@@ -1,0 +1,7 @@
+var GameState = {
+  
+  save : function() {
+    
+  },
+  
+}

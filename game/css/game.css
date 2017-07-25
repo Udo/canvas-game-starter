@@ -1,0 +1,84 @@
+@font-face {
+  font-family: console;
+  src: url('../fonts/glass_tty_vt220.ttf');
+}
+
+* {
+	box-sizing: inherit;
+	text-shadow: inherit;
+	font-family: console;
+	font-size: 20px;
+	transition: all 0.5s ease;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+	text-shadow: 0 0 8px rgba(255,255,200,0.65);
+}
+
+*:focus {
+  outline: none;
+}
+
+body {
+	background: #000;
+	color: #eeeeee;
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+	cursor: crosshair;
+	line-height: 150%;
+}
+
+a {
+	color: rgba(255, 255, 180, 0.8);
+	cursor: pointer !important;
+}
+
+a:hover {
+	color: rgba(255, 255, 230, 1.0);
+	text-shadow: 0 0 12px rgba(255, 255, 230, 1.0);
+}
+
+nav {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	padding: 16px;
+	background: rgba(100,100,100,0.3);
+}
+
+footer {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+  width: 250px;
+	border-top: 1px solid rgba(100,200,255,0.2);
+	padding-bottom: 3px;
+	background: rgba(100,100,100,0.3);
+}
+
+button {
+  display: inline-block;
+  border-left: 2px solid rgba(255,255,255,0.4);
+  border-top: 2px solid rgba(255,255,255,0.4);
+  border-right: 2px solid rgba(0,0,0,0.5);
+  border-bottom: 2px solid rgba(0,0,0,0.5);
+  box-shadow: 0px 0px 6px 6px rgba(0,0,0,0.35);
+	min-width: 80px;
+	color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-right: 6px;
+  margin-left: 6px;
+  height: 48px;
+  vertical-align: top;
+}
+
+button:hover {
+  border-color: yellow;
+}
+
+

@@ -1,0 +1,19 @@
+{
+  "name": "CanvasGameStarter",
+  "main": "app://game/index.html",
+  "window": {
+      "title": "Canvas Game Starter",
+      "toolbar": false,
+      "frame": true,
+      "width": 1280,
+      "height": 900,
+      "position": "mouse",
+      "width": 1280,
+      "height": 800
+    },
+    "unused-js-flags" : "--trace-opt --trace-deopt --trace-gc --trace-inlining ",
+          "chromium-args" : "--js-flags=''",
+    "webkit": {
+      "plugin": true
+    }
+}

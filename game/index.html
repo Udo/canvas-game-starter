@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>HTML/Canvas Game Starter</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="css/game.css">
+    <link rel="stylesheet" href="css/hint.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <script src="lib/lodash.min.js"></script>
+    <script src="lib/pixi.min.js"></script>
+    <script src="lib/jquery.min.js"></script>
+    <script src="lib/howler.min.js"></script>
+    <script src="lib/pathfinding.min.js"></script>
+    <script src="lib/minibars.min.js"></script>
+
+    <script src="js/tools.js"></script>
+    <script src="js/gamestate.js"></script>
+    <script src="js/stage.js"></script>
+  </head>
+  <body onunload="" onload="">
+    
+    <nav>
+      HTML/Canvas Game Starter
+    </nav>
+
+    <footer>
+      <div id="frame-rate">0fps</div>
+    </footer>
+
+    <script>
+    
+    $( window ).unload(GameState.save);
+    
+    Stage.init();
+    Stage.animate();
+            
+    </script>
+    
+  </body>
+</html>
