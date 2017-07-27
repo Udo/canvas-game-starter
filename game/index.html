@@ -19,6 +19,7 @@
     <script src="js/tools.js"></script>
     <script src="js/gamestate.js"></script>
     <script src="js/stage.js"></script>
+    <script src="js/game.js"></script>
   </head>
   <body onunload="" onload="">
     
@@ -32,11 +33,13 @@
 
     <script>
     
-    $( window ).unload(GameState.save);
-    
-    Stage.init();
-    Stage.animate();
-            
+    $( window ).on('unload', GameState.save);
+    $(function() {
+      Stage.init();
+      Stage.animate();
+      Game.init();
+    });
+          
     </script>
     
   </body>

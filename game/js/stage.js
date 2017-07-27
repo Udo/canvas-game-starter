@@ -17,11 +17,12 @@ var Stage = {
   		});
 		document.body.appendChild(this.renderer.view);
     this.container = merge(new PIXI.Container(), {
-      pivot : { x : Stage.size.x/2, y : Stage.size.y/2 },
+      //pivot : { x : Stage.size.x/2, y : Stage.size.y/2 },
     	});
-		$( window ).resize(function(){    
+		$( window ).on('resize' , function(){    
   		Stage.renderer.resize($(document).width(), $(document).height());
     });
+    this.lastAnimationTimestamp = new Date().getTime();
 	},
 	
 	/** @returns {PointXY} viewport dimensions */
@@ -54,9 +55,9 @@ var Stage = {
     },
   	/** execute all stage animations
     	*/
-    doAll : function(timeStamp) {
+    doAll : function(deltaTime) {
       each(Stage.animation.list, function(f) {
-        if(typeof f !== 'function' || f(timeStamp) == 'done')
+        if(typeof f !== 'function' || f(deltaTime) == 'done')
           Stage.animation.remove(f);
       });
     },
@@ -69,7 +70,7 @@ var Stage = {
   	if(!Stage.animation.paused) {
   		const startTimestamp = new Date().getTime();
   		
-  		Stage.animation.doAll(startTimestamp);
+  		Stage.animation.doAll((startTimestamp - Stage.lastAnimationTimestamp) / 1000);
       Stage.renderer.render(Stage.container);
   
   		const currentTimestamp = new Date().getTime();
@@ -81,6 +82,7 @@ var Stage = {
   		  ((currentTimestamp-Stage.lastRenderTimestamp)*0.02);
   		Stage.fpsIndicatorElement.text(Math.round(1000/Stage.currentRenderInterval)+'fps CPU:'+msFree+'%');
   		Stage.lastRenderTimestamp = currentTimestamp;
+  		Stage.lastAnimationTimestamp = currentTimestamp;
   	}
   	
     requestAnimationFrame(Stage.animate);
