@@ -4,6 +4,7 @@
 
 `
 License: Public Domain
+
 Author: udo@openfu.com
 `
 
@@ -21,3 +22,8 @@ It's a collection of standard HTML5 gamedev stuff, all put together in a startab
 Optional, for 3D stuff, but not loaded by default:
 
 * THREE.js (latest) ()[https://threejs.org/docs/]
+
+HTML5 based on:
+
+* HTML5 Boilerplate (5.3.0) [](https://html5boilerplate.com/)
+
