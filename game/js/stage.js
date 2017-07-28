@@ -57,8 +57,13 @@ var Stage = {
     	*/
     doAll : function(deltaTime) {
       each(Stage.animation.list, function(f) {
-        if(typeof f !== 'function' || f(deltaTime) == 'done')
+        try {
+          if(typeof f !== 'function' || f(deltaTime) == 'done')
+            Stage.animation.remove(f);
+        } catch(ee) {
+          console.error('error during animation', ee);
           Stage.animation.remove(f);
+        }
       });
     },
   },
