@@ -44,8 +44,10 @@ var Game = {
     scene.add( lights[ 2 ] );
     
     var geometry = new THREE.BoxGeometry( 1, 1, 1 );
-    var material = new THREE.MeshStandardMaterial( { color: 0x00ff00 } );
+    var materialWF = new THREE.MeshStandardMaterial( { emissive: 0x8888bb, roughness : 0.8, wireframe : true } );
+    var material = new THREE.MeshStandardMaterial( { color: 0xbbbbbb, roughness : 0.8 } );
     var cube = new THREE.Mesh( geometry, material );
+    cube.add(new THREE.Mesh( new THREE.BoxGeometry( 1.001, 1.001, 1.001 ), materialWF ));
     scene.add(cube);
     Game.stage.camera.position.z = 1.5;
     
