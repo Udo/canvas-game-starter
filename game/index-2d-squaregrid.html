@@ -17,6 +17,7 @@
     <script src="lib/u-pixistage.js"></script>
     <script src="lib/u-helper.js"></script>
 
+    <script src="js/grid.js"></script>
     <script src="js/game.js"></script>
   </head>
   <body>
@@ -33,12 +34,32 @@
     
     Stage = {};
     //$( window ).on('unload', GameState.save);
+    
+    var grid = false;
+
     $(function() {
+    
       Stage = PixiStage.create({
         smoothScroll : 0.85,
       });
       Stage.start();
       Game.init(Stage, $('#frame-rate'));
+      
+      grid = new Grid.create(10, 10, {
+        
+        onCreateCell : function(cell, x, y) {
+          var g = new PIXI.Graphics();
+          g.beginFill(0xff00ff, 0.5);
+          g.drawRect(0, 0, 30, 30);
+          g.x = x*32;
+          g.y = y*32;
+          g.cacheAsBitmap = true;
+          g.cell = cell;
+          Stage.root.addChild(g);
+        },
+        
+      });
+            
     });
           
     </script>

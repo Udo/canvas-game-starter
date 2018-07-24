@@ -17,8 +17,8 @@ contains the following libraries:
 * jQuery (3.2.1) MIT License | https://jquery.com/
 * lodash (1.8.3) CC0/Public Domain | https://lodash.com/
 * minibars (latest) Public Domain | https://github.com/udo/minibars
-* PathFinding.js MIT License | (latest) https://github.com/qiao/PathFinding.js/
 * PIXI.js BSD 3-clause License | (4.5.4 http://pixijs.download/dev/docs/index.html
+* udolib (latest) Public Domain | https://github.com/udo/udolib
 
 Optional, for 3D stuff, but not loaded by default:
 
