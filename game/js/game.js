@@ -2,6 +2,14 @@ var Game = {
   
   stage : false,
   
+  debugInfo : {
+    lastRenderTime : 0,
+  },
+  
+  state : {
+    
+  },
+  
   init : function(stage, frame_info_element) {
     
     Game.stage = stage;
@@ -19,8 +27,8 @@ var Game = {
       }    
     });
     
-    stage.on('frameinfo', function(inf) { 
-      frame_info_element.text(inf.fps+'FPS '+stage.root.children.length);      
+    stage.on('frameinfo', function(inf) {       
+      frame_info_element.text('FPS:'+inf.fps+' CPU:'+inf.threadLoadPercent+'%');      
     })
     
   },

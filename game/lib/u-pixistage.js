@@ -89,12 +89,15 @@ var PixiStage = {
     	trigger : function(eventName, param1, param2, param3) {
       	if(this.options.stopped || this.options.stopEvents)
       	  return;
-      	if(this.eventHandlers[eventName])
-      	  return(this.eventHandlers[eventName](param1, param2, param3));
+      	if(this.eventHandlers[eventName]) each(this.eventHandlers[eventName], function(eh) {
+        	eh(param1, param2, param3)
+      	});
     	},
     	
     	on : function(eventName, handlerFunc) {
-    	  this.eventHandlers[eventName] = handlerFunc;
+      	if(!this.eventHandlers[eventName])
+      	  this.eventHandlers[eventName] = [];
+    	  this.eventHandlers[eventName].push(handlerFunc);
     	},
     	
     	zoom : function(zoomLevel) {

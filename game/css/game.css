@@ -54,6 +54,7 @@ footer {
 	bottom: 0;
 	left: 0;
 	right: 0;
+	padding: 8px;
   width: 250px;
 	border-top: 1px solid rgba(100,200,255,0.2);
 	padding-bottom: 3px;

@@ -36,6 +36,8 @@
     //$( window ).on('unload', GameState.save);
     
     var grid = false;
+    var Stage = false; 
+    var tileSize = 64;
 
     $(function() {
     
@@ -44,21 +46,65 @@
       });
       Stage.start();
       Game.init(Stage, $('#frame-rate'));
+      Stage.layers.create('map');
+      Stage.layers.create('mobs');
       
-      grid = new Grid.create(10, 10, {
+      Stage.textures = {
+        char1 : PIXI.Texture.fromImage('img/BarbarianPriest.png'),
+      }
+      
+      grid = new Grid.create(12, 12, {
+        
+        tileSize : tileSize,
         
         onCreateCell : function(cell, x, y) {
           var g = new PIXI.Graphics();
-          g.beginFill(0xff00ff, 0.5);
-          g.drawRect(0, 0, 30, 30);
-          g.x = x*32;
-          g.y = y*32;
-          g.cacheAsBitmap = true;
+          g.beginFill((x + (y%2)) % 2 == 0 ? 0x00dd00 : 0x00bb00, 1.0);
+          g.drawRect(0, 0, tileSize-1, tileSize-1);
+          g.x = x*tileSize;
+          g.y = y*tileSize;
           g.cell = cell;
-          Stage.root.addChild(g);
+          cell.goIndex = Stage.layers.map.children.length;
+          Stage.layers.map.addChild(g);
         },
         
       });
+      
+      // center the layers
+      each(Stage.layers, function(l) {
+        l.x = -0.5*(grid.tileSize*grid.width);
+        l.y = -0.5*(grid.tileSize*grid.height);
+      });
+      
+      var c1 = new PIXI.Sprite(Stage.textures.char1);
+      Stage.layers.mobs.addChild(c1);
+      
+      Stage.on('click', function(e) {
+        var m = grid.unprojectMouse(e.x, e.y);
+        console.log(m);
+        c1.x = m.x*grid.tileSize;
+        c1.y = m.y*grid.tileSize;
+      });
+      
+      var lastHighlightedTile = false;
+      Stage.on('mousemove', function(e) {
+        var m = grid.unprojectMouse(e.x, e.y);
+        var cell = grid.get(m.x, m.y);
+        if(lastHighlightedTile) {
+          lastHighlightedTile.tint = 0xffffff;
+          lastHighlightedTile = false;
+        }
+        if(cell) {
+          var g = Stage.layers.map.children[cell.goIndex];
+          g.tint = 0x999999;
+          lastHighlightedTile = g;
+        }
+      });
+
+      Game.state = {
+        grid : grid.cells, 
+        units : {},
+      }
             
     });
           
