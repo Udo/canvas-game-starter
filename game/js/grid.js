@@ -1,37 +1,39 @@
 var Grid = {
   
-  create : function(width, height, opt) {
+  create : function(colCount, rowCount, opt) {
     if(!opt) opt = {};
-    this.width = width;
-    this.height = height;
-    this.cells = [];
+    var grid = {
+      colCount : colCount,
+      rowCount : rowCount,
+      cells : [],
+    }
     if(!opt.eachNeighbor)
       opt.eachNeighbor = Grid.eachNeighbor;
-    this.unprojectMouse = Grid.unprojectMouse.bind(this);
-    this.get = Grid.get.bind(this);
-    if(!opt.tileSize)
-      opt.tileSize = 1;
+    grid.unprojectMouse = Grid.unprojectMouse.bind(grid);
+    grid.get = Grid.get.bind(grid);
+    if(!opt.cellSize)
+      opt.cellSize = 1;
     if(!opt.xOffset || !opt.yOffset) {
-      opt.xOffset = 0.5*opt.tileSize*width;
-      opt.yOffset = 0.5*opt.tileSize*height;
+      opt.xOffset = 0.5*opt.cellSize*colCount;
+      opt.yOffset = 0.5*opt.cellSize*rowCount;
     }
-    var o = this;
     each(opt, function(v, k) {
       if(typeof v == 'function')
-        o[k] = v.bind(o);
+        grid[k] = v.bind(grid);
       else 
-        o[k] = v;
+        grid[k] = v;
     });
-    for(var y = 0; y < height; y++) {
+    for(var y = 0; y < rowCount; y++) {
       var row = [];
-      for(var x = 0; x < width; x++) {
+      for(var x = 0; x < colCount; x++) {
         var cell = { x: x, y: y, walkable : true };
         if(opt.onCreateCell)
           opt.onCreateCell(cell, x, y);
         row.push(cell);
       }
-      this.cells.push(row);
+      grid.cells.push(row);
     }
+    return(grid);
   },
   
   eachNeighbor : function(node, f) {
@@ -60,8 +62,8 @@ var Grid = {
   
   unprojectMouse : function(mx, my) {
     return({
-      x : Math.floor((mx+this.xOffset)/this.tileSize),
-      y : Math.floor((my+this.yOffset)/this.tileSize),
+      x : Math.floor((mx+this.xOffset)/this.cellSize),
+      y : Math.floor((my+this.yOffset)/this.cellSize),
     });
   },
   
