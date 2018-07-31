@@ -38,6 +38,32 @@
       });
       Game.init(Stage, $('#frame-rate'));
       Stage.start();
+      
+      var light = new THREE.PointLight( 0xff0000, 1, 100 );
+      light.position.set( 0, 50, 50 );
+      Stage.root.add( light );
+
+      light = new THREE.PointLight( 0xff0000, 1, 100 );
+      light.position.set( 50, -50, -50 );
+      Stage.root.add( light );
+      
+      var ambient = new THREE.AmbientLight( 0x404040 ); // soft white light
+      Stage.root.add( ambient );
+      
+      var geometry = new THREE.BoxBufferGeometry( 10, 10, 10 );
+      var material = new THREE.MeshStandardMaterial( {color: 0xaaffaa} );
+      var cube = new THREE.Mesh( geometry, material );
+      Stage.root.add( cube );
+      
+      Stage.animate(function(dt) {
+        
+        cube.rotation.x += dt;
+        cube.rotation.y += dt*2;
+        
+        return(true);
+        
+      });
+      
     });
     </script>
     
