@@ -15,10 +15,8 @@ var UGrid = {
     }
   },
 
-  projectHexToMap : function(h1, h2, cellSize, dest, f1, f2, f1DimFunction, options) {
-    if(!cellSize)
-      cellSize = options.cellSize;
-    var offset = (h1 % 2 != 0 ? options.oddOffset/2 : options.evenOffset/2);
+  projectHexToMap : function(h1, h2, cellSize, dest, f1, f2, f1DimFunction, grid) {
+    var offset = (h1 % 2 != 0 ? grid.oddOffset/2 : grid.evenOffset/2);
     dest[f1] = h1 * f1DimFunction(cellSize);
     dest[f2] = (h2 + offset) * cellSize;
     return(dest);
@@ -48,7 +46,7 @@ var UGrid = {
             x : x,
             y : y,
           };
-        cell.pos = grid.projectCellToMap(cell.x, cell.y, options.cellSize || 1.0);
+        cell.pos = grid.projectCellToMap(cell.x, cell.y);
         if(grid.onCreateCell)
           grid.onCreateCell(cell);
         grid.cells[y][x] = cell;
@@ -68,7 +66,7 @@ var UGrid = {
     setType : function(type) {
       UGrid.bind(this, type);
       this.each(function(cell) {
-        cell.pos = this.projectCellToMap(cell.x, cell.y, this.cellSize || 1.0);
+        cell.pos = this.projectCellToMap(cell.x, cell.y);
       });
     },
     
@@ -78,13 +76,13 @@ var UGrid = {
     },
 
     get : function(x, y) {
-      if(x > colCount-1 || x < 0 || y > rowCount-1 || y < 0 || isNaN(x) || isNaN(y))
+      if(x > this.colCount-1 || x < 0 || y > this.rowCount-1 || y < 0 || isNaN(x) || isNaN(y))
         return(false);
       return(this.cells[y][x]);
     },
     
     call : function(x, y, f) {
-      if(x > colCount-1 || x < 0 || y > rowCount-1 || y < 0 || isNaN(x) || isNaN(y))
+      if(x > this.colCount-1 || x < 0 || y > this.rowCount-1 || y < 0 || isNaN(x) || isNaN(y))
         return(false);
       return(f(this.cells[y][x], x, y));
     },
@@ -94,6 +92,15 @@ var UGrid = {
         row.forEach(function(cell, colIndex) {
           f(cell, colIndex, rowIndex);
         });
+      });
+    },
+
+    eachInDistanceOf : function(cell, distance, cellCallback) {
+      var grid = this;
+      this.eachInAreaOf([cell], distance, function(c, depth) {
+        var dist = grid.mapDistance(cell.x, cell.y, c.x, c.y);
+        if(dist <= distance)
+          cellCallback(c, dist, depth);
       });
     },
 
@@ -136,7 +143,7 @@ var UGrid = {
       var pvlength = grid.mapDistance(0, 0, pvx, pvy);
       pvx = pvx / pvlength;
       pvy = pvy / pvlength;
-      var unitLength = grid.options.cellSize || 1.0;
+      var unitLength = this.cellSize || 1.0;
       if(eachCellCallback)
         eachCellCallback(cc, distCounter);
       while(cc.x != c2.x || cc.y != c2.y) {
@@ -180,13 +187,74 @@ var UGrid = {
     
   },
   
-  pointyTop : {
+  square : {
+    
+    topology : 'square',
+    
+    enableDiagonal : true,
     
     eachNeighborOf : function(cell, eachNeighborCallback) {
-      var options = this.options || UGrid.options;
       var x = cell.x;
       var y = cell.y;
-      var offset1 = (y % 2 != 0 ? options.oddOffset : options.evenOffset);        
+      if(this.enableDiagonal) {
+        this.call(x-1, y-1, eachNeighborCallback);
+        this.call(x+1, y-1, eachNeighborCallback);
+        this.call(x-1, y+1, eachNeighborCallback);
+        this.call(x+1, y+1, eachNeighborCallback);
+      }
+      this.call(x-1, y+0, eachNeighborCallback);
+      this.call(x+1, y+0, eachNeighborCallback);
+      this.call(x+0, y-1, eachNeighborCallback);
+      this.call(x+0, y+1, eachNeighborCallback);
+    },
+    
+    heightFromWidth : function(width) {
+      return(width);
+    },
+    
+    rowHeightFromWidth : function(width) {
+      return(width);
+    },
+    
+    createDrawPath : function(size) {
+      var height = UGrid.square.heightFromWidth(size);
+      var width = size;
+      return([
+        -0.50 * width,   -0.50 * height,
+        +0.50 * width,   -0.50 * height,
+        +0.50 * width,   +0.50 * height,
+        -0.50 * width,   +0.50 * height,
+        -0.50 * width,   -0.50 * height,
+      ]);  
+    },
+    
+    projectCellToMap : function(hx, hy, optionalDestination) {
+      if(!optionalDestination)
+        optionalDestination = {};
+      optionalDestination.x = hx * this.cellSize;
+      optionalDestination.y = hy * this.cellSize;
+      return(optionalDestination);
+    },
+    
+    // todo: this needs another pass to unify both hex topology functions
+    projectMapToCell : function(xc, yc, optionalDestination) {
+      if(!optionalDestination)
+        optionalDestination = {};
+      optionalDestination.x = Math.round(xc / this.cellSize);
+      optionalDestination.y = Math.round(yc / this.cellSize);
+      return(optionalDestination);
+    },
+    
+  },
+
+  pointyTop : {
+    
+    topology : 'hex',
+
+    eachNeighborOf : function(cell, eachNeighborCallback) {
+      var x = cell.x;
+      var y = cell.y;
+      var offset1 = (y % 2 != 0 ? this.oddOffset : this.evenOffset);        
       this.call(offset1+x-1, y-1, eachNeighborCallback);
       this.call(offset1+x+0, y-1, eachNeighborCallback);
       this.call(x+1, y+0, eachNeighborCallback);
@@ -217,35 +285,31 @@ var UGrid = {
       ]);  
     },
     
-    projectCellToMap : function(hx, hy, cellSize, optionalDestination) {
+    projectCellToMap : function(hx, hy, optionalDestination) {
       if(!optionalDestination)
         optionalDestination = {};
       return(UGrid.projectHexToMap(
         hy, hx, 
-        cellSize || this.options.cellSize, 
+        this.cellSize, 
         optionalDestination, 
         'y', 'x', 
         UGrid.pointyTop.rowHeightFromWidth, 
-        this.options || UGrid.options));
+        this));
     },
     
     // todo: this needs another pass to unify both hex topology functions
-    projectMapToCell : function(xc, yc, cellSize, optionalDestination) {
+    projectMapToCell : function(xc, yc, optionalDestination) {
       if(!optionalDestination)
         optionalDestination = {};
-      var options = this.options || UGrid.options;
-      if(!cellSize)
-        cellSize = options.cellSize;
-      var cellWidth = cellSize || options.cellSize;
-      var cellHeight = UGrid.pointyTop.rowHeightFromWidth(cellWidth);
+      var cellHeight = UGrid.pointyTop.rowHeightFromWidth(this.cellSize);
       var y = (yc / cellHeight) + 1/6;
-      var x = (xc / cellWidth) - 
-        (Math.round(y) % 2 == 0 ? options.evenOffset*0.5 : options.oddOffset*0.5);
+      var x = (xc / this.cellSize) - 
+        (Math.round(y) % 2 == 0 ? this.evenOffset*0.5 : this.oddOffset*0.5);
       var fx = x - Math.round(x);
       var fy = y - Math.round(y);
       if(fy < -0.5+UGrid.sqrt3/5 && (Math.abs(fx) - (fy+0.5)*(1+UGrid.sqrt3/3) ) > 0) {
         y -= 1;
-        x += (Math.round(y) % 2 == 0 ? -options.evenOffset : -options.oddOffset) + (fx > 0 ? 1 : 0);
+        x += (Math.round(y) % 2 == 0 ? -this.evenOffset : -this.oddOffset) + (fx > 0 ? 1 : 0);
       }
       optionalDestination.x = Math.round(x);
       optionalDestination.y = Math.round(y);
@@ -256,11 +320,12 @@ var UGrid = {
 
   flatTop : {
 
+    topology : 'hex',
+
     eachNeighborOf : function(cell, eachNeighborCallback) {
-      var options = this.options || UGrid.options;
       var x = cell.x;
       var y = cell.y;
-      var offset1 = (x % 2 != 0 ? options.oddOffset : options.evenOffset);        
+      var offset1 = (x % 2 != 0 ? this.oddOffset : this.evenOffset);        
       this.call(x+0, y-1, eachNeighborCallback);
       this.call(x+1, offset1+y-1, eachNeighborCallback);
       this.call(x+1, offset1+y+0, eachNeighborCallback);
@@ -291,33 +356,29 @@ var UGrid = {
       ]);  
     },
     
-    projectCellToMap : function(hx, hy, cellSize, optionalDestination) {
+    projectCellToMap : function(hx, hy, optionalDestination) {
       if(!optionalDestination)
         optionalDestination = {};
       return(UGrid.projectHexToMap(
         hx, hy, 
-        cellSize || this.options.cellSize, 
+        this.cellSize, 
         optionalDestination, 
         'x', 'y', 
         UGrid.flatTop.colWidthFromHeight, 
-        this.options || UGrid.options));
+        this));
     },
     
     // todo: this needs another pass to unify both hex topology functions
     projectMapToCell : function(xc, yc, cellSize) {
-      var options = this.options || UGrid.options;
-      if(!cellSize)
-        cellSize = options.cellSize;
-      var cellHeight = cellSize || options.cellSize;
-      var cellWidth = UGrid.flatTop.colWidthFromHeight(cellHeight);
+      var cellWidth = UGrid.flatTop.colWidthFromHeight(this.cellSize);
       var x = (xc / cellWidth) + 1/6;
-      var y = (yc / cellHeight) - 
-        (Math.round(x) % 2 == 0 ? options.evenOffset*0.5 : options.oddOffset*0.5);
+      var y = (yc / this.cellSize) - 
+        (Math.round(x) % 2 == 0 ? this.evenOffset*0.5 : this.oddOffset*0.5);
       var fx = x - Math.round(x);
       var fy = y - Math.round(y);
       if(fx < -0.5+UGrid.sqrt3/5 && (Math.abs(fy) - (fx+0.5)*(1+UGrid.sqrt3/3) ) > 0) {
         x -= 1;
-        y += (Math.round(x) % 2 == 0 ? -options.evenOffset : -options.oddOffset) + (fy > 0 ? 1 : 0);
+        y += (Math.round(x) % 2 == 0 ? -this.evenOffset : -this.oddOffset) + (fy > 0 ? 1 : 0);
       }
       return({ x : Math.round(x), y : Math.round(y) });
     },

@@ -16,8 +16,8 @@
     <script src="lib/u-pathastar.js"></script>
     <script src="lib/u-pixistage.js"></script>
     <script src="lib/u-helper.js"></script>
+    <script src="lib/u-grid.js"></script>
 
-    <script src="js/grid.js"></script>
     <script src="js/game.js"></script>
   </head>
   <body>
@@ -53,16 +53,20 @@
         char1 : PIXI.Texture.fromImage('img/BarbarianPriest.png'),
       }
       
-      grid = Grid.create(12, 12, {
+      //grid = Grid.create(12, 12, {
+      grid = UGrid.create(12, 12, {
         
         cellSize : cellSize,
         
+        type : UGrid.square,
+        
         onCreateCell : function(cell) {
           var g = new PIXI.Graphics();
-          g.beginFill((cell.x + (cell.y%2)) % 2 == 0 ? 0x00dd00 : 0x00bb00, 1.0);
-          g.drawRect(0, 0, cellSize-1, cellSize-1);
-          g.x = cell.x*cellSize;
-          g.y = cell.y*cellSize;
+          g.beginFill((cell.x + (cell.y%2)) % 2 == 0 ? 0x66dd66 : 0x55bb55, 1.0);
+          g.lineStyle(1, 0x000000, 0.5);
+          g.drawPolygon(this.createDrawPath(this.cellSize));
+          g.x = cell.pos.x;
+          g.y = cell.pos.y;
           g.cell = cell;
           cell.goIndex = Stage.layers.map.children.length;
           Stage.layers.map.addChild(g);
@@ -70,34 +74,45 @@
         
       });
       
-      // center the layers
-      each(Stage.layers, function(l) {
-        l.x = -0.5*(grid.cellSize*grid.colCount);
-        l.y = -0.5*(grid.cellSize*grid.rowCount);
-      });
-      
+      Stage.root.pivotTarget.x = 0.5*(grid.cellSize*grid.colCount);
+      Stage.root.pivotTarget.y = 0.4*(grid.cellSize*grid.rowCount);
+
       var c1 = new PIXI.Sprite(Stage.textures.char1);
+      c1.pivot.x = 28;
+      c1.pivot.y = 28;
+      c1.grid = { x : 0, y : 0 };
+      grid.projectCellToMap(0, 0, c1);
       Stage.layers.mobs.addChild(c1);
       
       Stage.on('click', function(e) {
-        var m = grid.unprojectMouse(e.x, e.y);
+        var m = grid.projectMapToCell(e.x, e.y);
         console.log(m);
-        c1.x = m.x*grid.cellSize;
-        c1.y = m.y*grid.cellSize;
+        grid.projectCellToMap(m.x, m.y, c1);
+        c1.grid.x = m.x;
+        c1.grid.y = m.y;
       });
       
-      var lastHighlightedTile = false;
+      var lastHighlightedTiles = [];
       Stage.on('mousemove', function(e) {
-        var m = grid.unprojectMouse(e.x, e.y);
+        var m = grid.projectMapToCell(e.x, e.y);
         var cell = grid.get(m.x, m.y);
-        if(lastHighlightedTile) {
-          lastHighlightedTile.tint = 0xffffff;
-          lastHighlightedTile = false;
-        }
+        each(lastHighlightedTiles, function(tile) {
+          tile.tint = 0xffffff;
+          tile = false;
+        });
+        lastHighlightedTiles = [];
         if(cell) {
           var g = Stage.layers.map.children[cell.goIndex];
-          g.tint = 0x999999;
-          lastHighlightedTile = g;
+          grid.eachInDistanceOf(cell, 2.5, function(pathCell, dist, tier) {
+            var g = Stage.layers.map.children[pathCell.goIndex];
+            g.tint = rgb(32+tier*32, 32+tier*32, 32+tier*32);
+            lastHighlightedTiles.push(g);
+            });
+          grid.eachInLine(grid.get(c1.grid.x, c1.grid.y), cell, function(pathCell) {
+            var g = Stage.layers.map.children[pathCell.goIndex];
+            g.tint = 0x666666;
+            lastHighlightedTiles.push(g);
+            });
         }
       });
 
@@ -105,7 +120,7 @@
         grid : grid.cells, 
         units : {},
       }
-            
+           
     });
           
     </script>
