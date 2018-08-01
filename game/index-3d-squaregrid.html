@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>HTML/Canvas/3D Game Starter</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="css/game.css">
+    <link rel="stylesheet" href="css/hint.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <script src="lib/three.js"></script>
+    <script src="lib/jquery.min.js"></script>
+    <script src="lib/howler.min.js"></script>
+    <script src="lib/minibars.min.js"></script>
+    <script src="lib/u-pathastar.js"></script>
+    <script src="lib/u-threestage.js"></script>
+    <script src="lib/u-grid.js"></script>
+    <script src="lib/u-helper.js"></script>
+
+    <script src="js/game.js"></script>
+  </head>
+  <body>
+    
+    <nav>
+      HTML/Canvas/3D Game Starter
+    </nav>
+
+    <footer>
+      <div id="frame-rate">0fps</div>
+    </footer>
+
+    <script>
+    Stage = {};
+    grid = false;
+    cellSize = 3;
+    gridSize = 12;
+    
+    var Shapes = {};
+    var Mat = {};
+    
+    $(function() {
+      Stage = ThreeStage.create({
+        smoothScroll : 0.85,
+        draggable : true,
+      });
+      Game.init(Stage, $('#frame-rate'));
+      Stage.start();
+      Stage.layers.create('map');
+      Stage.layers.create('mobs');
+      
+      var light = new THREE.PointLight( 0xff0000, 1, 100 );
+      light.position.set( 0, 50, 50 );
+      Stage.root.add( light );
+
+      light = new THREE.PointLight( 0xff0000, 1, 100 );
+      light.position.set( 50, -50, -50 );
+      Stage.root.add( light );
+      
+      var ambient = new THREE.AmbientLight( 0x404040 ); // soft white light
+      Stage.root.add( ambient );
+      
+      Shapes.tile = new THREE.BoxBufferGeometry( cellSize*0.95, cellSize*0.95, cellSize*0.95 );
+      Mat.tile = new THREE.MeshStandardMaterial( {color: 0xaaffaa} );
+      
+      var mapOffset = -0.5*cellSize*gridSize;
+      
+      merge(Stage.camera.position, {
+        x : 0,
+        y : -20,
+        z : 15,
+      });
+      merge(Stage.camera.rotation, {
+        x : 0.7,
+        y : 0,
+        z :0,
+      });
+      Stage.camera.updateMatrixWorld();
+      
+      grid = UGrid.create(gridSize, gridSize, {
+        
+        cellSize : cellSize,
+        
+        type : UGrid.square,
+        
+        mapOffsetX : mapOffset,
+        mapOffsetY : mapOffset,
+        
+        onCreateCell : function(cell) {
+          var tile = new THREE.Mesh( Shapes.tile, Mat.tile );
+          tile.position.x = cell.pos.x;
+          tile.position.y = cell.pos.y;
+          tile.cell = cell;
+          cell.goIndex = Stage.layers.map.children.length;
+          Stage.layers.map.add(tile);
+        },
+        
+      });
+      
+      Stage.on('click', function(e) {
+        //Stage.eachMouseSelect(Stage.layers.map.children, function(hit) {
+        //  console.log(hit);
+        //  }, true);
+        var hit = Stage.getNearestMouseIntersect(Stage.layers.map.children);
+        if(hit) {
+          console.log('hit', hit);
+        }
+      });
+      
+      
+
+      /*
+
+      var c1 = new PIXI.Sprite(Stage.textures.char1);
+      c1.pivot.x = 28;
+      c1.pivot.y = 28;
+      c1.grid = { x : 0, y : 0 };
+      grid.projectCellToMap(0, 0, c1);
+      Stage.layers.mobs.addChild(c1);
+      
+      
+      var lastHighlightedTiles = [];
+      Stage.on('mousemove', function(e) {
+        var m = grid.projectMapToCell(e.x, e.y);
+        var cell = grid.get(m.x, m.y);
+        each(lastHighlightedTiles, function(tile) {
+          tile.tint = 0xffffff;
+          tile = false;
+        });
+        lastHighlightedTiles = [];
+        if(cell) {
+          var g = Stage.layers.map.children[cell.goIndex];
+          grid.eachInDistanceOf(cell, 2.5, function(pathCell, dist, tier) {
+            var g = Stage.layers.map.children[pathCell.goIndex];
+            g.tint = rgb(32+tier*32, 32+tier*32, 32+tier*32);
+            lastHighlightedTiles.push(g);
+            });
+          grid.eachInLine(grid.get(c1.grid.x, c1.grid.y), cell, function(pathCell) {
+            var g = Stage.layers.map.children[pathCell.goIndex];
+            g.tint = 0x666666;
+            lastHighlightedTiles.push(g);
+            });
+        }
+      });
+
+      Game.state = {
+        grid : grid.cells, 
+        units : {},
+      }
+           
+    });
+      
+*/
+      Stage.animate(function(dt) {
+        
+        //Stage.layers.map.rotation.x += dt;
+        Stage.layers.map.rotation.z += dt*0.2;
+        
+        return(true);
+        
+      });
+      
+    });
+    </script>
+    
+  </body>
+</html>

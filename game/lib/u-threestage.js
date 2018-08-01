@@ -5,7 +5,7 @@ var ThreeStage = {
     layers : {
       
     	create : function(name) {
-      	var layer = new Three.Object3D();
+      	var layer = new THREE.Object3D();
       	while(!name || this.layers[name])
       	  name = 'L'+(this._idCtr++);
         layer.name = name;
@@ -38,6 +38,25 @@ var ThreeStage = {
     },
 
   	functions : {
+    	
+    	eachMouseSelect : function(objects, f, recurse) {
+        if(!this.raycaster)
+          return;
+        this.raycaster.setFromCamera(this.mouse, this.camera);
+      	var intersects = this.raycaster.intersectObjects( objects, recurse );
+      	for ( var i = 0; i < intersects.length; i++ ) {
+          f(intersects[ i ], i);
+      	}
+    	},
+    	
+    	getNearestMouseIntersect : function(objects, recurse) {
+      	var result = false;
+      	this.eachMouseSelect(objects, function(hit) {
+        	if(result === false || result.distance > hit.distance) 
+        	  result = hit;
+        	}, recurse);
+        return(result);
+    	},
 
       clamp : function(v, min, max) {
         if(v < min)
@@ -49,52 +68,35 @@ var ThreeStage = {
     
       makeDraggable : function(o, dragProp) {
         var stage = this;
-        if(!dragProp)
-          dragProp = 'position';
-        var x0 = 0;
-        var y0 = 0;
-        o.dragStart = function(propOverride) {
-          if(propOverride)
-            dragProp = propOverride;
-          x0 = o[dragProp].x;
-          y0 = o[dragProp].y;
-        }
-        o.dragUpdate = function(xd, yd) {
-          o[dragProp].x = -xd + x0;
-          o[dragProp].y = -yd + y0;
-          if(stage.options.panArea) {
-            o[dragProp].x = stage.clamp(o[dragProp].x, stage.options.panArea.left, stage.options.panArea.right);
-            o[dragProp].y = stage.clamp(o[dragProp].y, stage.options.panArea.top, stage.options.panArea.bottom);
-          }
-          stage.trigger('pan', o[dragProp]);
-        }
-        o.stage = function(x, y) {
-          o[dragProp].x = x;
-          o[dragProp].y = y;
-          if(stage.options.panArea) {
-            o[dragProp].x = stage.clamp(o[dragProp].x, stage.options.panArea.left, stage.options.panArea.right);
-            o[dragProp].y = stage.clamp(o[dragProp].y, stage.options.panArea.top, stage.options.panArea.bottom);
-          }
-          stage.trigger('pan', o[dragProp]);
+        o.dragStart = function() {
+          stage.mouse.x0 = stage.mouse.x;
+          stage.mouse.y0 = stage.mouse.y;
+          stage.mouse.ex0 = o.position.x;
+          stage.mouse.ey0 = o.position.y;
         }
       },
     	
     	getViewportSize : function() {
     		return({
     			x : $(document).width(), 
-    			y : $(document).height(), 
+    			y : $(document).height(),
+    			xMid : Math.round($(document).width()/2),
+    			yMid : Math.round($(document).height()/2),
     			});
     	},
     	
     	trigger : function(eventName, param1, param2, param3) {
       	if(this.options.stopped || this.options.stopEvents)
       	  return;
-      	if(this.eventHandlers[eventName])
-      	  return(this.eventHandlers[eventName](param1, param2, param3));
+      	each(this.eventHandlers[eventName], function(f) {
+        	f(param1, param2, param3)
+      	});
     	},
     	
     	on : function(eventName, handlerFunc) {
-    	  this.eventHandlers[eventName] = handlerFunc;
+      	if(!this.eventHandlers[eventName])
+      	  this.eventHandlers[eventName] = [];
+    	  this.eventHandlers[eventName].push(handlerFunc);
     	},
     	
     	zoom : function(zoomLevel) {
@@ -103,7 +105,8 @@ var ThreeStage = {
     	},
     
     	panBy : function(xd, yd) {
-        this.root.dragUpdate(xd, yd);
+        this.root.position.x = this.mouse.ex0 + xd * this.mouse.panFactor;
+        this.root.position.y = this.mouse.ey0 + yd * this.mouse.panFactor;
     	},
     	
     	panTo : function(x, y) {
@@ -134,9 +137,9 @@ var ThreeStage = {
         $(this.renderer.view).on('mouseup', this.hooks.mouseup);
         $(this.renderer.view).on('mouseout', this.hooks.mouseout);
         $(this.renderer.view).on('mouseenter', this.hooks.mouseenter);
+        $(this.renderer.view).on('click', this.hooks.click);
         this.root = new THREE.Scene();
-        this.root.mousemove = this.hooks.mousemove;    
-        this.root.click = this.hooks.click;
+        this.renderer.view.addEventListener("mousemove", this.hooks.mousemove, false);
         this.renderer.view.addEventListener("mousewheel", this.hooks.wheel, false);
         this.renderer.view.addEventListener("DOMMouseScroll", this.hooks.wheel, false);    
         this.debug.animationTimestamp = new Date().getTime();
@@ -258,59 +261,51 @@ var ThreeStage = {
   	hooks : { // for incoming events
     	
     	click : function(e) {
+      	this.hooks.updateMouseButtons(e, true);
         this.trigger('click', this.mouse);
       },
-    	
-      mousedown : function(e) {
-        this.mouse.anyButton = true;
-        var buttonContext = 'any';
+
+      updateMouseButtons : function(e, isDown) {
+        this.mouse.anyButton = isDown;
+        this.mouse.buttonContext = 'any';
         if(e.which == 1 || e.button == 0) {
-          this.mouse.leftButton = true;
-          buttonContext = 'left';
+          this.mouse.leftButton = isDown;
+          this.mouse.buttonContext = 'left';
         } else if(e.which == 2 || e.button == 1) {
-          this.mouse.middleButton = true;
-          buttonContext = 'middle';
+          this.mouse.middleButton = isDown;
+          this.mouse.buttonContext = 'middle';
         } else if(e.which == 3 || e.button == 2) {
-          this.mouse.rightButton = true;
-          buttonContext = 'right';
+          this.mouse.rightButton = isDown;
+          this.mouse.buttonContext = 'right';
         } else {
           this.mouse.otherButton = e.which+':'+e.button;
         }
+      },
+    	
+      mousedown : function(e) {
+      	this.hooks.updateMouseButtons(e, true);
         this.mouse.x0 = this.mouse.screenX;
         this.mouse.y0 = this.mouse.screenY;
-        this.trigger('mousedown', this.mouse, buttonContext);        
-        this.trigger('mousedown_'+buttonContext, this.mouse);        
+        this.trigger('mousedown', this.mouse, this.mouse.buttonContext);        
+        this.trigger('mousedown_'+this.mouse.buttonContext, this.mouse);        
       },
       
       mousemove : function(e) {
-        this.mouse.screenX = e.data.global.x;
-        this.mouse.screenY = e.data.global.y;
-        this.mouse.x = ((e.data.global.x - this.root.position.x) / this.root.scale.x) + this.root.pivot.x;
-        this.mouse.y = ((e.data.global.y - this.root.position.y) / this.root.scale.y) + this.root.pivot.y;
+        this.mouse.screenX = e.x;
+        this.mouse.screenY = e.y;
+        this.mouse.x = ( e.clientX / this.size.x ) * 2 - 1;
+        this.mouse.y = - ( e.clientY / this.size.y ) * 2 + 1;
         if(this.mouse.anyButton) {
-          this.mouse.xd = (this.mouse.screenX - this.mouse.x0) / this.root.scale.x;
-          this.mouse.yd = (this.mouse.screenY - this.mouse.y0) / this.root.scale.y;
+          this.mouse.xd = (this.mouse.x - this.mouse.x0);
+          this.mouse.yd = (this.mouse.y - this.mouse.y0);
         }
         this.trigger('mousemove', this.mouse, e);
       },
       
       mouseup : function(e) {
-        this.mouse.anyButton = false;
-        var buttonContext = 'any';
-        if(e.which == 1 || e.button == 0) {
-          this.mouse.leftButton = false;
-          buttonContext = 'left';
-        } else if(e.which == 2 || e.button == 1) {
-          this.mouse.middleButton = false;
-          buttonContext = 'middle';
-        } else if(e.which == 3 || e.button == 2) {
-          this.mouse.rightButton = false;
-          buttonContext = 'right';
-        } else {
-          this.mouse.otherButton = e.which+':'+e.button;
-        }
-        this.trigger('mouseup', this.mouse, buttonContext);   
-        this.trigger('mouseup_'+buttonContext, this.mouse);     
+      	this.hooks.updateMouseButtons(e, false);
+        this.trigger('mouseup', this.mouse, this.mouse.buttonContext);   
+        this.trigger('mouseup_'+this.mouse.buttonContext, this.mouse);     
       },
       
       mouseout : function(e) {
@@ -386,6 +381,7 @@ var ThreeStage = {
       	xd : 0,	yd : 0,
       	screenX : 0,
       	screenY : 0,
+      	panFactor : 10,
     	},    	     
       eventHandlers : { 
         click : false,
@@ -416,10 +412,12 @@ var ThreeStage = {
       commandList : [],
       nextFrameCommandList : [],
     });
- 
+    s.raycaster = new THREE.Raycaster();
     s.size = s.getViewportSize();
     s.initRenderer();
-    
+    if(opt.draggable)
+      s.makeDraggable(s.root);
+   
     return(s);
   	
   },

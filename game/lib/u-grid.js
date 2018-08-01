@@ -62,6 +62,8 @@ var UGrid = {
   generic : {
     
     cells : [],
+    mapOffsetX : 0,
+    mapOffsetY : 0,
     
     setType : function(type) {
       UGrid.bind(this, type);
@@ -231,8 +233,8 @@ var UGrid = {
     projectCellToMap : function(hx, hy, optionalDestination) {
       if(!optionalDestination)
         optionalDestination = {};
-      optionalDestination.x = hx * this.cellSize;
-      optionalDestination.y = hy * this.cellSize;
+      optionalDestination.x = this.mapOffsetX + hx * this.cellSize;
+      optionalDestination.y = this.mapOffsetY + hy * this.cellSize;
       return(optionalDestination);
     },
     
