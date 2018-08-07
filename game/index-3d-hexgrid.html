@@ -106,17 +106,16 @@
         */
         var hit = Stage.getNearestMouseIntersect(Stage.layers.map.children);
         if(hit) {
-          console.log('hit', hit);
+          //console.log('hit', hit);
           GridMap3D.placeXY(GridMap3D.cursor, hit.object.cell);
         }
       });
       
       Stage.on('mousemove', function(e) {
         GridMap3D.mouseToGroundPlane();
-        console.log(GridMap3D.mousePlane);
-        GridMap3D.placeXY(GridMap3D.cursor, GridMap3D.mousePlane);
-        //var m = grid.projectMapToCell(e.x, e.y);
-        //var cell = grid.get(m.x, m.y);
+        //console.log(GridMap3D.mousePlane.cell);
+        GridMap3D.resetHighlight();
+        GridMap3D.highlightTileAt(GridMap3D.mousePlane.x, GridMap3D.mousePlane.y);
       });
       
 

@@ -9,7 +9,7 @@ var GridMap3D = bindThis({
 
   },
 
-  mousePlane : { xw : 0, yw : 0 },
+  mousePlane : { xw : 0, yw : 0, x : 0, y : 0, cell : 0 },
   
   mouseToGroundPlane : function() {
     this.stage.raycaster.setFromCamera(this.stage.mouse, this.stage.camera);
@@ -20,6 +20,8 @@ var GridMap3D = bindThis({
       this.mousePlane.xw = -this.grid.mapOffsetX + (hit[0].uv.x-0.5)*1000;
       this.mousePlane.yw = -this.grid.mapOffsetY + (hit[0].uv.y-0.5)*1000;
       this.grid.projectMapToCell(this.mousePlane.xw, this.mousePlane.yw, this.mousePlane);
+      // enable this if useful
+      // this.mousePlane.cell = grid.get(this.mousePlane.x, this.mousePlane.y);
     }
   },
   
@@ -40,6 +42,25 @@ var GridMap3D = bindThis({
   
   placeXY : function(o, pos) {
     this-grid.projectCellToMap(pos.x, pos.y, o.position);
+  },
+  
+  highlightedTiles : [],  
+  
+  resetHighlight : function() {
+    var grid = this;
+    each(this.highlightedTiles, function(t) {
+      t.material = grid.stage.mat.tile;
+    });
+    this.highlightedTiles.length = 0;
+  },
+  
+  highlightTileAt : function(x, y) {
+    var hlCell = this.grid.get(x, y);
+    if(hlCell) {
+      var hlTile = this.stage.layers.map.children[hlCell.goIndex];
+      this.highlightedTiles.push(hlTile);
+      hlTile.material = Stage.mat.highlight;
+    }
   },
   
   
