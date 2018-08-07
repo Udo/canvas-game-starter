@@ -19,8 +19,7 @@ var GridMap3D = bindThis({
     if(hit[0]) {
       this.mousePlane.xw = -this.grid.mapOffsetX + (hit[0].uv.x-0.5)*1000;
       this.mousePlane.yw = -this.grid.mapOffsetY + (hit[0].uv.y-0.5)*1000;
-      this.mousePlane.x = Math.round(this.mousePlane.xw / this.grid.cellSize);
-      this.mousePlane.y = Math.round(this.mousePlane.yw / this.grid.cellSize);
+      this.grid.projectMapToCell(this.mousePlane.xw, this.mousePlane.yw, this.mousePlane);
     }
   },
   
@@ -33,12 +32,14 @@ var GridMap3D = bindThis({
   createCursor : function() {
     this.cursor = Stage.wireframe(new THREE.Mesh( this.stage.shapes.tile, this.stage.mat.cursor ));
     this.cursor.position.z = this.grid.cellSize*0.5;
+    if(this.grid.topology == 'hex') {
+      this.cursor.rotation.x = Math.PI * 0.5;
+    }
     this.stage.layers.ui.add(this.cursor);
   },
   
   placeXY : function(o, pos) {
-    o.position.x = this.grid.mapOffsetX + this.grid.cellSize * pos.x;
-    o.position.y = this.grid.mapOffsetY + this.grid.cellSize * pos.y;
+    this-grid.projectCellToMap(pos.x, pos.y, o.position);
   },
   
   

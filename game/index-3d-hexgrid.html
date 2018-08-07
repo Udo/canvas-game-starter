@@ -63,7 +63,7 @@
       var ambient = new THREE.AmbientLight( 0x404040 ); // soft white light
       Stage.root.add( ambient );
       
-      Stage.shapes.tile = new THREE.BoxBufferGeometry( cellSize*0.98, cellSize*0.98, cellSize*0.98 );
+      Stage.shapes.tile = new THREE.CylinderBufferGeometry( cellSize*0.56, cellSize*0.56, cellSize, 6);
       Stage.mat.tile = new THREE.MeshStandardMaterial( {color: 0xaaffaa} );
       Stage.mat.highlight = new THREE.MeshStandardMaterial( {color: 0xaaffaa, emissive : 0x888888} );
       
@@ -77,13 +77,14 @@
         
         cellSize : cellSize,
         
-        type : UGrid.square,
+        type : UGrid.pointyTop,
         
         mapOffsetX : mapOffset,
         mapOffsetY : mapOffset,
         
         onCreateCell : function(cell) {
           var tile = new THREE.Mesh( Stage.shapes.tile, Stage.mat.tile );
+          tile.rotation.x = Math.PI * 0.5;
           tile.position.x = cell.pos.x;
           tile.position.y = cell.pos.y;
           tile.position.z = -cellSize*0.5;

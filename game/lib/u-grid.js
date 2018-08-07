@@ -15,10 +15,10 @@ var UGrid = {
     }
   },
 
-  projectHexToMap : function(h1, h2, cellSize, dest, f1, f2, f1DimFunction, grid) {
+  projectHexToMap : function(h1, h2, cellSize, dest, f1, f2, f1DimFunction, grid, f1Offset, f2Offset) {
     var offset = (h1 % 2 != 0 ? grid.oddOffset/2 : grid.evenOffset/2);
-    dest[f1] = h1 * f1DimFunction(cellSize);
-    dest[f2] = (h2 + offset) * cellSize;
+    dest[f1] = f1Offset + h1 * f1DimFunction(cellSize);
+    dest[f2] = f2Offset + (h2 + offset) * cellSize;
     return(dest);
   },
   
@@ -296,7 +296,8 @@ var UGrid = {
         optionalDestination, 
         'y', 'x', 
         UGrid.pointyTop.rowHeightFromWidth, 
-        this));
+        this,
+        this.mapOffsetY, this.mapOffsetX));
     },
     
     // todo: this needs another pass to unify both hex topology functions
@@ -367,7 +368,8 @@ var UGrid = {
         optionalDestination, 
         'x', 'y', 
         UGrid.flatTop.colWidthFromHeight, 
-        this));
+        this,
+        this.mapOffsetX, this.mapOffsetY));
     },
     
     // todo: this needs another pass to unify both hex topology functions
