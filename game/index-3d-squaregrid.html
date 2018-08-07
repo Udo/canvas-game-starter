@@ -63,7 +63,7 @@
       var ambient = new THREE.AmbientLight( 0x404040 ); // soft white light
       Stage.root.add( ambient );
       
-      Stage.shapes.tile = new THREE.BoxBufferGeometry( cellSize*0.95, cellSize*0.95, cellSize*0.95 );
+      Stage.shapes.tile = new THREE.BoxBufferGeometry( cellSize*0.98, cellSize*0.98, cellSize*0.98 );
       Stage.mat.tile = new THREE.MeshStandardMaterial( {color: 0xaaffaa} );
       Stage.mat.highlight = new THREE.MeshStandardMaterial( {color: 0xaaffaa, emissive : 0x888888} );
       
