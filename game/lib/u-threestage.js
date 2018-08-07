@@ -38,7 +38,16 @@ var ThreeStage = {
     },
 
   	functions : {
-    	
+
+      wireframe : function(o) {
+        var group = new THREE.Group();
+        group.wireframe = new THREE.Line( o.geometry, Stage.mat.line );
+        group.o = o;
+        group.add(group.wireframe);
+        group.add(o);
+        return(group);
+      },
+
     	eachMouseSelect : function(objects, f, recurse) {
         if(!this.raycaster)
           return;
@@ -124,7 +133,7 @@ var ThreeStage = {
       initRenderer : function() {
         this.camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
         this.camera.position.z = 30;
-        this.renderer = new THREE.WebGLRenderer();
+        this.renderer = new THREE.WebGLRenderer({ antialias: true });
         this.renderer.setSize( window.innerWidth, window.innerHeight );
         this.renderer.view = this.renderer.domElement;
         if(this.parentElement)
@@ -391,6 +400,9 @@ var ThreeStage = {
         resize : false,
         zoom : false,
       },
+      
+      mat : {},
+      shapes : {},
     	    	
     }
     
@@ -405,6 +417,7 @@ var ThreeStage = {
     ThreeStage.implementation.bind(s, ThreeStage.implementation.functions, s);
     s.layers = ThreeStage.implementation.bind(s, ThreeStage.implementation.layers);    
     s.hooks = ThreeStage.implementation.bind(s, ThreeStage.implementation.hooks);
+    s.helpers = ThreeStage.implementation.bind(s, ThreeStage.implementation.helpers);
     s.animation = ThreeStage.implementation.bind(s, ThreeStage.implementation.animation, {
       paused : false,
       stopped : false,
@@ -417,6 +430,9 @@ var ThreeStage = {
     s.initRenderer();
     if(opt.draggable)
       s.makeDraggable(s.root);
+      
+    s.mat.cursor = new THREE.MeshLambertMaterial({ color: 0x156289, emissive: 0x072534, side: THREE.DoubleSide, flatShading: true, transparent: true, opacity: 0.25 });
+    s.mat.line = new THREE.LineBasicMaterial({ color: 0x88ccff });      
    
     return(s);
   	

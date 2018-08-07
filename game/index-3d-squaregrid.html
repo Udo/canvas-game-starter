@@ -19,6 +19,7 @@
     <script src="lib/u-helper.js"></script>
 
     <script src="js/game.js"></script>
+    <script src="js/gridmap3d.js"></script>
   </head>
   <body>
     
@@ -38,6 +39,7 @@
     
     var Shapes = {};
     var Mat = {};
+    var Obj = {};
     
     $(function() {
       Stage = ThreeStage.create({
@@ -48,6 +50,7 @@
       Stage.start();
       Stage.layers.create('map');
       Stage.layers.create('mobs');
+      Stage.layers.create('ui');
       
       var light = new THREE.PointLight( 0xff0000, 1, 100 );
       light.position.set( 0, 50, 50 );
@@ -60,21 +63,14 @@
       var ambient = new THREE.AmbientLight( 0x404040 ); // soft white light
       Stage.root.add( ambient );
       
-      Shapes.tile = new THREE.BoxBufferGeometry( cellSize*0.95, cellSize*0.95, cellSize*0.95 );
-      Mat.tile = new THREE.MeshStandardMaterial( {color: 0xaaffaa} );
+      Stage.shapes.tile = new THREE.BoxBufferGeometry( cellSize*0.95, cellSize*0.95, cellSize*0.95 );
+      Stage.mat.tile = new THREE.MeshStandardMaterial( {color: 0xaaffaa} );
+      Stage.mat.highlight = new THREE.MeshStandardMaterial( {color: 0xaaffaa, emissive : 0x888888} );
       
       var mapOffset = -0.5*cellSize*gridSize;
       
-      merge(Stage.camera.position, {
-        x : 0,
-        y : -20,
-        z : 15,
-      });
-      merge(Stage.camera.rotation, {
-        x : 0.7,
-        y : 0,
-        z :0,
-      });
+      merge(Stage.camera.position, { x : 0, y : -20, z : 15 });
+      merge(Stage.camera.rotation, { x : 0.7, y : 0, z : 0 });
       Stage.camera.updateMatrixWorld();
       
       grid = UGrid.create(gridSize, gridSize, {
@@ -87,9 +83,10 @@
         mapOffsetY : mapOffset,
         
         onCreateCell : function(cell) {
-          var tile = new THREE.Mesh( Shapes.tile, Mat.tile );
+          var tile = new THREE.Mesh( Stage.shapes.tile, Stage.mat.tile );
           tile.position.x = cell.pos.x;
           tile.position.y = cell.pos.y;
+          tile.position.z = -cellSize*0.5;
           tile.cell = cell;
           cell.goIndex = Stage.layers.map.children.length;
           Stage.layers.map.add(tile);
@@ -97,16 +94,29 @@
         
       });
       
+      GridMap3D.init(grid, Stage); 
+      
       Stage.on('click', function(e) {
-        //Stage.eachMouseSelect(Stage.layers.map.children, function(hit) {
-        //  console.log(hit);
-        //  }, true);
+        /* 
+        // select all the objects under the mouse cursor
+        Stage.eachMouseSelect(Stage.layers.map.children, function(hit) {
+          console.log(hit);
+          }, true); 
+        */
         var hit = Stage.getNearestMouseIntersect(Stage.layers.map.children);
         if(hit) {
           console.log('hit', hit);
+          GridMap3D.placeXY(GridMap3D.cursor, hit.object.cell);
         }
       });
       
+      Stage.on('mousemove', function(e) {
+        GridMap3D.mouseToGroundPlane();
+        console.log(GridMap3D.mousePlane);
+        GridMap3D.placeXY(GridMap3D.cursor, GridMap3D.mousePlane);
+        //var m = grid.projectMapToCell(e.x, e.y);
+        //var cell = grid.get(m.x, m.y);
+      });
       
 
       /*
@@ -119,42 +129,11 @@
       Stage.layers.mobs.addChild(c1);
       
       
-      var lastHighlightedTiles = [];
-      Stage.on('mousemove', function(e) {
-        var m = grid.projectMapToCell(e.x, e.y);
-        var cell = grid.get(m.x, m.y);
-        each(lastHighlightedTiles, function(tile) {
-          tile.tint = 0xffffff;
-          tile = false;
-        });
-        lastHighlightedTiles = [];
-        if(cell) {
-          var g = Stage.layers.map.children[cell.goIndex];
-          grid.eachInDistanceOf(cell, 2.5, function(pathCell, dist, tier) {
-            var g = Stage.layers.map.children[pathCell.goIndex];
-            g.tint = rgb(32+tier*32, 32+tier*32, 32+tier*32);
-            lastHighlightedTiles.push(g);
-            });
-          grid.eachInLine(grid.get(c1.grid.x, c1.grid.y), cell, function(pathCell) {
-            var g = Stage.layers.map.children[pathCell.goIndex];
-            g.tint = 0x666666;
-            lastHighlightedTiles.push(g);
-            });
-        }
-      });
-
-      Game.state = {
-        grid : grid.cells, 
-        units : {},
-      }
-           
-    });
       
 */
       Stage.animate(function(dt) {
         
-        //Stage.layers.map.rotation.x += dt;
-        Stage.layers.map.rotation.z += dt*0.2;
+        Stage.root.rotation.z += dt*0.1;
         
         return(true);
         

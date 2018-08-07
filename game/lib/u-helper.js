@@ -1,8 +1,18 @@
 function bindThis(self, source, destination) {
   if(!destination)
     destination = {};
-  for(var prop in source) if(source.hasOwnProperty(prop)) {
-    destination[prop] = source[prop].bind(self); 
+  if(!source) {
+    for(var prop in self) if(self.hasOwnProperty(prop)) {
+      if(self[prop].bind)
+        destination[prop] = self[prop].bind(destination); 
+      else
+        destination[prop] = self[prop]; 
+    }
+  }
+  else {
+    for(var prop in source) if(source.hasOwnProperty(prop)) {
+      destination[prop] = source[prop].bind(self); 
+    }
   }
   return(destination);
 }
