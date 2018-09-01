@@ -75,9 +75,12 @@ function dist(x1, y1, x2, y2) {
     ));
 }
 
-function selectRandom(list) {
+function selectRandom(list, removeEntry) {
   if(list.length == 0) return null;
-  return(list[Math.floor(Math.random()*list.length)]);
+  var idx = Math.floor(Math.random()*list.length);
+  var entry = list[idx];
+  if(removeEntry) list.splice(idx, 1);
+  return(entry);
 }
 
 function clamp(v, min, max) {

@@ -2,6 +2,68 @@ var ThreeStage = {
   
   implementation : {
     
+    pipeline : {
+      
+      passes : {},
+      last : false,
+      composer : false,
+      
+      add : function(name, object, initFunc) {
+        object.isActive = true;
+        this.pipeline.passes[name] = object;
+        if(initFunc)
+          initFunc(object);
+        this.pipeline.composer.addPass(object);
+        this.pipeline.last = object;
+      },
+      
+      init : function() {
+        if(!this.pipeline.composer)
+          this.pipeline.composer = new THREE.EffectComposer(this.renderer);
+      },
+      
+      enable : function() {
+        this.renderFunction = function() {
+          this.pipeline.composer.render();
+        }
+      },
+      
+      disable : function() {
+        this.renderFunction = this.renderer.render;
+      },
+      
+      defaultSetup : function(opt) {
+        if(!opt) opt = {
+          smaa : false,
+          fxaa : true,
+          taa : false,
+          bloom : true,
+          ssao : true,
+          tonemapping : true,
+        };
+        this.pipeline.init();
+        this.pipeline.add('render', new THREE.RenderPass(this.root, this.camera));
+        if(opt.ssao)
+          this.pipeline.add('ssao', new THREE.SSAOPass( this.root, this.camera, window.innerWidth, window.innerHeight ));
+        if(opt.tonemapping)
+          this.pipeline.add('tonemapping', new THREE.AdaptiveToneMappingPass(true, 256));
+        if(opt.taa)
+          this.pipeline.add('taa', new THREE.TAARenderPass(this.root, this.camera));
+        if(opt.fxaa)
+          this.pipeline.add('fxaa', new THREE.ShaderPass( THREE.FXAAShader ), function(fxaa) {
+            fxaa.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+            });
+        if(opt.smaa)
+          this.pipeline.add('smaa', new THREE.SMAAPass(window.innerWidth, window.innerHeight));
+        if(opt.bloom)
+          this.pipeline.add('bloom', new THREE.UnrealBloomPass( 
+            new THREE.Vector2( window.innerWidth, window.innerHeight ), 1.5, 0.0, 0.70 ));
+        this.pipeline.last.renderToScreen = true;
+        this.pipeline.enable();
+      },
+
+    },
+    
     layers : {
       
     	create : function(name) {
@@ -18,6 +80,7 @@ var ThreeStage = {
       	var l = this.layers[name];
       	if(l) {
         	this.root.remove(l);
+          this.layers[name] = false;
         	return(true);
       	}
       	return(false);
@@ -163,7 +226,10 @@ var ThreeStage = {
       	else if(!this.options.stopAnimation) {
       		const st = new Date().getTime();
       		this.animation.doAll((st - this.debug.animationTimestamp) / 1000);
-          this.renderer.render(this.root, this.camera);      
+          if(!this.renderFunction)
+            this.renderer.render(this.root, this.camera);
+          else
+            this.renderFunction(this.root, this.camera);      
       		const ct = new Date().getTime();
       		this.debug.frameInterval = 
       		  ((this.debug.frameInterval || 10)*0.97) + 
@@ -250,12 +316,13 @@ var ThreeStage = {
           this.animation.commandList = this.animation.nextFrameCommandList;
           this.animation.nextFrameCommandList = [];
         }
+        var it = this;
         each(this.animation.list, function(f) {
           try {
             if(typeof f == 'function') {
               var r = f(deltaTime);
               if(r === false) {
-                this.animation.remove(f);
+                it.animation.remove(f);
               }
             }
           } catch(ee) {
@@ -338,6 +405,9 @@ var ThreeStage = {
     	resize : function(){    
     	  this.size = this.getViewportSize();
         this.trigger('resize', this.size);
+        this.camera.aspect = window.innerWidth / window.innerHeight;
+				this.camera.updateProjectionMatrix();
+				this.renderer.setSize( window.innerWidth, window.innerHeight );
       },
       
     	sink : function(e) { 
@@ -415,6 +485,7 @@ var ThreeStage = {
   	opt.stopEvents = true;
  
     ThreeStage.implementation.bind(s, ThreeStage.implementation.functions, s);
+    s.pipeline = ThreeStage.implementation.bind(s, ThreeStage.implementation.pipeline);    
     s.layers = ThreeStage.implementation.bind(s, ThreeStage.implementation.layers);    
     s.hooks = ThreeStage.implementation.bind(s, ThreeStage.implementation.hooks);
     s.helpers = ThreeStage.implementation.bind(s, ThreeStage.implementation.helpers);
@@ -432,7 +503,7 @@ var ThreeStage = {
       s.makeDraggable(s.root);
       
     s.mat.cursor = new THREE.MeshLambertMaterial({ color: 0x156289, emissive: 0x072534, side: THREE.DoubleSide, flatShading: true, transparent: true, opacity: 0.25 });
-    s.mat.line = new THREE.LineBasicMaterial({ color: 0x88ccff });      
+    s.mat.line = new THREE.LineBasicMaterial({ color: 0x88ccff, linewidth : 1 });      
    
     return(s);
   	

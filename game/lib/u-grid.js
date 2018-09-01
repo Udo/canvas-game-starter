@@ -48,7 +48,7 @@ var UGrid = {
           };
         cell.pos = grid.projectCellToMap(cell.x, cell.y);
         if(grid.onCreateCell)
-          grid.onCreateCell(cell);
+          grid.onCreateCell(cell, grid);
         grid.cells[y][x] = cell;
       }
     }

@@ -1,4 +1,6 @@
 # Logs
+.DS_Store
+.fuse*
 logs
 *.log
 .fuse*

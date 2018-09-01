@@ -10,6 +10,10 @@
     <link rel="stylesheet" href="css/hint.css">
     <link rel="stylesheet" href="css/font-awesome.min.css">
     <script src="lib/three.js"></script>
+
+    <script src="lib/three-postprocessing/all.js"></script>
+    <script src="lib/three-shaders/all.js"></script>
+
     <script src="lib/jquery.min.js"></script>
     <script src="lib/howler.min.js"></script>
     <script src="lib/minibars.min.js"></script>
@@ -46,26 +50,25 @@
         smoothScroll : 0.85,
         draggable : true,
       });
+      
+      Stage.pipeline.defaultSetup();
+      
       Game.init(Stage, $('#frame-rate'));
       Stage.start();
       Stage.layers.create('map');
       Stage.layers.create('mobs');
       Stage.layers.create('ui');
       
-      var light = new THREE.PointLight( 0xff0000, 1, 100 );
-      light.position.set( 0, 50, 50 );
-      Stage.root.add( light );
-
-      light = new THREE.PointLight( 0xff0000, 1, 100 );
-      light.position.set( 50, -50, -50 );
+      var light = new THREE.DirectionalLight( 0xffffff, 0.40 );
+      light.position.set( 0.3, 1, 0.3 );
       Stage.root.add( light );
       
       var ambient = new THREE.AmbientLight( 0x404040 ); // soft white light
       Stage.root.add( ambient );
       
       Stage.shapes.tile = new THREE.BoxBufferGeometry( cellSize*0.98, cellSize*0.98, cellSize*0.98 );
-      Stage.mat.tile = new THREE.MeshStandardMaterial( {color: 0xaaffaa} );
-      Stage.mat.highlight = new THREE.MeshStandardMaterial( {color: 0xaaffaa, emissive : 0x888888} );
+      Stage.mat.tile = new THREE.MeshStandardMaterial({ color: 0xaaffaa, metalness : 0 });
+      Stage.mat.highlight = new THREE.MeshStandardMaterial( {color: 0xaaffaa, emissive : 0x888888, metalness : 0 } );
       
       var mapOffset = -0.5*cellSize*gridSize;
       
@@ -86,7 +89,7 @@
           var tile = new THREE.Mesh( Stage.shapes.tile, Stage.mat.tile );
           tile.position.x = cell.pos.x;
           tile.position.y = cell.pos.y;
-          tile.position.z = -cellSize*0.5;
+          tile.position.z = -cellSize*0.5 + Math.random()*.2;
           tile.cell = cell;
           cell.goIndex = Stage.layers.map.children.length;
           Stage.layers.map.add(tile);
