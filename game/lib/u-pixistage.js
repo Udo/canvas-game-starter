@@ -276,17 +276,18 @@ var PixiStage = {
           this.animation.commandList = this.animation.nextFrameCommandList;
           this.animation.nextFrameCommandList = [];
         }
+        var self = this;
         each(this.animation.list, function(f) {
           try {
             if(typeof f == 'function') {
               var r = f(deltaTime);
               if(r === false) {
-                this.animation.remove(f);
+                self.animation.remove(f);
               }
             }
           } catch(ee) {
             console.error('error during animation', ee);
-            this.animation.remove(f);
+            self.animation.remove(f);
           }
         });
       },
