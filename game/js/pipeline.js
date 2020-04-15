@@ -1,3 +1,4 @@
+
 import * as THREE from '../lib/three/build/three.module.js';
 
 import { EffectComposer } from '../lib/three/examples/jsm/postprocessing/EffectComposer.js';
@@ -15,6 +16,34 @@ import { RGBShiftShader } from '../lib/three/examples/jsm/shaders/RGBShiftShader
 import { FXAAShader } from '../lib/three/examples/jsm/shaders/FXAAShader.js';
 import { CopyShader } from '../lib/three/examples/jsm/shaders/CopyShader.js';
 
+import { GLTFLoader } from '../lib/three/examples/jsm/loaders/GLTFLoader.js';
+import { RGBELoader } from '../lib/three/examples/jsm/loaders/RGBELoader.js';
+import { RoughnessMipmapper } from '../lib/three/examples/jsm/utils/RoughnessMipmapper.js';
+
+function load_gltf(url, target_or_function) {
+	new GLTFLoader().load(
+		url,
+		function (res) {
+			var o = res.scene.children[0];
+			console.log('gltf object loaded', o);
+			if(typeof target_or_function == 'function')
+			{
+				target_or_function(o, res);
+			}
+			else
+			{
+				target_or_function.add(o);
+			}
+		},
+		function (progress) {
+			console.log('gltf progress', progress);
+		},
+		function (error) {
+			console.log('gltf error', error);
+		},
+	);	
+}
+			
 var Shaders = {
 	RenderPass,
 	ShaderPass,
@@ -29,4 +58,4 @@ var Shaders = {
 	CopyShader,
 };
 
-export { THREE, EffectComposer, Shaders };
+export { THREE, EffectComposer, Shaders, GLTFLoader, RGBELoader, RoughnessMipmapper, load_gltf };
