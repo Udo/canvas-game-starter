@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="css/game.css">
     <link rel="stylesheet" href="css/hint.css">
     <link rel="stylesheet" href="css/font-awesome.min.css">
-    <script src="lib/pixi.min.js"></script>
+    <script src="lib/pixi5.min.js"></script>
     <script src="lib/jquery.min.js"></script>
     <script src="lib/howler.min.js"></script>
     <script src="lib/minibars.min.js"></script>
@@ -50,7 +50,7 @@
       Stage.layers.create('mobs');
       
       Stage.textures = {
-        char1 : PIXI.Texture.fromImage('img/BarbarianPriest.png'),
+        char1 : PIXI.Texture.from('img/BarbarianPriest.png'),
       }
       
       //grid = Grid.create(12, 12, {

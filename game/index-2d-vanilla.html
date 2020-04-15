@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Pure Canvas Demo</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="css/game.css">
+    <link rel="stylesheet" href="css/hint.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <script src="lib/u-helper.js"></script>
+
+  </head>
+  <body style="overflow:auto;">
+    
+	<canvas id="c" width="1920" height="1920" 
+		style="display:block;margin-left:auto;margin-right:auto;border:1px solid #880000;">
+	</canvas>
+
+    <script>
+    
+		var c = document.getElementById("c");
+		var ctx = c.getContext("2d");
+   
+		vpoke = function(x, y, r, g, b, a) {
+			ctx.fillStyle = "rgba("+r+","+g+","+b+","+(a)+")";
+			ctx.fillRect( x, y, 1, 1 );
+		}
+		
+		light_blob = function(x, y, r, g, b, alpha) {
+			vpoke(x, y, r, g, b, alpha);
+			vpoke(x-1, y, r, g, b, alpha*0.5);
+			vpoke(x+1, y, r, g, b, alpha*0.5);
+			vpoke(x, y-1, r, g, b, alpha*0.5);
+			vpoke(x, y+1, r, g, b, alpha*0.5);
+			vpoke(x-1, y-1, r, g, b, alpha*0.25);
+			vpoke(x+1, y+1, r, g, b, alpha*0.25);
+			vpoke(x+1, y-1, r, g, b, alpha*0.25);
+			vpoke(x+1, y+1, r, g, b, alpha*0.25);
+			vpoke(x-2, y, r, g, b, alpha*0.25);
+			vpoke(x+2, y, r, g, b, alpha*0.25);
+			vpoke(x, y-2, r, g, b, alpha*0.25);
+			vpoke(x, y+2, r, g, b, alpha*0.25);			
+		}
+		
+		rand = function(mn, mx) {
+			var d = mx - mn;
+			return(mn + Math.round(Math.random()*d));
+		}
+		
+		frand = function(mn, mx) {
+			var d = mx - mn;
+			return(mn + (Math.random()*d));
+		}
+		
+		var ring_size = 100;
+		var midx = 1920 / 2;
+		var midy = 1920 / 2;
+		
+		var ring_count = 6;
+		var ring_offsets = {};
+		
+		ctx.fillStyle = "rgb(0,0,0,1.0)";
+		ctx.fillRect( 0, 0, midx*2, midy*2 );
+
+		for(var i = 0; i < ring_count; i++) {
+			var ri = [];
+			for(var ix = 0; ix < 3; ix++) {
+				var start = frand(0, Math.PI*2);
+				var end = start + frand(0.25, 0.5);
+				if(end > Math.PI*2) end = Math.PI*2;
+				ri.push({
+					start : start,
+					end : end,
+				});
+			}
+			ring_offsets[i] = ri;
+		}
+		
+		var clamp = function(v, mn, mx) {
+			if(v < mn) return(mn);
+			if(v > mx) return(mx);
+			return(v);
+		}
+
+		var gen_lights = function(light_count, intensity, scatterp) {
+			for(var a = 0; a < light_count; a++) {
+				
+				var ring = rand(0, ring_count-1);
+				var angle = frand(0, Math.PI*2);
+				var alpha = Math.pow(frand(0, 0.95), 5)*intensity;
+				var r = 215 + rand(0, 40);
+				var g = 200 + rand(0, 40);
+				var b = 100 + rand(0, 40);
+				var xj = Math.pow(frand(-1, 1), scatterp)*ring_size*0.5;
+				var yj = Math.pow(frand(-1, 1), scatterp)*ring_size*0.5;
+				var x = 0;
+				var y = 0;
+				
+				var spoke = false;
+				ring_offsets[ring].forEach(function(ro) {
+					if(angle > ro.start && angle < ro.end) spoke = ro;
+				});
+				if(spoke) {
+					var dist = ring_size*frand(-1.3,1.3);
+					x = midx + xj + Math.sin(spoke.start)*(ring*ring_size + dist);
+					y = midy + yj + Math.cos(spoke.start)*(ring*ring_size + dist);
+					var xr = midx + xj + Math.sin(spoke.start)*(ring*ring_size + dist)*(-1);
+					var yr = midy + yj + Math.cos(spoke.start)*(ring*ring_size + dist)*(-1);
+					light_blob(xr, yr, r, g, b, alpha*0.5);
+					xr = midx + xj + Math.sin(spoke.start)*(ring*ring_size + dist*0.5);
+					yr = midy + yj + Math.cos(spoke.start)*(ring*ring_size + dist*0.5);
+					light_blob(xr, yr, r, g, b, alpha);
+				} else {
+					
+					if(ring == 0 && frand(0, 1) < 0.75) ring = 0.3;
+					
+					x = midx + Math.sin(angle)*ring*ring_size + xj;
+					y = midy + Math.cos(angle)*ring*ring_size + yj;
+				}
+				
+				light_blob(x, y, r, g, b, alpha);
+				
+			}
+		}
+		
+		var light_batch_size = 10000;
+		
+		gen_lights(light_batch_size, 0.15, 1);
+		gen_lights(light_batch_size/2, 0.35, 3);
+		gen_lights(light_batch_size/4, 1.0, 5);
+          
+    </script>
+    
+  </body>
+</html>

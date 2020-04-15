@@ -32,7 +32,7 @@ var GridMap3D = bindThis({
   },
   
   createCursor : function() {
-    this.cursor = Stage.wireframe(new THREE.Mesh( this.stage.shapes.tile, this.stage.mat.cursor ));
+    this.cursor = this.stage.wireframe(new THREE.Mesh( this.stage.shapes.tile, this.stage.mat.cursor ));
     this.cursor.position.z = this.grid.cellSize*0.5;
     if(this.grid.topology == 'hex') {
       this.cursor.rotation.x = Math.PI * 0.5;
@@ -41,7 +41,7 @@ var GridMap3D = bindThis({
   },
   
   placeXY : function(o, pos) {
-    this-grid.projectCellToMap(pos.x, pos.y, o.position);
+    this.grid.projectCellToMap(pos.x, pos.y, o.position);
   },
   
   highlightedTiles : [],  
@@ -59,7 +59,7 @@ var GridMap3D = bindThis({
     if(hlCell) {
       var hlTile = this.stage.layers.map.children[hlCell.goIndex];
       this.highlightedTiles.push(hlTile);
-      hlTile.material = Stage.mat.highlight;
+      hlTile.material = this.stage.mat.highlight;
     }
   },
   

@@ -6,7 +6,6 @@ License: Public Domain (libraries have their own licenses)
 
 Author: udo@openfu.com
 
-
 ## What is it?
 
 You don't need a complicated framework for productive HTML5 game development, you can just use a few very simple libraries
@@ -28,5 +27,7 @@ HTML5 based on:
 
 * HTML5 Boilerplate (5.3.0) MIT License | https://html5boilerplate.com/
 
+## Changelog
 
+* Updated to use JS modules for THREE.js (sort of)
 
