@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Irregular Map</title>
+		<meta name="description" content="">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<link rel="stylesheet" href="css/game.css">
+		<link rel="stylesheet" href="css/hint.css">
+		<link rel="stylesheet" href="css/font-awesome.min.css">
+
+		<script src="lib/jquery.min.js"></script>
+		<script src="lib/howler.min.js"></script>
+		<script src="lib/minibars.min.js"></script>
+		<script src="lib/u-pathastar.js"></script>
+		<script src="lib/u-threestage.js"></script>
+		<script src="lib/u-grid.js"></script>
+		<script src="lib/u-helper.js"></script>
+
+		<script src="js/game.js"></script>
+		<script src="js/gridmap3d.js"></script>
+	</head>
+	<body>
+		
+		<nav>
+			HTML/Canvas/3D Game Starter
+		</nav>
+
+		<footer>
+			<div id="frame-rate">0fps</div>
+		</footer>
+		
+		<script>
+		
+		 Stage = {};
+		
+		</script>
+
+		<script type="module">
+		import { THREE, EffectComposer, Shaders } from './js/pipeline.js';
+
+		var grid = false;
+		var cellSize = 3;
+		var gridSize = 12;
+		
+		function relax_vertices(geo) {
+			//var repulsion = [];
+			if(geo.squares.length < 128) return;
+			geo.squares.forEach((sq) => {
+				if(Math.random() < 0.5) return;
+				var a = geo.vertices[sq[0]];
+				var b = geo.vertices[sq[1]];
+				var c = geo.vertices[sq[2]];
+				var d = geo.vertices[sq[3]];
+				var mx = (a.x+b.x+c.x+d.x)/4;
+				var my = (a.y+b.y+c.y+d.y)/4;
+				var mz = (a.z+b.z+c.z+d.z)/4;
+				var m = new THREE.Vector3( mx, my, mz );
+				var ad = m.distanceTo(a);
+				var bd = m.distanceTo(b);
+				var cd = m.distanceTo(c);
+				var dd = m.distanceTo(d);
+				var avgdist = (ad + bd + cd + dd) / 4;
+				[[a, ad], [b, bd], [c, cd], [d, dd]].forEach((e) => {
+					e[0].x += 0.1 * (avgdist-e[1])*(e[0].x-mx);
+					e[0].y += 0.1 * (avgdist-e[1])*(e[0].y-my);
+				});
+			});
+			geo.facesNeedUpdate = true;
+			geo.verticesNeedUpdate = true;
+		}
+		
+		function subdivide_square(geo, opt = {}) {
+			var jitter = opt.jitter || 0;
+			
+			geo.vertices.forEach((v) => {
+				v.x += (0.5-Math.random())*opt.jitter*1;
+				v.y += (0.5-Math.random())*opt.jitter*1;
+			});
+			
+			var vsize = geo.vertices.length;
+			var fsize = geo.faces.length;
+			var result = new THREE.Geometry();
+			result.squares = [];
+			
+			var named_vertices = {};
+			
+			var push_v = (varray) => {
+				varray.forEach((va) => {
+					if(va.vidx === false) {
+						va.vidx = result.vertices.length;
+						result.vertices.push(va);
+					}
+				});
+			}
+			
+			var add_square = (a, b, c, d) => {
+				push_v([a, b, c, d]);
+				result.faces.push( new THREE.Face3(a.vidx, b.vidx, c.vidx) );
+				result.faces.push( new THREE.Face3(c.vidx, d.vidx, a.vidx) );
+			};
+			
+			var vmid = (aidx, bidx, j = 0) => {
+				if(aidx > bidx) return(vmid(bidx, aidx, j));
+				var name = aidx+'_'+bidx;
+				if(named_vertices[name]) {
+					return(named_vertices[name]);
+				}
+				var a = geo.vertices[aidx];
+				var b = geo.vertices[bidx];
+				var dist = a.distanceTo(b) / 3;
+				var jx = (0.5-Math.random())*dist*j;
+				var jy = (0.5-Math.random())*dist*j;
+				var jz = (0.5-Math.random())*dist*j;
+				var nv = new THREE.Vector3( 0.5*(a.x+b.x)+jx, 0.5*(a.y+b.y)+jy, 0.5*(a.z+b.z)+0.5*jz );
+				nv.name = name;
+				nv.vidx = false;
+				return(named_vertices[name] = nv);
+			};
+						
+			var vget = (vertidx) => {
+				var name = vertidx;
+				if(named_vertices[name]) {
+					return(named_vertices[name]);
+				}
+				var nv = geo.vertices[vertidx];
+				nv.name = name;
+				nv.vidx = false;
+				return(named_vertices[name] = nv);
+			}
+			
+			geo.squares.forEach((sq) => {
+				var a = vget(sq[0]);
+				var b = vget(sq[1]);
+				var c = vget(sq[2]);
+				var d = vget(sq[3]);
+				var ab = vmid(sq[0], sq[1], jitter);
+				var bc = vmid(sq[1], sq[2], jitter);
+				var cd = vmid(sq[2], sq[3], jitter);
+				var ad = vmid(sq[0], sq[3], jitter);
+				var ac = vmid(sq[0], sq[2], jitter);
+				add_square(a, ab, ac, ad);
+				add_square(ab, b, bc, ac);
+				add_square(ac, bc, c, cd);
+				add_square(ad, ac, cd, d);
+			});
+			
+			result.mergeVertices();
+			
+			for(var i = 0; i < result.faces.length; i += 2)
+			{
+				var f = result.faces[i];
+				var f1 = result.faces[i+1];				
+				result.squares.push([ f.a, f.b, f.c, f1.b ]);
+			}
+						
+			return(result);
+		}
+		
+		$(function() {
+			Stage = ThreeStage.create({
+				THREE : THREE,
+				smoothScroll : 0.85,
+				draggable : true,
+			});
+			
+			//Stage.pipeline.defaultSetup(Stage, EffectComposer, Shaders);
+			
+			Game.init(Stage, $('#frame-rate'));
+			Stage.start();
+			Stage.layers.create('map');
+			Stage.layers.create('mobs');
+			Stage.layers.create('ui');
+
+			merge(Stage.camera.position, { x : 0, y : -20, z : 20 });
+			merge(Stage.camera.rotation, { x : 0.7, y : 0, z : 0 });
+			Stage.camera.updateMatrixWorld();
+			
+			var light = new THREE.DirectionalLight( 0xffffff, 0.40 );
+			light.position.set( 0.3, 1, 0.3 );
+			Stage.root.add( light );
+			
+			var ambient = new THREE.AmbientLight( 0x404040 ); // soft white light
+			Stage.root.add( ambient );
+
+
+			var material = new THREE.MeshBasicMaterial( {color: 0x6688aa, side: THREE.DoubleSide} );
+
+			var geometry = new THREE.Geometry();
+
+			geometry.vertices.push(
+				new THREE.Vector3( -25,  20, 0 ),
+				new THREE.Vector3( -20, -20, 0 ),
+				new THREE.Vector3(  20, -20, 0 ),
+				new THREE.Vector3(  20,  25, 0 ),
+			);
+
+			geometry.faces.push( new THREE.Face3( 0, 1, 2 ) );
+			geometry.faces.push( new THREE.Face3( 2, 3, 0 ) );
+			geometry.squares = [[0,1,2,3]];
+
+			var plane = false;
+			
+			function show_plane() {
+				if(plane) Stage.root.remove(plane);
+
+				var tplane = new THREE.Mesh( geometry, material );
+				plane = Stage.wireframe(tplane);
+				Stage.root.add(plane);				
+			}
+			
+			show_plane();
+			
+			setInterval(() => {
+				relax_vertices(plane.geometry);
+				show_plane();				
+			}, 50);
+
+			Stage.on('click', function(e) {
+				geometry = subdivide_square(geometry, { jitter : 0.25 });
+				show_plane();
+			});
+			
+			Stage.animate(function(dt) {
+				
+				Stage.root.rotation.z += dt*0.1;
+				
+				return(true);
+				
+			});
+			
+		});
+		</script>
+		
+	</body>
+</html>

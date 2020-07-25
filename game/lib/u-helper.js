@@ -169,3 +169,26 @@ function merge(dest, source) {
   }
   return(dest);
 }
+
+function clone(o) {
+	return(JSON.parse(JSON.stringify(o)));
+}
+
+if(typeof exports !== 'undefined') {
+	exports.lerp = lerp;
+	exports.clone = clone;
+	exports.rgb = rgb;
+	exports.rgba = rgba;
+	exports.frgb = frgb;
+	exports.frgba = frgba;
+	exports.bind_this = bindThis;
+	exports.first = first;
+	exports.dist = dist;
+	exports.select_random = selectRandom;
+	exports.clamp = clamp;
+	exports.clamp01 = clamp01;
+	exports.each = each;
+	exports.keys = keys;
+	exports.map = map;
+	exports.merge = merge;
+}

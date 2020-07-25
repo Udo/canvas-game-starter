@@ -36,12 +36,11 @@ var ThreeStage = {
 				var pixelRatio = Stage.renderer.getPixelRatio();
 				Stage.composer = new EffectComposer(Stage.renderer);
 				Stage.composer.addPass(new opt.RenderPass( Stage.root, Stage.camera ) );
-				//Stage.pipeline.enable_fxaa(Stage, EffectComposer, opt);
 				//Stage.composer.addPass(new opt.SMAAPass(window.innerWidth, window.innerHeight));
 				//Stage.composer.addPass(new opt.TAARenderPass(Stage.root, Stage.camera));
 				Stage.pipeline.enable_sao(Stage, EffectComposer, opt);
 				//Stage.pipeline.enable_ssao(Stage, EffectComposer, opt);
-				Stage.composer.addPass(new opt.UnrealBloomPass(new THREE.Vector2( window.innerWidth, window.innerHeight ), 1.5, 0.0, 0.70 ));
+				//Stage.composer.addPass(new opt.UnrealBloomPass(new THREE.Vector2( window.innerWidth, window.innerHeight ), 1.5, 0.0, 0.70 ));
 				//Stage.composer.addPass(new opt.AdaptiveToneMappingPass(true, 256));
 			},
 
@@ -86,6 +85,15 @@ var ThreeStage = {
 		functions : {
 
 			wireframe : function(o) {
+				
+				var wireframe = new THREE.WireframeGeometry( o.geometry );
+				var line = new THREE.LineSegments( wireframe );
+				line.material.depthTest = false;
+				line.material.opacity = 1;
+				line.material.transparent = true;
+				o.add(line);
+				return(o);
+
 				var group = new THREE.Group();
 				group.wireframe = new THREE.Line( o.geometry, this.mat.line );
 				group.o = o;
@@ -489,7 +497,7 @@ var ThreeStage = {
 			s.makeDraggable(s.root);
 			
 		s.mat.cursor = new THREE.MeshLambertMaterial({ color: 0x156289, emissive: 0x072534, side: THREE.DoubleSide, flatShading: true, transparent: true, opacity: 0.25 });
-		s.mat.line = new THREE.LineBasicMaterial({ color: 0x88ccff, linewidth : 1 });			
+		s.mat.line = new THREE.LineBasicMaterial({ color: 0x88ccff, linewidth : 1, depthTest : false });			
 	 
 		return(s);
 		
