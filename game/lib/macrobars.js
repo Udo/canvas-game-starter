@@ -75,7 +75,7 @@ var compile = function(text) {
 			gensource.push('output += num_out('+data_prefix(token.text)+');');
 		},
 		each_start : (token) => {
-			gensource.push('each('+data_prefix(token.text)+', (data, index) {');
+			gensource.push('each('+data_prefix(token.text)+', (data, index) => {');
 		},
 		each_end : (token) => {
 			gensource.push('}); /* each end */');
@@ -127,7 +127,12 @@ var compile = function(text) {
 	gensource.push('	return(output);');
 	gensource.push('}');
 	
-	var f = eval('('+gensource.join("\n")+')');
+	var f = {};
+	try {
+		f = eval('('+gensource.join("\n")+')');
+	} catch(ce) {
+		console.error(ce);
+	}
 	
 	f.tokens = tokens;
 	f.gensource = gensource;
