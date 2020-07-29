@@ -51,6 +51,7 @@ var PixiStage = {
 				var stage = this;
 				if(!dragProp)
 					dragProp = 'position';
+				o.dragProp = dragProp;
 				var x0 = 0;
 				var y0 = 0;
 				o.dragStart = function(propOverride) {
@@ -68,7 +69,7 @@ var PixiStage = {
 					}
 					stage.trigger('pan', o[dragProp]);
 				}
-				o.stage = function(x, y) {
+				o.dragSetPosition = o.stage = function(x, y) {
 					o[dragProp].x = x;
 					o[dragProp].y = y;
 					if(stage.options.panArea) {
@@ -143,7 +144,8 @@ var PixiStage = {
 				$(this.renderer.view).on('mouseup', this.hooks.mouseup);
 				$(this.renderer.view).on('mouseout', this.hooks.mouseout);
 				$(this.renderer.view).on('mouseenter', this.hooks.mouseenter);
-				this.root.mousemove = this.hooks.mousemove;		
+				//this.root.mousemove = this.hooks.mousemove;		
+				this.renderer.view.addEventListener("mousemove", this.hooks.mousemove, false);
 				this.renderer.view.addEventListener("mousewheel", this.hooks.wheel, false);
 				this.renderer.view.addEventListener("DOMMouseScroll", this.hooks.wheel, false);		
 				this.root.click = this.hooks.click;
@@ -331,10 +333,19 @@ var PixiStage = {
 			},
 			
 			mousemove : function(e) {
-				this.mouse.screenX = e.data.global.x;
-				this.mouse.screenY = e.data.global.y;
-				this.mouse.x = ((e.data.global.x - this.root.position.x) / this.root.scale.x) + this.root.pivot.x;
-				this.mouse.y = ((e.data.global.y - this.root.position.y) / this.root.scale.y) + this.root.pivot.y;
+				var x = 0;
+				var y = 0;
+				if(e.data && e.data.global) {
+					x = e.data.global.x;
+					y = e.data.global.y;
+				} else {
+					x = e.offsetX;
+					y = e.offsetY;
+				}
+				this.mouse.screenX = x;
+				this.mouse.screenY = y;
+				this.mouse.x = ((x - this.root.position.x) / this.root.scale.x) + this.root.pivot.x;
+				this.mouse.y = ((y - this.root.position.y) / this.root.scale.y) + this.root.pivot.y;
 				if(this.mouse.anyButton) {
 					this.mouse.xd = (this.mouse.screenX - this.mouse.x0) / this.root.scale.x;
 					this.mouse.yd = (this.mouse.screenY - this.mouse.y0) / this.root.scale.y;
@@ -409,6 +420,15 @@ var PixiStage = {
 	
 	create : function(opt) {
 		
+		opt.frameSkipThreshold = opt.frameSkipThreshold || 50;
+		opt.minZoom = opt.minZoom || 0.5;
+		opt.maxZoom = opt.maxZoom || 3.0;
+		opt.zoomStep = opt.zoomStep || 0.2;
+		opt.stopped = true;
+		opt.stopEvents = true;
+		opt.defaultFont = opt.defaultFont || {fontFamily : 'console,monospace', 
+			fontSize: 26, fill : 0xffffff, align : 'left'};
+
 		var s;
 		s = {
 				
@@ -446,27 +466,21 @@ var PixiStage = {
 				resize : false,
 				zoom : false,
 			},
+			animation : {
+				paused : false,
+				stopped : false,
+				list : [],
+				commandList : [],
+				nextFrameCommandList : [],
+			},
+			options : opt,
 						
 		}
 		
-		s.options = opt;
-		opt.frameSkipThreshold = opt.frameSkipThreshold || 50;
-		opt.minZoom = opt.minZoom || 0.5;
-		opt.maxZoom = opt.maxZoom || 3.0;
-		opt.zoomStep = opt.zoomStep || 0.2;
-		opt.stopped = true;
-		opt.stopEvents = true;
- 
 		PixiStage.implementation.bind(s, PixiStage.implementation.functions, s);
 		s.layers = PixiStage.implementation.bind(s, PixiStage.implementation.layers);		
 		s.hooks = PixiStage.implementation.bind(s, PixiStage.implementation.hooks);
-		s.animation = PixiStage.implementation.bind(s, PixiStage.implementation.animation, {
-			paused : false,
-			stopped : false,
-			list : [],
-			commandList : [],
-			nextFrameCommandList : [],
-		});
+		s.animation = PixiStage.implementation.bind(s, PixiStage.implementation.animation, s.animation);
  
 		s.size = s.getViewportSize();
 		s.initRenderer();
