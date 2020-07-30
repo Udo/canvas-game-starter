@@ -3,11 +3,20 @@ if(!String.prototype.replaceAll) String.prototype.replaceAll = function(search, 
 		return target.split(search).join(replacement);
 };
 
-var safe_out = (s) => { if(!s) s = ''; return((''+s).replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;')); };
+var safe_out = (s) => { if(typeof s == 'undefined') s = ''; return((''+s).replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;')); };
 
-var num_out = (n) => {
+var num_out = (n, decimals = 2) => {
 	if(typeof n == 'undefined' || n === false) n = 0;
-	return(n.toFixed(2));
+	if(decimals == 0) return(Math.round(n));
+	return(n.toFixed(decimals));
+}
+
+var num_out_round = (n) => {
+	if(typeof n == 'undefined' || n === false) n = 0;
+	if(n > 999999) n = (n/1000000).toFixed(1) + 'M';
+	if(n > 999) n = (n/1000).toFixed(1) + 'k';
+	else n = Math.round(n);
+	return(n);
 }
 
 var debug_out = (ee) => {
@@ -28,6 +37,7 @@ var signposts = [
 	{ start : '{{#default ', end : '}}', type : 'default_empty' },
 	{ start : '{{{', end : '}}}', type : 'field_unsafe' },
 	{ start : '{{%', end : '}}', type : 'field_number' },
+	{ start : '{{~', end : '}}', type : 'field_number_round' },
 	{ start : '{{#each ', end : '}}', type : 'each_start' },
 	{ start : '{{/', end : '}}', type : 'each_end' },
 	{ start : '{{', end : '}}', type : 'field' },
@@ -73,6 +83,9 @@ var compile = function(text) {
 		},
 		field_number : (token) => {
 			gensource.push('output += num_out('+data_prefix(token.text)+');');
+		},
+		field_number_round : (token) => {
+			gensource.push('output += num_out_round('+data_prefix(token.text)+');');
 		},
 		each_start : (token) => {
 			gensource.push('each('+data_prefix(token.text)+', (data, index) => {');
