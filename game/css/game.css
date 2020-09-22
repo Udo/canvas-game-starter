@@ -62,24 +62,30 @@ footer {
 }
 
 button {
-  display: inline-block;
-  border-left: 2px solid rgba(255,255,255,0.4);
-  border-top: 2px solid rgba(255,255,255,0.4);
-  border-right: 2px solid rgba(0,0,0,0.5);
-  border-bottom: 2px solid rgba(0,0,0,0.5);
-  box-shadow: 0px 0px 6px 6px rgba(0,0,0,0.35);
+	display: inline-block;
+	border-left: 2px solid rgba(255,255,255,0.4);
+	border-top: 2px solid rgba(255,255,255,0.4);
+	border-right: 2px solid rgba(0,0,0,0.5);
+	border-bottom: 2px solid rgba(0,0,0,0.5);
+	box-shadow: 0px 0px 6px 6px rgba(0,0,0,0.35);
 	min-width: 80px;
-	color: white;
-  border-radius: 8px;
-  cursor: pointer;
-  margin-right: 6px;
-  margin-left: 6px;
-  height: 48px;
-  vertical-align: top;
+	color: black;
+	border-radius: 8px;
+	cursor: pointer;
+	margin-right: 6px;
+	margin-left: 6px;
+	height: 48px;
+	vertical-align: top;
 }
 
 button:hover {
   border-color: yellow;
 }
 
-
+input[type=text] {
+	background: #663300;
+	border: 2px solid #aa9922;
+	color: yellow;
+	padding: 4px;
+	width: 100%;
+}

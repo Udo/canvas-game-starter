@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "wsbroker": "^1.0.15"
+  }
+}

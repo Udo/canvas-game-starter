@@ -1,0 +1,134 @@
+<style>
+
+#deck-container {
+	position: absolute;
+	left: 0;
+	bottom:-128px;
+	right:0;
+	text-align: center;
+	vertical-align: bottom;
+}
+
+.card {
+	display: inline-block;
+	width: 180px;
+	height: 280px;
+	background: #ffccaa;
+	border-radius: 16px;
+	border: 12px solid #048;
+	color: black;
+	transform-origin: center bottom;
+	cursor: pointer;
+}
+
+.card > .illu {
+	width: 150px;
+	height: 150px;
+	overflow: none;
+}
+
+#deck-container > .card:hover {
+	transform: scale(1.4);
+	border-color: yellow;
+}
+
+</style>
+
+<div id="card-template" style="display:none;">
+	<div class="card" id="{{id}}" onclick="Deck.use_card('{{id}}');">
+		<div class="title">{{name}}</div>
+		<div class="illu"><img width="100%" src="{{{illu}}}"/></div>
+	</div>
+</div>
+
+<div id="deck-container">
+</div>
+
+<script>
+
+Deck = {
+	
+	id_counter : 1000,
+	
+	card_template : null,
+
+	init : () => {
+		Deck.card_template = Macrobars.compile($('#card-template').html());
+		each(Deck.card_types, (v, k) => {
+			v.type = k;
+		});
+		Deck.add_card('oooo');
+		Deck.add_card('xxxo');
+		Deck.add_card('xoxo');
+		Deck.add_card('xxoo');
+		Deck.add_card('xooo');
+	},
+		
+	cards_on_hand : {},
+	
+	use_card : (id) => {
+		var card = Deck.cards_on_hand[id];
+		if(!card) return;
+		delete Deck.cards_on_hand[id];
+		$('#'+id).remove();
+		Deck.card_types[card.type].onuse(card);
+	},
+	
+	add_card : (type) => {
+		if(!Deck.card_types[type]) return(console.error('CARD NOT FOUND', type));
+		var card = clone(Deck.card_types[type]);
+		card.id = 'card_'+(Deck.id_counter++);
+		Deck.cards_on_hand[card.id] = card;
+		$('#deck-container').append(Deck.card_template(card));
+	},
+	
+	pretty : () => {
+		var card_count = $('#deck-container > .card').length;
+		var rot = -30;
+		var rot_amount = 60/card_count;
+		$('#deck-container > .card').each((idx,card) => {
+			//$(card).css('transform', 'rotate('+rot+'deg)');
+			rot += rot_amount;
+		});
+	},
+	
+	card_types : {
+		
+		oooo : {
+			name : 'Open Ocean',
+			illu : 'img/0000-512px.png',
+			ctype : 'oooo',
+			onuse : (card) => { Map.change_cursor(card.ctype); },
+		},
+		xooo : {
+			name : 'Land Tip',
+			illu : 'img/1000-512px.png',
+			ctype : 'xooo',
+			onuse : (card) => { Map.change_cursor(card.ctype); },
+		},
+		xoxo : {
+			name : 'Land Bridge',
+			illu : 'img/1010-512px.png',
+			ctype : 'xoxo',
+			onuse : (card) => { Map.change_cursor(card.ctype); },
+		},
+		xxxo : {
+			name : 'Bay',
+			illu : 'img/1110-512px.png',
+			ctype : 'xxxo',
+			onuse : (card) => { Map.change_cursor(card.ctype); },
+		},
+		xxoo : {
+			name : 'Coastline',
+			illu : 'img/1100-512px.png',
+			ctype : 'xxoo',
+			onuse : (card) => { Map.change_cursor(card.ctype); },
+		},
+		
+	},
+	
+}
+
+$(() => Deck.init());
+
+</script>

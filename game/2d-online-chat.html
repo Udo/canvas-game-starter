@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>HTML/Canvas Game Starter</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="css/game.css?">
+    <link rel="stylesheet" href="css/hint.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <script src="lib/pixi5.min.js"></script>
+    <script src="lib/jquery.min.js"></script>
+    <script src="lib/howler.min.js"></script>
+    <script src="lib/macrobars.js"></script>
+    <script src="lib/u-pathastar.js"></script>
+    <script src="lib/u-helper.js"></script>
+    <script src="lib/u-grid.js"></script>
+    <script src="lib/u-keyboard.js"></script>
+    <script src="lib/u-connection.js"></script>
+    <script src="lib/u-events.js"></script>
+
+    <script src="js/game.js"></script>
+  </head>
+  <body>
+    
+    <nav>2D Online Chat Example</nav>
+
+	<style>
+		
+		#chat-log {
+			position: absolute;
+			left: 32px;
+			right: 32px;
+			top: 128px;
+			bottom: 128px;
+			background: rgba(20,40,60,0.5);
+		}
+		
+		#connection-params {
+			position: absolute;
+			left: 32px;
+			right: 32px;
+			top: 64px;
+			height: 44px;
+			background: rgba(20,40,60,0.5);
+			display: flex;
+		}
+		
+		#connection-status {
+			position: absolute;
+			top: 8px;
+			left: 0;
+			right: 0;
+			text-align: center;
+		}
+		
+		#chat-line {
+			position: absolute;
+			bottom: 8px;
+			left: 32px;
+			right: 32px;
+			display: flex;
+		}
+		
+	</style>
+
+	<div id="connection-status"></div>
+
+	<div id="connection-params">
+		<div style="flex:1;padding:8px;">Server URL</div>
+		<input style="flex:9" type="text" id="server_url" value="ws://dev.openfu.com/game_test/"/>
+		<button onclick="Connection.start($('#server_url').val());">Connect</button>
+	</div>
+	<div id="chat-log"></div>
+
+	<div id="chat-line">
+		<input style="flex:9" type="text" id="chat-input"/>
+		<button onclick="Connection.send({ type : 'chat_message', text : $('#chat-input').val() });$('#chat-input').val('');">Send</button>
+	</div>
+	
+	<script>
+		
+	$(() => {
+		
+		Connection.init();
+		Connection.on('server_hello', (msg) => {
+			Connection.send({ type : 'client_hello' });
+		});
+		Connection.on('message', (msg) => {
+			$('#chat-log').append('<div>'+JSON.stringify(msg)+'</div>');
+		});
+		
+	});
+		
+	</script>
+    
+  </body>
+</html>

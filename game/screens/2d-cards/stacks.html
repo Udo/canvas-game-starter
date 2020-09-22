@@ -1,0 +1,77 @@
+<style>
+
+	#stack-draw {
+		right: 128px;
+		bottom: 128px;
+	}
+
+	#stack-discard {
+		left: 128px;
+		bottom: 128px;
+	}
+	
+	.stack-icon {
+		position: absolute;
+		width: 64px;
+		height: 64px;
+		border: 3px solid gray;
+		border-radius: 32px;
+		text-align: center;
+		overflow: hidden;
+	}
+	
+	.card-number {
+		display: inline-block;
+		background: rgba(220,200,180,0.5);
+		padding: 8px;
+	}
+
+</style>
+
+<div id="stack-draw" class="stack-icon">
+	<div id="draw-number">-</div>
+</div>
+
+<div id="stack-discard" class="stack-icon">
+	<div id="discard-number">-</div>
+</div>
+
+<script>
+
+Stacks = {
+	
+	draw_counter : null,
+	discard_counter : null,
+	draw : [],
+	discard : [],
+	
+	start_game : () => {
+		var card_type_keys = Object.keys(Deck.card_types);
+		for(var i = 0; i < 20; i++) {
+			var random_type = selectRandom(card_type_keys);
+			var random_card = clone(Deck.card_types[random_type]);
+			random_card.id = 'card_'+(Deck.id_counter++);
+			Stacks.draw.push(random_card);
+		}
+	},
+	
+	init : () => {
+		
+		Stacks.draw_counter = $('#draw-number');
+		Stacks.discard_counter = $('#discard-number');
+		Stacks.start_game();
+		Stacks.update();
+		
+	},
+	
+	update : () => {
+		Stacks.draw_counter.text(Stacks.draw.length);
+		Stacks.discard_counter.text(Stacks.discard.length);
+		setTimeout(Stacks.update, 500);
+	},
+	
+}
+
+$(() => Stacks.init());
+
+</script>
