@@ -19,7 +19,7 @@
 	left: 0;
 	top: 0;
 	width: 2048px;
-	height: 2048px;	
+	height: 2048px;
 }
 
 #map-grid {
@@ -34,8 +34,6 @@
 	position: absolute;
 	left: 0;
 	top: 0;
-	width: 256px;
-	height: 256px;
 	background-color: rgba(255,255,200,0.5);
 	background-size: contain;
 	pointer-events: none;
@@ -70,9 +68,9 @@
 </style>
 
 <div id="map-container">
-	<div id="map" 
-		onmousemove="Map.on_mousemove(event)" 
-		onmousedown="Map.on_mousedown(event)" 
+	<div id="map"
+		onmousemove="Map.on_mousemove(event)"
+		onmousedown="Map.on_mousedown(event)"
 		oncontextmenu="return(false);"
 		onmouseup="Map.on_mouseup(event)">
 		<div id="map-tiles"></div>
@@ -91,105 +89,26 @@ function clamp(v, mn, mx) {
 }
 
 Map = {
-	
+
 	id_counter : 1000,
-	my_ship : null,
+
 	init : () => {
 		Map.map_pane = $('#map');
 		Map.cursor = $('#map-cursor');
-		Map.place_tile('oooo', 3, 3);
-		Map.my_ship = Map.place_mob('ship', 3, 3);
-		//Map.change_cursor('oooo');
+		Map.cursor.css('width', Map.gridsize+'px');
+		Map.cursor.css('height', Map.gridsize+'px');
 		var ofsx = (Map.map_pane.width()-$('#map-container').width())/2;
 		var ofsy = (Map.map_pane.height()-$('#map-container').height())/2;
 		Map.map_pane
 			.css('left', -(ofsx)+'px')
 			.css('top', -(ofsy)+'px')
 	},
-	
+
 	map_pane : null,
-	cursor : null,	
-	cells : {},
-	mobs : {},
-	gridsize : 256,
-	
-	tile_types : {
-		 
-		oooo : {
-			sides : ['o', 'o', 'o', 'o'],
-			img : 'img/0000-512px.png',
-		},
-		xooo : {
-			sides : ['x', 'o', 'o', 'o'],
-			img : 'img/1000-512px.png',
-		},
-		xoxo : {
-			sides : ['x', 'o', 'x', 'o'],
-			img : 'img/1010-512px.png',
-		},
-		xxoo : {
-			sides : ['x', 'x', 'o', 'o'],
-			img : 'img/1100-512px.png',
-		},
-		xxxo : {
-			sides : ['x', 'x', 'x', 'o'],
-			img : 'img/1110-512px.png',
-		},
-		
-	},
-	
-	mob_types : {
-		
-		ship : {
-			name : 'Ship',
-		},
-		
-	},
-	
+	cursor : null,
+	gridsize : 128,
+
 	current_tile_type : false,
-	change_cursor : (type) => {
-		Map.current_tile_type = type;
-		Map.cursor_rotation = 0;
-		if(type) Map.cursor
-			.css('transform', 'rotate(0deg)')
-			.css('background-image', 'url('+Map.tile_types[type].img+')');
-	},
-	cursor_rotation : 0,
-	rotate_cursor : () => {
-		Map.cursor_rotation += 90;
-		//if(Map.cursor_rotation > 360) Map.cursor_rotation -= 360;
-		Map.cursor
-			.css('transform', 'rotate('+Map.cursor_rotation+'deg)');
-	},
-	
-	place_mob : (type, x, y) => {
-		var t = Map.cells[x+':'+y];
-		if(!t) return;
-		var mt = clone(Map.mob_types[type]);
-		mt.id = 'mob_'+(Map.id_counter++);
-		mt.type = type;
-		mt.x = x;
-		mt.y = y;
-		Map.mobs[mt.id] = mt;
-		var px = -90+(x+0.5)*Map.gridsize;
-		var py = -40+(y+0.5)*Map.gridsize;
-		$('#map-mobs').append('<div id="'+mt.id+'" class="mob '+type+'" '+
-			'style="left:'+px+'px;top:'+py+'px;"></div>');
-		return(mt);
-	},
-	
-	place_tile : (type, x, y) => {
-		var t = Map.tile_types[type];
-		var px = x*Map.gridsize;
-		var py = y*Map.gridsize;
-		Map.cells[x+':'+y] = {
-			type : type,
-		};
-		$('#map-tiles').append('<div id="t-'+x+'-'+y+'" class="dtile" '+
-			'style="left:'+px+'px;top:'+py+'px;background-image:url('+t.img+');'+
-			'transform:rotate('+(Map.cursor_rotation)+'deg) scale(1.15);"></div>');
-		Map.change_cursor(false);
-	},
 
 	mouse : {
 		down : false,
@@ -200,7 +119,7 @@ Map = {
 		opos : { },
 		button: false,
 	},
-	
+
 	on_mousedown : (e) => {
 		Map.mouse.button = e.button;
 		Map.mouse.down = true;
@@ -214,13 +133,13 @@ Map = {
 		Map.mouse.down = false;
 		if(!Map.mouse.drag_move) {
 			if(Map.mouse.button == 2) {
-				Map.rotate_cursor();
+				console.log('Mouse button 2!');
 			} else {
-				Map.place_tile(Map.current_tile_type, Map.mouse.gx, Map.mouse.gy);
+				console.log('Mouse button!');
 			}
 		}
 	},
-	
+
 	on_mousemove : (e) => {
 		var x = Map.mouse.x = e.offsetX;
 		var y = Map.mouse.y = e.offsetY;
@@ -241,23 +160,19 @@ Map = {
 			y = Map.mouse.gy*Map.gridsize;
 			$('footer').text(Map.mouse.gx+':'+Map.mouse.gy);
 			if(!Map.cursor) return;
-			if(!Map.current_tile_type) 
-				Map.cursor
-					.css('display', 'none');
-			else
-				Map.cursor
-					.css('display', 'inherit')
-					.css('left', x+'px')
-					.css('top', y+'px')
+			Map.cursor
+				.css('display', 'inherit')
+				.css('left', x+'px')
+				.css('top', y+'px')
 		}
 	},
-	
+
 }
 
 $(() => {
-	
+
 	Map.init();
-	
+
 });
 
 </script>

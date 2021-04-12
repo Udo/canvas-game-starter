@@ -9,19 +9,19 @@ Author: udo@openfu.com
 ## What is it?
 
 You don't need a complicated framework for productive HTML5 game development, you can just use a few very simple libraries
-to make your life easier though. This is a collection of standard HTML5 gamedev stuff, all put together in a startable form. It 
+to make your life easier though. This is a collection of standard HTML5 gamedev stuff, all put together in a startable form. It
 contains the following libraries:
 
-* Howler.js (2.0.4) MIT License | https://github.com/goldfire/howler.js#documentation
-* jQuery (3.2.1) MIT License | https://jquery.com/
+* Howler.js (2.2.1) MIT License | https://github.com/goldfire/howler.js#documentation
+* jQuery (3.6.0) MIT License | https://jquery.com/
 * lodash (1.8.3) CC0/Public Domain | https://lodash.com/
-* minibars (latest) Public Domain | https://github.com/udo/minibars
-* PIXI.js BSD 3-clause License | (4.5.4 http://pixijs.download/dev/docs/index.html
+* macrobars (latest) Public Domain | https://github.com/udo/macrobars
+* PIXI.js BSD 3-clause License | (5.3.9 http://pixijs.download/dev/docs/index.html
 * udolib (latest) Public Domain | https://github.com/udo/udolib
 
 Optional, for 3D stuff, but not loaded by default:
 
-* THREE.js (latest) MIT License | https://threejs.org/docs/
+* THREE.js MIT License | https://threejs.org/docs/
 
 HTML5 based on:
 

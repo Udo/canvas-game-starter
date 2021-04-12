@@ -32,6 +32,7 @@ var debug_out = (ee) => {
 
 var signposts = [
 	{ start : '<script>', end : '</script>', type : 'code' },
+	{ start : '<?=', end : '?>', type : 'field' },
 	{ start : '<?', end : '?>', type : 'code' },
 	{ start : '<!--?', end : '?-->', type : 'code' },
 	{ start : '{{#default ', end : '}}', type : 'default_empty' },
@@ -62,7 +63,7 @@ var data_prefix = (identifier) => {
 		return('data.'+identifier);
 }
 	
-var compile = function(text) {
+var compile = function(text, options = {}) {
 	
 	var crash_counter = 0;
 	var tokens = [];
@@ -133,6 +134,9 @@ var compile = function(text) {
 	gensource.push('	if(!data) data = {}; var data_root = data;');
 	gensource.push('	var output = ""; var default_empty_field = "";');
 	gensource.push('	var echo = (s) => { output += s; };');
+	each(options, (v, k) => {
+		gensource.push('	var '+k+' = '+options[k]+';');
+	});
 	tokens.forEach((tok) => {
 		emit[tok.type](tok);
 	});
