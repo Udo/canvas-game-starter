@@ -2,30 +2,22 @@ import { Line } from './Line.js';
 import { Vector3 } from '../math/Vector3.js';
 import { Float32BufferAttribute } from '../core/BufferAttribute.js';
 
-/**
- * @author mrdoob / http://mrdoob.com/
- */
+const _start = /*@__PURE__*/ new Vector3();
+const _end = /*@__PURE__*/ new Vector3();
 
-var _start = new Vector3();
-var _end = new Vector3();
+class LineSegments extends Line {
 
-function LineSegments( geometry, material ) {
+	constructor( geometry, material ) {
 
-	Line.call( this, geometry, material );
+		super( geometry, material );
 
-	this.type = 'LineSegments';
+		this.type = 'LineSegments';
 
-}
+	}
 
-LineSegments.prototype = Object.assign( Object.create( Line.prototype ), {
+	computeLineDistances() {
 
-	constructor: LineSegments,
-
-	isLineSegments: true,
-
-	computeLineDistances: function () {
-
-		var geometry = this.geometry;
+		const geometry = this.geometry;
 
 		if ( geometry.isBufferGeometry ) {
 
@@ -33,10 +25,10 @@ LineSegments.prototype = Object.assign( Object.create( Line.prototype ), {
 
 			if ( geometry.index === null ) {
 
-				var positionAttribute = geometry.attributes.position;
-				var lineDistances = [];
+				const positionAttribute = geometry.attributes.position;
+				const lineDistances = [];
 
-				for ( var i = 0, l = positionAttribute.count; i < l; i += 2 ) {
+				for ( let i = 0, l = positionAttribute.count; i < l; i += 2 ) {
 
 					_start.fromBufferAttribute( positionAttribute, i );
 					_end.fromBufferAttribute( positionAttribute, i + 1 );
@@ -56,18 +48,7 @@ LineSegments.prototype = Object.assign( Object.create( Line.prototype ), {
 
 		} else if ( geometry.isGeometry ) {
 
-			var vertices = geometry.vertices;
-			var lineDistances = geometry.lineDistances;
-
-			for ( var i = 0, l = vertices.length; i < l; i += 2 ) {
-
-				_start.copy( vertices[ i ] );
-				_end.copy( vertices[ i + 1 ] );
-
-				lineDistances[ i ] = ( i === 0 ) ? 0 : lineDistances[ i - 1 ];
-				lineDistances[ i + 1 ] = lineDistances[ i ] + _start.distanceTo( _end );
-
-			}
+			console.error( 'THREE.LineSegments.computeLineDistances() no longer supports THREE.Geometry. Use THREE.BufferGeometry instead.' );
 
 		}
 
@@ -75,7 +56,8 @@ LineSegments.prototype = Object.assign( Object.create( Line.prototype ), {
 
 	}
 
-} );
+}
 
+LineSegments.prototype.isLineSegments = true;
 
 export { LineSegments };

@@ -1,20 +1,16 @@
-/**
- * @author Takahiro / https://github.com/takahirox
- */
-
 import {
 	Loader
-} from "../../../build/three.module.js";
-import { GLTFLoader } from "../loaders/GLTFLoader.js";
+} from '../../../build/three.module.js';
+import { GLTFLoader } from '../loaders/GLTFLoader.js';
 
 // VRM Specification: https://dwango.github.io/vrm/vrm_spec/
 //
 // VRM is based on glTF 2.0 and VRM extension is defined
 // in top-level json.extensions.VRM
 
-var VRMLoader = ( function () {
+class VRMLoader extends Loader {
 
-	function VRMLoader( manager ) {
+	constructor( manager ) {
 
 		if ( GLTFLoader === undefined ) {
 
@@ -22,51 +18,61 @@ var VRMLoader = ( function () {
 
 		}
 
-		Loader.call( this, manager );
+		super( manager );
 
-		this.gltfLoader = new GLTFLoader( this.manager );
+		this.gltfLoader = new GLTFLoader( manager );
 
 	}
 
-	VRMLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
+	load( url, onLoad, onProgress, onError ) {
 
-		constructor: VRMLoader,
+		const scope = this;
 
-		load: function ( url, onLoad, onProgress, onError ) {
+		this.gltfLoader.load( url, function ( gltf ) {
 
-			var scope = this;
-
-			this.gltfLoader.load( url, function ( gltf ) {
+			try {
 
 				scope.parse( gltf, onLoad );
 
-			}, onProgress, onError );
+			} catch ( e ) {
 
-		},
+				if ( onError ) {
 
-		setDRACOLoader: function ( dracoLoader ) {
+					onError( e );
 
-			this.glTFLoader.setDRACOLoader( dracoLoader );
-			return this;
+				} else {
 
-		},
+					console.error( e );
 
-		parse: function ( gltf, onLoad ) {
+				}
 
-			// var gltfParser = gltf.parser;
-			// var gltfExtensions = gltf.userData.gltfExtensions || {};
-			// var vrmExtension = gltfExtensions.VRM || {};
+				scope.manager.itemError( url );
 
-			// handle VRM Extension here
+			}
 
-			onLoad( gltf );
+		}, onProgress, onError );
 
-		}
+	}
 
-	} );
+	setDRACOLoader( dracoLoader ) {
 
-	return VRMLoader;
+		this.gltfLoader.setDRACOLoader( dracoLoader );
+		return this;
 
-} )();
+	}
+
+	parse( gltf, onLoad ) {
+
+		// const gltfParser = gltf.parser;
+		// const gltfExtensions = gltf.userData.gltfExtensions || {};
+		// const vrmExtension = gltfExtensions.VRM || {};
+
+		// handle VRM Extension here
+
+		onLoad( gltf );
+
+	}
+
+}
 
 export { VRMLoader };

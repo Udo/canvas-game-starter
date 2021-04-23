@@ -1,14 +1,3 @@
-/**
- * @author mrdoob / http://mrdoob.com/
- * @author Alex Pletzer
- *
- * Updated on 22.03.2017
- * VTK header is now parsed and used to extract all the compressed data
- * @author Andrii Iudin https://github.com/andreyyudin
- * @author Paul Kibet Korir https://github.com/polarise
- * @author Sriram Somasundharam https://github.com/raamssundar
- */
-
 import {
 	BufferAttribute,
 	BufferGeometry,
@@ -16,35 +5,53 @@ import {
 	Float32BufferAttribute,
 	Loader,
 	LoaderUtils
-} from "../../../build/three.module.js";
-import { Zlib } from "../libs/inflate.module.min.js";
+} from '../../../build/three.module.js';
+import * as fflate from '../libs/fflate.module.js';
 
-var VTKLoader = function ( manager ) {
+class VTKLoader extends Loader {
 
-	Loader.call( this, manager );
+	constructor( manager ) {
 
-};
+		super( manager );
 
-VTKLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
+	}
 
-	constructor: VTKLoader,
+	load( url, onLoad, onProgress, onError ) {
 
-	load: function ( url, onLoad, onProgress, onError ) {
+		const scope = this;
 
-		var scope = this;
-
-		var loader = new FileLoader( scope.manager );
+		const loader = new FileLoader( scope.manager );
 		loader.setPath( scope.path );
 		loader.setResponseType( 'arraybuffer' );
+		loader.setRequestHeader( scope.requestHeader );
+		loader.setWithCredentials( scope.withCredentials );
 		loader.load( url, function ( text ) {
 
-			onLoad( scope.parse( text ) );
+			try {
+
+				onLoad( scope.parse( text ) );
+
+			} catch ( e ) {
+
+				if ( onError ) {
+
+					onError( e );
+
+				} else {
+
+					console.error( e );
+
+				}
+
+				scope.manager.itemError( url );
+
+			}
 
 		}, onProgress, onError );
 
-	},
+	}
 
-	parse: function ( data ) {
+	parse( data ) {
 
 		function parseASCII( data ) {
 
@@ -400,6 +407,7 @@ VTKLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 						pointIndex = pointIndex + 12;
 
 					}
+
 					// increment our next pointer
 					state.next = state.next + count + 1;
 
@@ -448,6 +456,7 @@ VTKLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 						}
 
 					}
+
 					// increment our next pointer
 					state.next = state.next + count + 1;
 
@@ -485,6 +494,7 @@ VTKLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 						}
 
 					}
+
 					// increment our next pointer
 					state.next = state.next + count + 1;
 
@@ -541,23 +551,23 @@ VTKLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 
 		function Float32Concat( first, second ) {
 
-		    var firstLength = first.length, result = new Float32Array( firstLength + second.length );
+			const firstLength = first.length, result = new Float32Array( firstLength + second.length );
 
-		    result.set( first );
-		    result.set( second, firstLength );
+			result.set( first );
+			result.set( second, firstLength );
 
-		    return result;
+			return result;
 
 		}
 
 		function Int32Concat( first, second ) {
 
-		    var firstLength = first.length, result = new Int32Array( firstLength + second.length );
+			var firstLength = first.length, result = new Int32Array( firstLength + second.length );
 
-		    result.set( first );
-		    result.set( second, firstLength );
+			result.set( first );
+			result.set( second, firstLength );
 
-		    return result;
+			return result;
 
 		}
 
@@ -783,9 +793,8 @@ VTKLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 
 					for ( var i = 0; i < dataOffsets.length - 1; i ++ ) {
 
-						var inflate = new Zlib.Inflate( byteData.slice( dataOffsets[ i ], dataOffsets[ i + 1 ] ), { resize: true, verify: true } ); // eslint-disable-line no-undef
-						content = inflate.decompress();
-						content = content.buffer;
+						var data = fflate.unzlibSync( byteData.slice( dataOffsets[ i ], dataOffsets[ i + 1 ] ) ); // eslint-disable-line no-undef
+						content = data.buffer;
 
 						if ( ele.attributes.type === 'Float32' ) {
 
@@ -1149,33 +1158,16 @@ VTKLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 
 		}
 
-		function getStringFile( data ) {
-
-			var stringFile = '';
-			var charArray = new Uint8Array( data );
-			var i = 0;
-			var len = charArray.length;
-
-			while ( len -- ) {
-
-				stringFile += String.fromCharCode( charArray[ i ++ ] );
-
-			}
-
-			return stringFile;
-
-		}
-
 		// get the 5 first lines of the files to check if there is the key word binary
 		var meta = LoaderUtils.decodeText( new Uint8Array( data, 0, 250 ) ).split( '\n' );
 
 		if ( meta[ 0 ].indexOf( 'xml' ) !== - 1 ) {
 
-			return parseXML( getStringFile( data ) );
+			return parseXML( LoaderUtils.decodeText( data ) );
 
 		} else if ( meta[ 2 ].includes( 'ASCII' ) ) {
 
-			return parseASCII( getStringFile( data ) );
+			return parseASCII( LoaderUtils.decodeText( data ) );
 
 		} else {
 
@@ -1185,6 +1177,6 @@ VTKLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 
 	}
 
-} );
+}
 
 export { VTKLoader };

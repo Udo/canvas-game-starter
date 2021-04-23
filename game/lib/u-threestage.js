@@ -1,11 +1,11 @@
 var THREE;
 
 var ThreeStage = {
-	
+
 	implementation : {
-		
+
 		pipeline : {
-			
+
 			enable_fxaa : function(Stage, EffectComposer, opt) {
 				var fxaaPass = Stage.pipeline.fxaaPass = new opt.ShaderPass( opt.FXAAShader );
 				fxaaPass.material.uniforms[ 'resolution' ].value.x = 1 / ( window.innerWidth * pixelRatio );
@@ -23,7 +23,7 @@ var ThreeStage = {
 				console.log(saoPass.params);
 				Stage.composer.addPass(saoPass);
 			},
-			
+
 			enable_ssao : function(Stage, EffectComposer, opt) {
 				var ssaoPass = Stage.pipeline.ssaoPass = new opt.SSAOPass( Stage.root, Stage.camera, window.innerWidth, window.innerHeight );
 				ssaoPass.kernelRadius = 10;
@@ -31,7 +31,7 @@ var ThreeStage = {
 				ssaoPass.maxDistance = 2;
 				Stage.composer.addPass(ssaoPass);
 			},
-			
+
 			defaultSetup : function(Stage, EffectComposer, opt) {
 				var pixelRatio = Stage.renderer.getPixelRatio();
 				Stage.composer = new EffectComposer(Stage.renderer);
@@ -46,9 +46,9 @@ var ThreeStage = {
 			},
 
 		},
-		
+
 		layers : {
-			
+
 			create : function(name) {
 				var layer = new THREE.Object3D();
 				while(!name || this.layers[name])
@@ -58,7 +58,7 @@ var ThreeStage = {
 				this.root.add(layer);
 				return(layer);
 			},
-			
+
 			remove : function(name) {
 				var l = this.layers[name];
 				if(l) {
@@ -67,8 +67,8 @@ var ThreeStage = {
 					return(true);
 				}
 				return(false);
-			},	
-			
+			},
+
 		},
 
 		bind : function(self, source, destination) {
@@ -76,8 +76,8 @@ var ThreeStage = {
 				destination = {};
 			for(var prop in source) if(source.hasOwnProperty(prop)) {
 				if(typeof source[prop] == 'function')
-					destination[prop] = source[prop].bind(self); 
-				else 
+					destination[prop] = source[prop].bind(self);
+				else
 					destination[prop] = source[prop];
 			}
 			return(destination);
@@ -103,11 +103,11 @@ var ThreeStage = {
 					f(intersects[ i ], i);
 				}
 			},
-			
+
 			getNearestMouseIntersect : function(objects, recurse) {
 				var result = false;
 				this.eachMouseSelect(objects, function(hit) {
-					if(result === false || result.distance > hit.distance) 
+					if(result === false || result.distance > hit.distance)
 						result = hit;
 					}, recurse);
 				return(result);
@@ -120,7 +120,7 @@ var ThreeStage = {
 					v = max;
 				return(v);
 			},
-		
+
 			makeDraggable : function(o, dragProp) {
 				var stage = this;
 				o.dragStart = function() {
@@ -130,16 +130,16 @@ var ThreeStage = {
 					stage.mouse.ey0 = o.position.y;
 				}
 			},
-			
+
 			getViewportSize : function() {
 				return({
-					x : $(document).width(), 
+					x : $(document).width(),
 					y : $(document).height(),
 					xMid : Math.round($(document).width()/2),
 					yMid : Math.round($(document).height()/2),
 					});
 			},
-			
+
 			trigger : function(eventName, param1, param2, param3) {
 				if(this.options.stopped || this.options.stopEvents)
 					return;
@@ -147,35 +147,35 @@ var ThreeStage = {
 					f(param1, param2, param3)
 				});
 			},
-			
+
 			on : function(eventName, handlerFunc) {
 				if(!this.eventHandlers[eventName])
 					this.eventHandlers[eventName] = [];
 				this.eventHandlers[eventName].push(handlerFunc);
 			},
-			
+
 			zoom : function(zoomLevel) {
 				this.mouse.zoom = this.clamp(zoomLevel, this.options.minZoom, this.options.maxZoom);
 				this.trigger('zoom', this.mouse);
 			},
-		
+
 			panBy : function(xd, yd) {
 				this.root.position.x = this.mouse.ex0 + xd * this.mouse.panFactor;
 				this.root.position.y = this.mouse.ey0 + yd * this.mouse.panFactor;
 			},
-			
+
 			panTo : function(x, y) {
 				this.root.dragSetPosition(x, y);
 			},
-			
+
 			animate : function(f) {
 				this.animation.add(f);
 			},
-		
+
 			once : function(f) {
-				this.animation.nextFrameCommandList.push(f);				
+				this.animation.nextFrameCommandList.push(f);
 			},
-		
+
 			initRenderer : function() {
 				this.camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
 				this.camera.position.z = 30;
@@ -196,12 +196,12 @@ var ThreeStage = {
 				this.root = new THREE.Scene();
 				this.renderer.view.addEventListener("mousemove", this.hooks.mousemove, false);
 				this.renderer.view.addEventListener("mousewheel", this.hooks.wheel, false);
-				this.renderer.view.addEventListener("DOMMouseScroll", this.hooks.wheel, false);		
+				this.renderer.view.addEventListener("DOMMouseScroll", this.hooks.wheel, false);
 				this.debug.animationTimestamp = new Date().getTime();
 				this.debug.renderTimestamp = new Date().getTime();
 				this.hooks.resize();
 			},
-		
+
 			renderFrame : function() {
 				if(this.debug.frameSkipStatus > 0) {
 					this.debug.frameSkipStatus -= 1;
@@ -210,16 +210,16 @@ var ThreeStage = {
 					const st = new Date().getTime();
 					this.animation.doAll((st - this.debug.animationTimestamp) / 1000);
 					if(this.renderFunction)
-						this.renderFunction(this.root, this.camera);			
+						this.renderFunction(this.root, this.camera);
 					if(this.composer)
 						this.composer.render();
 					else
 						this.renderer.render(this.root, this.camera);
 					const ct = new Date().getTime();
-					this.debug.frameInterval = 
-						((this.debug.frameInterval || 10)*0.97) + 
+					this.debug.frameInterval =
+						((this.debug.frameInterval || 10)*0.97) +
 						((st-this.debug.renderTimestamp)*0.03);
-					this.debug.fps = Math.round(1000/this.debug.frameInterval);					
+					this.debug.fps = Math.round(1000/this.debug.frameInterval);
 					this.debug.threadLoad = (this.debug.threadLoad || 0)*0.97 + (ct-st)*0.03;
 					var loadpct = Math.round(100*this.debug.threadLoad/this.debug.frameInterval);
 					if(loadpct < 10) loadpct = '0'+loadpct;
@@ -235,27 +235,27 @@ var ThreeStage = {
 				if(!this.options.stopped)
 					requestAnimationFrame(this.renderFrame);
 			},
-			
+
 			start : function() {
 				this.options.stopAnimation = false;
 				this.options.stopped = false;
 				this.options.stopEvents = false;
 				this.renderFrame();
 			},
-	
+
 			stop : function() {
 				this.options.stopped = true;
 			},
 
 		},
-	
+
 		animation : {
-			
+
 			list : [],
 			queueSlots : {},
 			queueSlotsActive : {},
-			
-			add : function(f, optionalQueueSlotID) { 
+
+			add : function(f, optionalQueueSlotID) {
 				if(optionalQueueSlotID) {
 					f.queueSlot = optionalQueueSlotID;
 					if(this.animation.queueSlotsActive[optionalQueueSlotID]) {
@@ -269,11 +269,11 @@ var ThreeStage = {
 						this.animation.add(f);
 					}
 				} else {
-					this.animation.list.push(f); 
+					this.animation.list.push(f);
 					this.trigger('animationstart', f, this.animation.list.length-1);
 				}
 			},
-	
+
 			remove : function(f) {
 				var idx = this.animation.list.indexOf(f);
 				if(idx > -1) {
@@ -286,13 +286,13 @@ var ThreeStage = {
 						var next = qs.shift();
 						if(qs.length == 0) {
 							delete this.animation.queueSlots[f.queueSlot];
-							this.animation.queueSlotsActive[optionalQueueSlotID] = false;						 
+							this.animation.queueSlotsActive[optionalQueueSlotID] = false;
 						}
 						this.animation.add(next);
 					}
 				}
 			},
-			
+
 			doAll : function(deltaTime) {
 				if(this.animation.commandList.length > 0) {
 					each(this.animation.commandList, function(f) {
@@ -316,11 +316,11 @@ var ThreeStage = {
 					}
 				});
 			},
-			
+
 		},
-		
+
 		hooks : { // for incoming events
-			
+
 			click : function(e) {
 				this.hooks.updateMouseButtons(e, true);
 				this.trigger('click', this.mouse);
@@ -342,15 +342,15 @@ var ThreeStage = {
 					this.mouse.otherButton = e.which+':'+e.button;
 				}
 			},
-			
+
 			mousedown : function(e) {
 				this.hooks.updateMouseButtons(e, true);
 				this.mouse.x0 = this.mouse.screenX;
 				this.mouse.y0 = this.mouse.screenY;
-				this.trigger('mousedown', this.mouse, this.mouse.buttonContext);				
-				this.trigger('mousedown_'+this.mouse.buttonContext, this.mouse);				
+				this.trigger('mousedown', this.mouse, this.mouse.buttonContext);
+				this.trigger('mousedown_'+this.mouse.buttonContext, this.mouse);
 			},
-			
+
 			mousemove : function(e) {
 				this.mouse.screenX = e.x;
 				this.mouse.screenY = e.y;
@@ -362,13 +362,13 @@ var ThreeStage = {
 				}
 				this.trigger('mousemove', this.mouse, e);
 			},
-			
+
 			mouseup : function(e) {
 				this.hooks.updateMouseButtons(e, false);
-				this.trigger('mouseup', this.mouse, this.mouse.buttonContext);	 
-				this.trigger('mouseup_'+this.mouse.buttonContext, this.mouse);		 
+				this.trigger('mouseup', this.mouse, this.mouse.buttonContext);
+				this.trigger('mouseup_'+this.mouse.buttonContext, this.mouse);
 			},
-			
+
 			mouseout : function(e) {
 				// cancel any dragging operations
 				var stage = this;
@@ -376,30 +376,30 @@ var ThreeStage = {
 				buttonProps.forEach(function(buttonContext) {
 					if(stage.mouse[buttonContext+'Button']) {
 						stage.mouse[buttonContext+'Button'] = false;
-						stage.trigger('mouseup', stage.mouse, buttonContext);	 
-						stage.trigger('mouseup_'+buttonContext, stage.mouse);		 
+						stage.trigger('mouseup', stage.mouse, buttonContext);
+						stage.trigger('mouseup_'+buttonContext, stage.mouse);
 					}
 				});
-				this.trigger('mouseout', this.mouse);				
+				this.trigger('mouseout', this.mouse);
 			},
 
 			mouseenter : function(e) {
-				this.trigger('mouseenter', this.mouse);				
+				this.trigger('mouseenter', this.mouse);
 			},
-			
-			resize : function(){		
+
+			resize : function(){
 				this.size = this.getViewportSize();
 				this.trigger('resize', this.size);
 				this.camera.aspect = window.innerWidth / window.innerHeight;
 				this.camera.updateProjectionMatrix();
 				this.renderer.setSize( window.innerWidth, window.innerHeight );
 			},
-			
-			sink : function(e) { 
+
+			sink : function(e) {
 				e.preventDefault();
 				return(false);
 			},
-			
+
 			wheel : function(e) {
 				if(!this.options.disableWheelZoom) {
 					if(e.wheelDeltaY < 0) {
@@ -410,19 +410,19 @@ var ThreeStage = {
 				}
 				this.trigger('wheel', e.wheelDeltaY, e.wheelDeltaX);
 			},
-			
+
 		},
-		
+
 	},
-	
+
 	create : function(opt) {
 		if(opt.THREE) THREE = opt.THREE;
-		
+
 		var s;
 		s = {
-				
+
 			_idCtr : 1000,
-			size : false, 
+			size : false,
 			renderer : false,
 			root : false,
 			debug : {
@@ -447,8 +447,8 @@ var ThreeStage = {
 				screenX : 0,
 				screenY : 0,
 				panFactor : 10,
-			},					 
-			eventHandlers : { 
+			},
+			eventHandlers : {
 				click : false,
 				mousedown : false,
 				mousemove : false,
@@ -456,12 +456,12 @@ var ThreeStage = {
 				resize : false,
 				zoom : false,
 			},
-			
+
 			mat : {},
 			shapes : {},
-						
+
 		}
-		
+
 		s.options = opt;
 		opt.frameSkipThreshold = opt.frameSkipThreshold || 50;
 		opt.minZoom = opt.minZoom || 0.5;
@@ -469,10 +469,10 @@ var ThreeStage = {
 		opt.zoomStep = opt.zoomStep || 0.2;
 		opt.stopped = true;
 		opt.stopEvents = true;
- 
+
 		ThreeStage.implementation.bind(s, ThreeStage.implementation.functions, s);
-		s.pipeline = ThreeStage.implementation.bind(s, ThreeStage.implementation.pipeline);		
-		s.layers = ThreeStage.implementation.bind(s, ThreeStage.implementation.layers);		
+		s.pipeline = ThreeStage.implementation.bind(s, ThreeStage.implementation.pipeline);
+		s.layers = ThreeStage.implementation.bind(s, ThreeStage.implementation.layers);
 		s.hooks = ThreeStage.implementation.bind(s, ThreeStage.implementation.hooks);
 		s.helpers = ThreeStage.implementation.bind(s, ThreeStage.implementation.helpers);
 		s.animation = ThreeStage.implementation.bind(s, ThreeStage.implementation.animation, {
@@ -487,13 +487,13 @@ var ThreeStage = {
 		s.initRenderer();
 		if(opt.draggable)
 			s.makeDraggable(s.root);
-			
+
 		s.mat.cursor = new THREE.MeshLambertMaterial({ color: 0x156289, emissive: 0x072534, side: THREE.DoubleSide, flatShading: true, transparent: true, opacity: 0.25 });
-		s.mat.line = new THREE.LineBasicMaterial({ color: 0x88ccff, linewidth : 1 });			
-	 
+		s.mat.line = new THREE.LineBasicMaterial({ color: 0x88ccff, linewidth : 1 });
+
 		return(s);
-		
+
 	},
-		
+
 }
 

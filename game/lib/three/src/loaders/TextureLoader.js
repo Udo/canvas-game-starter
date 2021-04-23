@@ -1,27 +1,21 @@
-/**
- * @author mrdoob / http://mrdoob.com/
- */
-
 import { RGBAFormat, RGBFormat } from '../constants.js';
 import { ImageLoader } from './ImageLoader.js';
 import { Texture } from '../textures/Texture.js';
 import { Loader } from './Loader.js';
 
-function TextureLoader( manager ) {
+class TextureLoader extends Loader {
 
-	Loader.call( this, manager );
+	constructor( manager ) {
 
-}
+		super( manager );
 
-TextureLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
+	}
 
-	constructor: TextureLoader,
+	load( url, onLoad, onProgress, onError ) {
 
-	load: function ( url, onLoad, onProgress, onError ) {
+		const texture = new Texture();
 
-		var texture = new Texture();
-
-		var loader = new ImageLoader( this.manager );
+		const loader = new ImageLoader( this.manager );
 		loader.setCrossOrigin( this.crossOrigin );
 		loader.setPath( this.path );
 
@@ -30,7 +24,7 @@ TextureLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 			texture.image = image;
 
 			// JPEGs can't have an alpha channel, so memory can be saved by storing them as RGB.
-			var isJPEG = url.search( /\.jpe?g($|\?)/i ) > 0 || url.search( /^data\:image\/jpeg/ ) === 0;
+			const isJPEG = url.search( /\.jpe?g($|\?)/i ) > 0 || url.search( /^data\:image\/jpeg/ ) === 0;
 
 			texture.format = isJPEG ? RGBFormat : RGBAFormat;
 			texture.needsUpdate = true;
@@ -47,7 +41,7 @@ TextureLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 
 	}
 
-} );
+}
 
 
 export { TextureLoader };
