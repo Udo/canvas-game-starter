@@ -94,7 +94,7 @@
 
 							const material = new THREE.MeshToonMaterial( {
 								color: diffuseColor,
-								gradientMap: gradientMap
+								gradientMap: gradientMap,
 							} );
 
 							const mesh = new THREE.Mesh( selectRandom(geometries), material );
@@ -129,9 +129,6 @@
 					scene.add( textMesh );
 
 				}
-
-				addLabel( "-gradientMap", new THREE.Vector3( - 450, 0, 0 ) );
-				addLabel( "+gradientMap", new THREE.Vector3( 300, 0, 0 ) );
 
 				addLabel( "-diffuse", new THREE.Vector3( 0, 0, - 300 ) );
 				addLabel( "+diffuse", new THREE.Vector3( 0, 0, 300 ) );
@@ -195,7 +192,7 @@
 
 			function render() {
 
-				const timer = Date.now() * 0.00025;
+				const timer = Date.now() * 0.000025;
 
 				particleLight.position.x = Math.sin( timer * 7 ) * 300;
 				particleLight.position.y = Math.cos( timer * 5 ) * 400;
