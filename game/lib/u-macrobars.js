@@ -91,7 +91,7 @@ var compile = function(text, options = {}) {
 			gensource.push('output += ('+data_prefix(token.text)+' || default_empty_field);');
 		},
 		field_number : (token) => {
-			gensource.push('output += num_out('+data_prefix(token.text)+');');
+			gensource.push('output += num_out('+data_prefix(token.text)+', this.decimals);');
 		},
 		field_number_round : (token) => {
 			gensource.push('output += num_out_round('+data_prefix(token.text)+');');
@@ -136,6 +136,10 @@ var compile = function(text, options = {}) {
 		}
 
 	}
+
+	if(typeof options.decimals == 'undefined')
+		options.decimals = 2;
+	this.decimals = options.decimals;
 
 	gensource.push('(data) => { ');
 	if(options.strict)

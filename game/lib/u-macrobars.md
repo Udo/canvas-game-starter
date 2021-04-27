@@ -78,7 +78,7 @@ Data fields start with two open curly braces and end with two closed curly brace
 
 ###Summary
 
-- use `{{` and `}}` to output afield
+- use `{{` and `}}` to output a field
 - use `<?=` and `?>` to output a field
 - use `{{:` and `}}` to output any variable
 - use `<?:` and `?>` to output any variable
@@ -270,3 +270,33 @@ when the template executes, use the `<defer>` tag:
   var faction = Game.get_faction(data.city.faction);
 </defer>
 ```
+
+# Options
+
+Compiler options you can pass in when compiling your template:
+
+## strict
+
+```javascript
+	Macrobars.compile(template_text, options = { strict : true })
+```
+
+Will generate "use_strict"; pragma code (default is false).
+
+## decimals
+
+```javascript
+	Macrobars.compile(template_text, options = { decimals : 3 })
+```
+
+Will change the number of decimals used with the `{{% field }}` instruction (default is 2).
+
+# Debugging
+
+```javascript
+	var f = Macrobars.compile(template_text, options)
+```
+
+The code that was generated during compile is stored in `f.gensource`.
+
+The tokens that were generated are stored in `f.tokens`.
