@@ -34,7 +34,7 @@ var signposts = [
 	{ start : '<script>', end : '</script>', type : 'code' },
 	{ start : '<defer>', end : '</defer>', type : 'defer' },
 	{ start : '<?=', end : '?>', type : 'field' },
-	{ start : '<?:', end : '?>', type : 'field_unsafe' },
+	{ start : '<?:', end : '?>', type : 'var_out' },
 	{ start : '<?', end : '?>', type : 'code' },
 	{ start : '<!--?', end : '?-->', type : 'code' },
 	{ start : '{{#default ', end : '}}', type : 'default_empty' },
@@ -80,6 +80,9 @@ var compile = function(text, options = {}) {
 		},
 		defer : (token) => {
 			gensource.push('output += "<script>\n" + '+JSON.stringify(token.text)+' + "</script>\n";');
+		},
+		var_out : (token) => {
+			gensource.push('output += safe_out('+(token.text)+', default_empty_field);');
 		},
 		field : (token) => {
 			gensource.push('output += safe_out('+data_prefix(token.text)+', default_empty_field);');

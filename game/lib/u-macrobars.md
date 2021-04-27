@@ -76,12 +76,12 @@ Fundamentally, Macrobars fills fields from your data object into placeholders as
 
 Data fields start with two open curly braces and end with two closed curly braces: `{{object.field_name}}`.
 
-Summary:
+###Summary
 
-- use `{{` and `}}` to output fields
+- use `{{` and `}}` to output afield
+- use `<?=` and `?>` to output a field
 - use `{{:` and `}}` to output any variable
-- use `<?=` and `?>` processing instruction (PI) braces to output fields
-- use `<?:` and `?>` processing instruction (PI) braces to output any variable
+- use `<?:` and `?>` to output any variable
 - use `{{%` and `}}` to output formatted numbers with two decimals
 - use `{{~` and `}}` to output rounded numbers
 - use `{{{` and `}}}` for unsafe output
