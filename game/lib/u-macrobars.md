@@ -76,12 +76,15 @@ Fundamentally, Macrobars fills fields from your data object into placeholders as
 
 Data fields start with two open curly braces and end with two closed curly braces: `{{object.field_name}}`.
 
-Alternatively:
+Summary:
 
+- use `{{` and `}}` to output fields
+- use `{{:` and `}}` to output any variable
 - use `<?=` and `?>` processing instruction (PI) braces to output fields
 - use `<?:` and `?>` processing instruction (PI) braces to output any variable
 - use `{{%` and `}}` to output formatted numbers with two decimals
 - use `{{~` and `}}` to output rounded numbers
+- use `{{{` and `}}}` for unsafe output
 
 ## Safe HTML Escaping
 
@@ -178,6 +181,8 @@ to the template function when you call it, it is the data you passed in. As the 
 may change, for example within an 'each' loop: `{{#each some_array}}{{array_item}}{{/each}}` data will refer to the
 current item. You may also change this yourself in code.
 
+## Variables
+
 ```
 Variable	Meaning
 -------------------------------------------------------------------
@@ -185,11 +190,12 @@ data		current scope (changed inside 'each' to current item)
 index		current index pointer
 data_root	original data object passed into template function
 options		the options you passed in when you compiled
+this		the template function itself, which you can bind variables to
 ```
 
-## Scope-less
+### Using variables
 
-Instead of the default 'data' scope, you can refer to *any* variable inside your template by prefixing your field
+You can refer to *any* variable inside your template by prefixing your field
 with a colon, like so:
 
 ```html
