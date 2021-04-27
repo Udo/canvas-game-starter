@@ -1,0 +1,169 @@
+<html>
+
+<body>
+
+	<style>
+	* {
+		box-sizing: border-box;
+		line-height: inherit;
+	}
+	body {
+		font-family: sans serif;
+		line-height: 160%;
+		margin: 0;
+	}
+	.three-cols {
+		display:flex;
+	}
+	.three-cols > * {
+		flex: 1;
+	}
+
+	.fld {
+		height: calc(45vh - 100px);
+		border: 4px solid rgba(0,0,0,0.2);
+		overflow: auto;
+	}
+
+	textarea {
+		width: 100%;
+		padding: 8px;
+	}
+
+	#input {
+		background: #26c;
+		color: yellow;
+	}
+
+	#datavar {
+		background: #48a;
+		color: yellow;
+	}
+
+	pre, #gensource {
+		background: rgba(0,0,0,0.1);
+		white-space: pre-wrap;
+	}
+
+	h1 {
+		background: blue;
+		color: white;
+		margin: 0;
+		padding: 16px;
+	}
+
+	button {
+		padding: 8px;
+		min-width: 160px;
+		background: green;
+		color: white;
+		font-weight: bold;
+		cursor: pointer;
+	}
+
+	button:hover {
+		background: darkgreen;
+	}
+
+	#result > div div {
+		padding: 8px;
+	}
+
+	</style>
+
+	<h1>Macrobars Testing Ground</h1>
+
+	<script src="u-macrobars.js"></script>
+
+	<script>
+
+	var f = () => {};
+	var prop = { };
+	var test_variable = Math.random()*10;
+
+	var lorem = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Orci ac auctor augue mauris augue neque gravida in. Quis ipsum suspendisse ultrices gravida dictum fusce ut placerat orci.';
+
+	</script>
+
+<script id="example-template" type="text/x-macrobars">
+<div>
+	<h1>{{title}}</h1>
+	<div>{{body}}</div>
+	<div>
+		Number: 	<b><?= n ?></b><br/>
+		Decimals:	<b>{{% n }}</b><br/>
+		Number rounded:	<b>{{~ n }}</b><br/>
+		Variable:	<b><?: test_variable ?></b><br/>
+		<? if(data.n < 5) { ?>
+			<b style="color:green">n is smaller than 5</b>
+		<? } else { ?>
+			<b style="color:red">n is bigger than 5</b><? } ?>
+	</div>
+</div>
+</script>
+
+<script id="example-script" type="text/x-macrobars">
+prop = {
+	title : 'Example Title',
+	body : lorem,
+	n : Math.random()*10,
+}
+</script>
+
+	<button onclick="
+		f = Macrobars.compile(document.querySelector('#input').value);
+		document.querySelector('#gensource').value = f.gensource.join('\n');
+		"
+		>Compile</button>
+	<button onclick="
+		f = Macrobars.compile(document.querySelector('#input').value);
+		document.querySelector('#gensource').value = f.gensource.join('\n');
+		eval(document.querySelector('#datavar').value);
+		var r = f(prop);
+		document.querySelector('#text_result').textContent = r;
+		document.querySelector('#result').innerHTML = r;"
+		>Execute</button>
+
+	<div class="three-cols">
+
+		<div>
+			<h2>Template</h2>
+			<textarea id="input" class="fld"></textarea>
+		</div>
+
+		<div>
+			<h2>HTML Output</h2>
+			<div class="fld" id="result"></div>
+		</div>
+
+		<div>
+			<h2>Generated Text</h2>
+			<pre class="fld" id="text_result"></pre>
+		</div>
+
+	</div>
+
+	<div class="three-cols">
+
+		<div>
+			<h2>Data & Variables</h2>
+			<textarea id="datavar" class="fld"></textarea>
+		</div>
+
+		<div style="flex:2">
+			<h2>Compiled</h2>
+			<textarea id="gensource" class="fld"></textarea>
+		</div>
+
+	</div>
+
+	<script>
+
+	document.querySelector('#input').value = document.querySelector('#example-template').innerHTML.trim();
+	document.querySelector('#datavar').value = document.querySelector('#example-script').innerHTML.trim();
+
+	</script>
+
+</body>
+
+</html>

@@ -1,3 +1,5 @@
+Macrobars = (() => {
+
 if(!String.prototype.replaceAll) String.prototype.replaceAll = function(search, replacement) {
 		var target = this;
 		return target.split(search).join(replacement);
@@ -47,15 +49,15 @@ var signposts = [
 ];
 
 if(!each) function each(o, f) {
-  if(!o)
-    return;
-  if(o.forEach) {
-    o.forEach(f);
-  } else {
-    for(var prop in o) if(o.hasOwnProperty(prop)) {
-      f(o[prop], prop);
-    }
-  }
+	if(!o)
+		return;
+	if(o.forEach) {
+		o.forEach(f);
+	} else {
+		for(var prop in o) if(o.hasOwnProperty(prop)) {
+			f(o[prop], prop);
+		}
+	}
 }
 
 var data_prefix = (identifier) => {
@@ -171,9 +173,16 @@ var compile = function(text, options = {}) {
 	return(f);
 }
 
-Macrobars = {
+return({
 
 	compile : compile,
 
-}
+	num_out : num_out,
+	safe_out : safe_out,
+	num_out_round : num_out_round,
+	debug_out : debug_out,
+	each : each,
 
+});
+
+})();
