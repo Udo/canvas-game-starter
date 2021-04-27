@@ -41,12 +41,20 @@
 	}
 
 	pre, #gensource {
+		margin: 0;
 		background: rgba(0,0,0,0.1);
 		white-space: pre-wrap;
 	}
 
 	h1 {
-		background: blue;
+		background: darkorange;
+		color: black;
+		margin: 0;
+		padding: 16px;
+	}
+
+	h2 {
+		background: gray;
 		color: white;
 		margin: 0;
 		padding: 16px;
@@ -110,19 +118,21 @@ prop = {
 }
 </script>
 
-	<button onclick="
-		f = Macrobars.compile(document.querySelector('#input').value);
-		document.querySelector('#gensource').value = f.gensource.join('\n');
-		"
-		>Compile</button>
-	<button onclick="
-		f = Macrobars.compile(document.querySelector('#input').value);
-		document.querySelector('#gensource').value = f.gensource.join('\n');
-		eval(document.querySelector('#datavar').value);
-		var r = f(prop);
-		document.querySelector('#text_result').textContent = r;
-		document.querySelector('#result').innerHTML = r;"
-		>Execute</button>
+	<div style="background:black;padding:8px;">
+		<button onclick="
+			f = Macrobars.compile(document.querySelector('#input').value);
+			document.querySelector('#gensource').value = f.gensource.join('\n');
+			"
+			>Compile</button>
+		<button onclick="
+			f = Macrobars.compile(document.querySelector('#input').value);
+			document.querySelector('#gensource').value = f.gensource.join('\n');
+			eval(document.querySelector('#datavar').value);
+			var r = f(prop);
+			document.querySelector('#text_result').textContent = r;
+			document.querySelector('#result').innerHTML = r;"
+			>Execute</button>
+	</div>
 
 	<div class="three-cols">
 
