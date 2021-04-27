@@ -42,10 +42,15 @@ Before you can use the template, it needs to be compiled. For example, using jQu
 const myTemplate = Macrobars.compile(
     $('#entry-template').html());
 ```
-  
+
+The generic syntax for Macrobars compile is:
+```javascript
+	Macrobars.compile(template_text, options = {})
+```
+
 ### 3. Execute Templates
-  
-Due to compilation, the template `myTemplate` becomes a simple function you can call, passing an arbitrary data object as an argument. 
+
+Due to compilation, the template `myTemplate` becomes a simple function you can call, passing an arbitrary data object as an argument.
 
 ```javascript
 $('#entries').append(myTemplate({
@@ -69,12 +74,19 @@ When called, the Macrobars template function generates HTML code from that data:
 
 Fundamentally, Macrobars fills fields from your data object into placeholders assigned for them inside the template. The example above illustrates a simple case. By default, all content is escaped for HTML code, meaning that the data will be seen as plain text by the browser.
 
-Data fields start with two open curly braces and end with two closed curly braces: `{{object.field_name}}`. 
+Data fields start with two open curly braces and end with two closed curly braces: `{{object.field_name}}`.
+
+Alternatively:
+
+- use `<?=` and `?>` processing instruction (PI) braces to output fields
+- use `<?:` and `?>` processing instruction (PI) braces to output any variable
+- use `{{%` and `}}` to output formatted numbers with two decimals
+- use `{{~` and `}}` to output rounded numbers
 
 ## Safe HTML Escaping
 
 This is the default output mode. In the example above, the field `{{body}}`, combined with the data string `'<Greetings from Macrobars!>'` results in the output:
-	
+
 ```
   &lt;Greetings from Macrobars!&gt;
 ```
@@ -86,7 +98,7 @@ If you want to stream unescaped HTML into your template, use three curly braces 
 
 ## Numeric Values
 
-To interpret a field as a numeric value and output a formatted number, prepend your field name with a % character: `{{%my_number}}`. You can 
+To interpret a field as a numeric value and output a formatted number, prepend your field name with a % character: `{{%my_number}}`. You can
 optionally specify the number of decimal digits as well. This example will output a number with 3 decimal digits: `{{%my_number, 3}}`.
 
 If you want to override how this type of fields gets outputted, define a function called `num_out(n)` in your template.
@@ -122,14 +134,14 @@ In these cases, you can use the dot notation to access lower levels of the data 
     </div>
     <div class="meta">
       published: {{meta.published}}
-      by: <a href="mailto:{{meta.email}}">{{meta.author}}</a>     
+      by: <a href="mailto:{{meta.email}}">{{meta.author}}</a>
     </div>
   </div>
 ```
 ## each Block
 
 To render a block for each item in an array, use the `{{#each listName}}` command:
-	
+
 ```html
   <ul>
     {{#each items}}<div>
@@ -150,7 +162,7 @@ where the data might look like this:
 }
 ```
 
-`each` blocks supply the local variable `:index`, containing the current numerical index of the entry. 
+`each` blocks supply the local variable `:index`, containing the current numerical index of the entry.
 
 ## The default value
 
@@ -163,8 +175,17 @@ after this declaration will now show the string 'ALL EMPTY'.
 By default, all field commands internally use a variable called 'data' as their context. For example, a field like
 `{{%my_number}}` would internally refer to `data.my_number`. Initially, this `data` object is whatever you pass
 to the template function when you call it, it is the data you passed in. As the template runs, what `data` refers to
-may change, for example within an 'each' loop: `{{#each some_array}}{{array_item}}{{/each}}` data will refer to the 
+may change, for example within an 'each' loop: `{{#each some_array}}{{array_item}}{{/each}}` data will refer to the
 current item. You may also change this yourself in code.
+
+```
+Variable	Meaning
+-------------------------------------------------------------------
+data		current scope (changed inside 'each' to current item)
+index		current index pointer
+data_root	original data object passed into template function
+options		the options you passed in when you compiled
+```
 
 ## Scope-less
 
@@ -191,6 +212,8 @@ the template (see below).
 Now comes the real meat of Macrobars: executing real JavaScript code directly within the template.
 
 ## Code Sections
+
+Finally, you can execute any Javascript directly, just as you would in PHP.
 
 To accomodate a range of editors and use cases, Macrobars executes any JavaScript code it finds in:
 - between `<script>` and `</script>` tags
@@ -231,4 +254,13 @@ Within these code sections, you may execute any JavaScript code you like.
 
 This example also illustrates flow control spanning across `<script>` and `</script>` tags.
 
+## Deferred Execution
 
+To NOT execute any Javascript immediately but instead output the code as-is
+when the template executes, use the `<defer>` tag:
+
+```html
+<defer>
+  var faction = Game.get_faction(data.city.faction);
+</defer>
+```

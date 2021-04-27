@@ -12,7 +12,6 @@
 
 		<script src="lib/jquery.min.js"></script>
 		<script src="lib/howler.min.js"></script>
-		<script src="lib/minibars.min.js"></script>
 		<script src="lib/u-pathastar.js"></script>
 		<script src="lib/u-threestage.js"></script>
 		<script src="lib/u-grid.js"></script>
@@ -22,7 +21,7 @@
 		<script src="js/gridmap3d.js"></script>
 	</head>
 	<body>
-		
+
 		<nav>
 			HTML/Canvas/3D Game Starter
 		</nav>
@@ -33,16 +32,16 @@
 
 		<script type="module">
 		import { THREE, EffectComposer, Shaders } from './js/pipeline.js';
-								
+
 		var Stage = {};
 		var grid = false;
 		var cellSize = 3;
 		var gridSize = 12;
-		
+
 		var Shapes = {};
 		var Mat = {};
 		var Obj = {};
-		
+
 		$(function() {
 			Stage = ThreeStage.create({
 				THREE : THREE,
@@ -55,33 +54,33 @@
 			Stage.layers.create('map');
 			Stage.layers.create('mobs');
 			Stage.layers.create('ui');
-			
+
 			var light = new THREE.DirectionalLight( 0xffffff, 0.40 );
 			light.position.set( 0.3, 1, 0.3 );
 			Stage.root.add( light );
-			
+
 			var ambient = new THREE.AmbientLight( 0x404040 ); // soft white light
 			Stage.root.add( ambient );
-			
+
 			Stage.shapes.tile = new THREE.CylinderBufferGeometry( cellSize*0.56, cellSize*0.56, cellSize, 6);
 			Stage.mat.tile = new THREE.MeshStandardMaterial( {color: 0xaaffaa, metalness : 0} );
 			Stage.mat.highlight = new THREE.MeshStandardMaterial( {color: 0xaaffaa, emissive : 0x888888} );
-			
+
 			var mapOffset = -0.5*cellSize*gridSize;
-			
+
 			merge(Stage.camera.position, { x : 0, y : -20, z : 15 });
 			merge(Stage.camera.rotation, { x : 0.7, y : 0, z : 0 });
 			Stage.camera.updateMatrixWorld();
-			
+
 			grid = UGrid.create(gridSize, gridSize, {
-				
+
 				cellSize : cellSize,
-				
+
 				type : UGrid.pointyTop,
-				
+
 				mapOffsetX : mapOffset,
 				mapOffsetY : mapOffset,
-				
+
 				onCreateCell : function(cell) {
 					var tile = new THREE.Mesh( Stage.shapes.tile, Stage.mat.tile );
 					tile.rotation.x = Math.PI * 0.5;
@@ -92,17 +91,17 @@
 					cell.goIndex = Stage.layers.map.children.length;
 					Stage.layers.map.add(tile);
 				},
-				
+
 			});
-			
-			GridMap3D.init(grid, Stage); 
-			
+
+			GridMap3D.init(grid, Stage);
+
 			Stage.on('click', function(e) {
-				/* 
+				/*
 				// select all the objects under the mouse cursor
 				Stage.eachMouseSelect(Stage.layers.map.children, function(hit) {
 					console.log(hit);
-					}, true); 
+					}, true);
 				*/
 				var hit = Stage.getNearestMouseIntersect(Stage.layers.map.children);
 				if(hit) {
@@ -110,25 +109,25 @@
 					GridMap3D.placeXY(GridMap3D.cursor, hit.object.cell);
 				}
 			});
-			
+
 			Stage.on('mousemove', function(e) {
 				GridMap3D.mouseToGroundPlane();
 				//console.log(GridMap3D.mousePlane.cell);
 				GridMap3D.resetHighlight();
 				GridMap3D.highlightTileAt(GridMap3D.mousePlane.x, GridMap3D.mousePlane.y);
 			});
-			
+
 
 			Stage.animate(function(dt) {
-				
+
 				Stage.root.rotation.z += dt*0.1;
-				
+
 				return(true);
-				
+
 			});
-			
+
 		});
 		</script>
-		
+
 	</body>
 </html>

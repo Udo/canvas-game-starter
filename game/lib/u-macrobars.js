@@ -26,13 +26,15 @@ var debug_out = (ee) => {
 	if(p0 != -1) {
 		loc = loc.substr(p0+('<anonymous>'.length+1));
 		loc = loc.substr(0, loc.length-1);
-	} 
+	}
 	return('Macrobars '+es[0]+' ('+loc+')');
 }
 
 var signposts = [
 	{ start : '<script>', end : '</script>', type : 'code' },
+	{ start : '<defer>', end : '</defer>', type : 'defer' },
 	{ start : '<?=', end : '?>', type : 'field' },
+	{ start : '<?:', end : '?>', type : 'field_unsafe' },
 	{ start : '<?', end : '?>', type : 'code' },
 	{ start : '<!--?', end : '?-->', type : 'code' },
 	{ start : '{{#default ', end : '}}', type : 'default_empty' },
@@ -51,7 +53,7 @@ if(!each) function each(o, f) {
     o.forEach(f);
   } else {
     for(var prop in o) if(o.hasOwnProperty(prop)) {
-      f(o[prop], prop); 
+      f(o[prop], prop);
     }
   }
 }
@@ -62,19 +64,22 @@ var data_prefix = (identifier) => {
 	else
 		return('data.'+identifier);
 }
-	
+
 var compile = function(text, options = {}) {
-	
+
 	var crash_counter = 0;
 	var tokens = [];
 	var gensource = [];
-	
+
 	var emit = {
 		text : (token) => {
 			gensource.push('output += '+JSON.stringify(token.text)+';');
 		},
 		code : (token) => {
 			gensource.push(token.text);
+		},
+		defer : (token) => {
+			gensource.push('output += "<script>\n" + '+JSON.stringify(token.text)+' + "</script>\n";');
 		},
 		field : (token) => {
 			gensource.push('output += safe_out('+data_prefix(token.text)+', default_empty_field);');
@@ -98,9 +103,9 @@ var compile = function(text, options = {}) {
 			gensource.push('default_empty_field = '+JSON.stringify(token.text)+';');
 		},
 	}
-	
+
 	while(text != '' && crash_counter < 100) {
-		
+
 		crash_counter+=1;
 		var p0 = -1;
 		var sp_found = false;
@@ -111,13 +116,13 @@ var compile = function(text, options = {}) {
 				p0 = ps;
 			}
 		});
-		
+
 		if(sp_found)
 		{
 			tokens.push({ type : 'text', text : text.substr(0, p0) });
 			text = text.substr(p0 + sp_found.start.length);
 			var p1 = text.indexOf(sp_found.end);
-			if(p1 == -1) p1 = text.length; 
+			if(p1 == -1) p1 = text.length;
 			tokens.push({ type : sp_found.type, text : text.substr(0, p1)});
 			text = text.substr(p1+sp_found.end.length);
 		}
@@ -126,10 +131,12 @@ var compile = function(text, options = {}) {
 			tokens.push({ type : 'text', text : text });
 			text = '';
 		}
-		
+
 	}
-	
-	gensource.push('(data) => { "use strict";');
+
+	gensource.push('(data) => { ');
+	if(options.strict)
+		gensource.push('"use strict";');
 	gensource.push('	try {');
 	gensource.push('	if(!data) data = {}; var data_root = data;');
 	gensource.push('	var output = ""; var default_empty_field = "";');
@@ -143,23 +150,23 @@ var compile = function(text, options = {}) {
 	gensource.push('	} catch (ee) { console.error(ee); output += debug_out(ee); }');
 	gensource.push('	return(output);');
 	gensource.push('}');
-	
+
 	var f = {};
 	try {
 		f = eval('('+gensource.join("\n")+')');
 	} catch(ce) {
 		console.error(ce);
 	}
-	
+
 	f.tokens = tokens;
 	f.gensource = gensource;
-	
+
 	return(f);
 }
 
 Macrobars = {
-	
+
 	compile : compile,
-	
+
 }
 
