@@ -27,16 +27,16 @@ function flip1(t) {
 	return(1-t);
 }
 
-function step1(t, a = 0.5, b = 0.5) {
+function step1(t, a = 0.5, b = false) {
 	if(t < a) return(0);
+	if(b === false) b = a;
 	if(t > b) return(1);
 	var range = b-a;
 	if(range == 0) return(1);
-	var tpos = t - range;
-	return(t + lerp(tpos/range));
+	return((t-a) / range);
 }
 
-function quadratic1(t) {
+function smooth_start21(t) {
 	return(t*t);
 }
 
@@ -45,8 +45,8 @@ function parabola(t) {
 	return(1-v*v);
 }
 
-function cubed1(t) {
-	return(t*t);
+function smooth_start31(t) {
+	return(t*t*t);
 }
 
 function logistic1(t, a = 10) {
@@ -63,9 +63,6 @@ function range_map(t, t_start = 0, t_end = 1, to_start = 0, to_end = 1, pfunc1 =
 	return(lerp(p, to_start, to_end));
 }
 
-var smooth_start21 = quadratic1;
-var smooth_start31 = cubed1;
-
 function smooth_stop21(t) {
 	t = 1-t;
 	return(1 - t*t);
@@ -76,7 +73,7 @@ function smooth_stop31(t) {
 	return(1 - t*t*t);
 }
 
-function mix1(t, f1, f2, blendf = false) {
+function crossfade1(t, f1, f2, blendf = false) {
 	var v1 = f1(t);
 	var v2 = f2(t);
 	var bf = t;

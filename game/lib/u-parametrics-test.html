@@ -145,7 +145,7 @@ step_size = 0.025;
 function test(t)
 {
 	return(
-		mix1(t, smooth_start21, smooth_stop21)
+		crossfade1(t, smooth_start21, smooth_stop21)
 	);
 }
 </script>
@@ -179,16 +179,14 @@ function test(t)
 
 		<i>bezier31</i>(t, b = 0.8, c = 0.2)
 		<i>bounce_stop1</i>(t)
-		<i>clamp1</i>(n, min = 0, max = 1)
 		<i>chain1</i>(t, a1, a2, a...)
-		<i>cubed1</i>(t)
+		<i>clamp1</i>(n, min = 0, max = 1)
+		<i>crossfade1</i>(t, f1, f2, blendf1 = false)
 		<i>flip1</i>(t)
 		<i>howfar1</i>(t, a = 0, b = 100)
 		<i>parabola</i>(t)
-		<i>quadratic1</i>(t)
 		<i>lerp</i>(t, a = 0, b = 1)
 		<i>logistic1</i>(t, a = 10)
-		<i>mix1</i>(t, f1, f2, blendf1 = false)
 		<i>range_map</i>(t, t_start, t_end, to_start, to_end, blendf1 = false)
 		<i>sin1</i>(t)
 		<i>smooth_start21</i>(t)
