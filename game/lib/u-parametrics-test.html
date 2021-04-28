@@ -1,0 +1,211 @@
+<html>
+
+<body>
+
+	<style>
+	* {
+		box-sizing: border-box;
+		line-height: inherit;
+	}
+	body {
+		font-family: sans serif;
+		line-height: 160%;
+		margin: 0;
+	}
+	.three-cols {
+		display:flex;
+	}
+	.three-cols > * {
+		flex: 1;
+	}
+
+	.fld {
+		height: calc(60vh);
+		border: 4px solid rgba(0,0,0,0.2);
+		overflow: auto;
+	}
+
+	textarea {
+		width: 100%;
+		padding: 8px;
+	}
+
+	#input {
+		background: #26c;
+		color: yellow;
+	}
+
+	#datavar {
+		background: #36b;
+		color: yellow;
+	}
+
+	pre, #gensource {
+		margin: 0;
+		background: rgba(0,0,0,0.1);
+		white-space: pre-wrap;
+	}
+
+	h1 {
+		background: darkorange;
+		color: black;
+		margin: 0;
+		padding: 16px;
+	}
+
+	h2 {
+		background: gray;
+		color: white;
+		margin: 0;
+		padding: 16px;
+	}
+
+	button {
+		padding: 8px;
+		min-width: 160px;
+		background: green;
+		color: white;
+		font-weight: bold;
+		cursor: pointer;
+	}
+
+	button:hover {
+		background: darkgreen;
+	}
+
+	#result > div div {
+		padding: 8px;
+	}
+
+	#graph {
+		background: #333;
+		text-align: center;
+		padding-top: 5vh;
+	}
+
+	#graph > div.b {
+		display: inline-block;
+		width: 4px;
+		background: red;
+		margin: 0;
+		padding: 0;
+		text-align: center;
+		color: white;
+		vertical-align: bottom;
+		overflow: hidden;
+		font-size: 70%;
+	}
+
+	#helper {
+		color: gray;
+	}
+
+	#helper i {
+		color: blue;
+		font-weight: bold;
+		font-style: normal;
+	}
+
+	</style>
+
+	<h1>Parametrics Testing Ground</h1>
+
+	<script src="u-parametrics.js"></script>
+
+	<script>
+
+	var f = () => {};
+	var prop = { };
+	var step_size = 0.1;
+
+	function draw_graph(items) {
+		var e = [];
+		var wi = 80 / items.length;
+		items.forEach((v, idx) => {
+			e.push('<div class="b" style="width:'+(wi).toFixed(2)+'%;height:'+(clamp1(v[1], 0.01, 1)*50)+'vh;">'+(v[0]).toFixed(1)+'</div>');
+		});
+		document.querySelector('#graph').innerHTML = e.join('');
+	}
+
+	function run() {
+		eval(document.querySelector('#datavar').value);
+		var output = [];
+		for(var i = 0; i <= 1.00001; i += step_size) {
+			output.push([clamp1(i), test(clamp1(i))]);
+		}
+		draw_graph(output);
+		document.querySelector('#output').textContent = output.join('\n');
+	}
+
+	</script>
+
+<script id="example-script" type="text/x-macrobars">
+step_size = 0.025;
+
+function test(t)
+{
+	return(
+		mix1(t, smooth_start21, smooth_stop21)
+	);
+}
+</script>
+
+	<div style="background:black;padding:8px;">
+		<button onclick="run();">Execute</button>
+	</div>
+
+	<div class="three-cols">
+
+		<div>
+			<h2>Data & Variables</h2>
+			<textarea id="datavar" class="fld"></textarea>
+		</div>
+
+		<div style="">
+			<h2>Output</h2>
+			<pre id="output" class="fld"></pre>
+		</div>
+
+		<div style="">
+			<h2>Graph</h2>
+			<div id="graph" class="fld"></div>
+		</div>
+
+	</div>
+
+	<div style="padding: 12px;" id="helper">
+
+		<b>Functions: </b>
+
+		<i>bezier31</i>(t, b = 0.8, c = 0.2)
+		<i>clamp1</i>(n, min = 0, max = 1)
+		<i>cubed1</i>(t)
+		<i>flip1</i>(t)
+		<i>howfar1</i>(t, a = 0, b = 100)
+		<i>parabola</i>(t)
+		<i>quadratic1</i>(t)
+		<i>lerp</i>(t, a = 0, b = 1)
+		<i>logistic1</i>(t, a = 10)
+		<i>mix1</i>(t, f1, f2, blendf1 = false)
+		<i>range_map</i>(t, t_start, t_end, to_start, to_end, blendf1 = false)
+		<i>sin1</i>(t)
+		<i>smooth_start21</i>(t)
+		<i>smooth_start31</i>(t)
+		<i>smooth_step21</i>(t)
+		<i>smooth_step31</i>(t)
+		<i>smooth_stop21</i>(t)
+		<i>smooth_stop31</i>(t)
+		<i>step1</i>(t, a = 0.5, b = 0.5)
+		<i>tanh1</i>(t, a = 5)
+
+	</div>
+
+	<script>
+
+	document.querySelector('#datavar').value = document.querySelector('#example-script').innerHTML.trim();
+
+	</script>
+
+</body>
+
+</html>
