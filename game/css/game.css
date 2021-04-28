@@ -103,6 +103,15 @@ input[type=text] {
 	overflow: hidden;
 }
 
+#dscreen > h1 {
+	margin: 0;
+	background: DarkOrange;
+}
+
+#dscreen > * {
+	padding: 16px;
+}
+
 .sbtn.active {
 	color: yellow;
 }
