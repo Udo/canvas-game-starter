@@ -104,6 +104,11 @@
 		color: blue;
 		font-weight: bold;
 		font-style: normal;
+		cursor: pointer;
+	}
+
+	#helper i:hover {
+		color: black;
 	}
 
 	</style>
@@ -121,9 +126,11 @@
 	function draw_graph(items) {
 		var e = [];
 		var wi = 80 / items.length;
+		e.push('<div class="b" style="background:rgba(0,0,0,0.1);width:'+(wi).toFixed(2)+'%;height:'+(50)+'vh;"></div>');
 		items.forEach((v, idx) => {
 			e.push('<div class="b" style="width:'+(wi).toFixed(2)+'%;height:'+(clamp1(v[1], 0.01, 1)*50)+'vh;">'+(v[0]).toFixed(1)+'</div>');
 		});
+		e.push('<div class="b" style="background:rgba(0,0,0,0.1);width:'+(wi).toFixed(2)+'%;height:'+(50)+'vh;"></div>');
 		document.querySelector('#graph').innerHTML = e.join('');
 	}
 
@@ -137,15 +144,22 @@
 		document.querySelector('#output').textContent = output.join('\n');
 	}
 
+	var default_example = 'crossfade1(t, smooth_start21, smooth_stop21)';
+
+	function load_code(code) {
+		document.querySelector('#datavar').value =
+			document.querySelector('#example-script').innerHTML.trim().replace('$CODE', code);
+		run();
+	}
+
 	</script>
 
 <script id="example-script" type="text/x-macrobars">
 step_size = 0.025;
 
-function test(t)
-{
+function test(t) {
 	return(
-		crossfade1(t, smooth_start21, smooth_stop21)
+		$CODE
 	);
 }
 </script>
@@ -177,32 +191,31 @@ function test(t)
 
 		<b>Functions: </b>
 
-		<i>bezier31</i>(t, b = 0.8, c = 0.2)
-		<i>bounce_stop1</i>(t)
-		<i>chain1</i>(t, a1, a2, a...)
-		<i>clamp1</i>(n, min = 0, max = 1)
-		<i>crossfade1</i>(t, f1, f2, blendf1 = false)
-		<i>flip1</i>(t)
-		<i>howfar1</i>(t, a = 0, b = 100)
-		<i>parabola</i>(t)
-		<i>lerp</i>(t, a = 0, b = 1)
-		<i>logistic1</i>(t, a = 10)
-		<i>range_map</i>(t, t_start, t_end, to_start, to_end, blendf1 = false)
-		<i>sin1</i>(t)
-		<i>smooth_start21</i>(t)
-		<i>smooth_start31</i>(t)
-		<i>smooth_step21</i>(t)
-		<i>smooth_step31</i>(t)
-		<i>smooth_stop21</i>(t)
-		<i>smooth_stop31</i>(t)
-		<i>step1</i>(t, a = 0.5, b = 0.5)
-		<i>tanh1</i>(t, a = 5)
+		<i onclick="load_code('bezier31(t)')">bezier31</i>(t, b = 0.8, c = 0.2)
+		<i onclick="load_code('bounce_stop1(t)')">bounce_stop1</i>(t)
+		<i onclick="load_code('chain1(t, sin1, sin1, sin1)')">chain1</i>(t, a1, a2, a...)
+		<i onclick="load_code('clamp1(t, 0.2, 0.8)')">clamp1</i>(n, min = 0, max = 1)
+		<i onclick="load_code('crossfade1(t, smooth_start21, smooth_stop21)')">crossfade1</i>(t, f1, f2, blendf1 = false)
+		<i onclick="load_code('flip1(t)')">flip1</i>(t)
+		<i onclick="load_code('parabola1(t)')">parabola1</i>(t)
+		<i onclick="load_code('lerp(t)')">lerp</i>(t, a = 0, b = 1)
+		<i onclick="load_code('logistic1(t)')">logistic1</i>(t, a = 10)
+		<i onclick="load_code('range_map(t)')">range_map</i>(t, t_start, t_end, to_start, to_end, blendf1 = false)
+		<i onclick="load_code('sin1(t)')">sin1</i>(t)
+		<i onclick="load_code('smooth_start21(t)')">smooth_start21</i>(t)
+		<i onclick="load_code('smooth_start31(t)')">smooth_start31</i>(t)
+		<i onclick="load_code('smooth_step21(t)')">smooth_step21</i>(t)
+		<i onclick="load_code('smooth_step31(t)')">smooth_step31</i>(t)
+		<i onclick="load_code('smooth_stop21(t)')">smooth_stop21</i>(t)
+		<i onclick="load_code('smooth_stop31(t)')">smooth_stop31</i>(t)
+		<i onclick="load_code('step1(t, 0.2, 0.8)')">step1</i>(t, a = 0.5, b = 0.5)
+		<i onclick="load_code('tanh1(t)')">tanh1</i>(t, a = 5)
 
 	</div>
 
 	<script>
 
-	document.querySelector('#datavar').value = document.querySelector('#example-script').innerHTML.trim();
+	load_code(default_example);
 
 	</script>
 

@@ -10,15 +10,6 @@ function lerp(t, a = 0, b = 1) {
 	return((b-a)*t + a);
 }
 
-function howfar1(t, a = 0, b = 100) {
-	if(t < a) return(0);
-	if(t > b) return(1);
-	var range = b-a;
-	if(range == 0) return(1);
-	var tr = t-a;
-	return(tr / range);
-}
-
 function sin1(t) {
 	return(Math.sin(t*Math.PI));
 }
@@ -40,7 +31,7 @@ function smooth_start21(t) {
 	return(t*t);
 }
 
-function parabola(t) {
+function parabola1(t) {
 	var v = lerp(t, -1, 1);
 	return(1-v*v);
 }
@@ -58,8 +49,9 @@ function tanh1(t, a = 5) {
 }
 
 function range_map(t, t_start = 0, t_end = 1, to_start = 0, to_end = 1, pfunc1 = false) {
-	var p = howfar1(t, t_start, t_end);
-	if(pfunc) p = pfunc(p, t_start, t_end, to_start, to_end);
+	var p = step1(t, t_start, t_end);
+	if(pfunc1 !== false)
+		p = pfunc1(p, t_start, t_end, to_start, to_end);
 	return(lerp(p, to_start, to_end));
 }
 
@@ -82,11 +74,11 @@ function crossfade1(t, f1, f2, blendf = false) {
 }
 
 function smooth_step21(t) {
-	return(mix1(t, smooth_start21, smooth_stop21));
+	return(crossfade1(t, smooth_start21, smooth_stop21));
 }
 
 function smooth_step31(t) {
-	return(mix1(t, smooth_start31, smooth_stop31));
+	return(crossfade1(t, smooth_start31, smooth_stop31));
 }
 
 function bezier31(t, b = 0.8, c = 0.2) {
