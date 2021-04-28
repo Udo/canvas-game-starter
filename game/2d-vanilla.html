@@ -1,28 +1,29 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <title>Pure Canvas Demo</title>
-    <meta name="description" content="">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+	<head>
+		<meta charset="utf-8">
+		<title>Pure Canvas Demo</title>
+		<meta name="description" content="">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <link rel="stylesheet" href="css/game.css">
-    <link rel="stylesheet" href="css/hint.css">
-    <link rel="stylesheet" href="css/font-awesome.min.css">
-    <script src="lib/u-helper.js"></script>
+		<link rel="stylesheet" href="css/game.css">
+		<link rel="stylesheet" href="css/hint.css">
+		<link rel="stylesheet" href="css/font-awesome.min.css">
+		<script src="lib/u-helper.js"></script>
 
-  </head>
-  <body style="overflow:auto;">
-    
+		<script src="js/game.js"></script>
+	</head>
+	<body style="overflow:auto;" onunload="Game.quick_save();">
+		
 	<canvas id="c" width="1920" height="1920" 
 		style="display:block;margin-left:auto;margin-right:auto;border:1px solid #880000;">
 	</canvas>
 
-    <script>
-    
+		<script>
+		
 		var c = document.getElementById("c");
 		var ctx = c.getContext("2d");
-   
+	 
 		vpoke = function(x, y, r, g, b, a) {
 			ctx.fillStyle = "rgba("+r+","+g+","+b+","+(a)+")";
 			ctx.fillRect( x, y, 1, 1 );
@@ -130,8 +131,8 @@
 		gen_lights(light_batch_size, 0.15, 1);
 		gen_lights(light_batch_size/2, 0.35, 3);
 		gen_lights(light_batch_size/4, 1.0, 5);
-          
-    </script>
-    
-  </body>
+					
+		</script>
+		
+	</body>
 </html>
