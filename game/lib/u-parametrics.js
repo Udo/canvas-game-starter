@@ -99,3 +99,26 @@ function bezier31(t, b = 0.8, c = 0.2) {
 	var t3 = t2*t;
 	return((3*b*s2*t) + (3*c*s*t2) + t3);
 }
+
+function bounce_stop1(v) { // lifted this particular bounce from: https://github.com/sole/tween.js/blob/master/src/Tween.js
+	if (v < (1 / 2.75)) {
+		return 7.5625 * v * v;
+	} else if (v < (2 / 2.75)) {
+		return 7.5625 * (v -= (1.5 / 2.75)) * v + 0.75;
+	} else if (v < (2.5 / 2.75)) {
+		return 7.5625 * (v -= (2.25 / 2.75)) * v + 0.9375;
+	} else {
+		return 7.5625 * (v -= (2.625 / 2.75)) * v + 0.984375;
+	}
+}
+
+function chain1(t) {
+	var seg = arguments.length - 1;
+	if(seg <= 0) return(t);
+	var ts = t / (1/seg);
+	var fts = ts % 1;
+	var tseg = Math.floor(ts);
+	var v = arguments[tseg+1];
+	if(typeof v == 'function') v = v(fts);
+	return(v);
+}
