@@ -13,7 +13,7 @@
 		<script src="lib/jquery.min.js"></script>
 		<script src="lib/howler.min.js"></script>
 		<script src="lib/u-pathastar.js"></script>
-		<script src="lib/u-pixistage.js"></script>
+		<script src="lib/u-pixistage2.js"></script>
 		<script src="lib/u-helper.js"></script>
 		<script src="lib/u-grid.js"></script>
 
@@ -22,7 +22,6 @@
 	<body onunload="Game.quick_save();">
 
 		<nav>
-			HTML/Canvas Game Starter
 		</nav>
 
 		<footer>
@@ -31,22 +30,27 @@
 
 		<script>
 
+		$('nav').text($('title').text());
+
 		Stage = {};
 		//$( window ).on('unload', GameState.save);
 
 		var grid = false;
 		var Stage = false;
-		var cellSize = 64;
+		var cellSize = 128;
 
 		$(function() {
 
-			Stage = PixiStage.create({
-				smoothScroll : 0.1,
-			});
-			Stage.start();
-			Game.init(Stage, $('#frame-rate'));
-			Stage.layers.create('map');
-			Stage.layers.create('mobs');
+
+			Stage = new PixiStage2();
+			Stage.make_draggable(Stage.map_root, 'right');
+			Stage.create_layer('map');
+			Stage.create_layer('mobs');
+			Stage.create_layer('ui', Stage.root);
+
+			Stage.on('frameinfo', function(info) {
+				$('#frame-rate').text('FPS:'+info.fps+' CPU:'+info.threadLoadPercent+'%');
+			})
 
 			Stage.textures = {
 				char1 : PIXI.Texture.from('img/ship-512px.png'),
@@ -61,9 +65,9 @@
 
 				onCreateCell : function(cell) {
 					var g = new PIXI.Graphics();
-					g.beginFill((cell.x + (cell.y%2)) % 2 == 0 ? 0x66dd66 : 0x55bb55, 1.0);
+					g.beginFill((cell.x%2 * cell.y%2) == 0 ? 0x666666 : 0x888888, 1.0);
 					g.lineStyle(1, 0x000000, 0.5);
-					g.drawPolygon(this.createDrawPath(this.cellSize));
+					g.drawPolygon(this.createDrawPath(this.cellSize-2));
 					g.x = cell.pos.x;
 					g.y = cell.pos.y;
 					g.cell = cell;
@@ -72,9 +76,6 @@
 				},
 
 			});
-
-			Stage.root.pivotTarget.x = 0.5*(grid.cellSize*grid.colCount);
-			Stage.root.pivotTarget.y = 0.4*(grid.cellSize*grid.rowCount);
 
 			var c1 = new PIXI.Sprite(Stage.textures.char1);
 			c1.pivot.x = c1.width / 2;
@@ -102,23 +103,19 @@
 				lastHighlightedTiles = [];
 				if(cell) {
 					var g = Stage.layers.map.children[cell.goIndex];
-					grid.eachInAreaOf([cell], 2, function(pathCell, tier) {
+					grid.eachInAreaOf([cell], 1, function(pathCell, tier) {
 						var g = Stage.layers.map.children[pathCell.goIndex];
-						g.tint = rgb(32+tier*32, 32+tier*32, 32+tier*32);
+						g.tint = rgb(32+tier*32, 255, 32+tier*32);
 						lastHighlightedTiles.push(g);
 						});
 					grid.eachInLine(grid.get(c1.grid.x, c1.grid.y), cell, function(pathCell) {
 						var g = Stage.layers.map.children[pathCell.goIndex];
-						g.tint = 0x333333;
+						g.tint = 0x3366cc;
 						lastHighlightedTiles.push(g);
 						});
 				}
 			});
 
-			Game.state = {
-				grid : grid.cells,
-				units : {},
-			}
 
 		});
 
