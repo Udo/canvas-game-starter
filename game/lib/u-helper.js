@@ -1,3 +1,16 @@
+function make_hash(s) {
+	var hash = 0, h2 = 31191, i, chr;
+	s = s+' ';
+	for (i = 0; i < s.length; i++) {
+		chr   = s.charCodeAt(i);
+		hash  = ((hash << 5) - hash) + chr;
+		hash |= 0; // Convert to 32bit integer
+		h2  = ((h2 << 5) - hash) - chr;
+		h2 |= 0;
+	}
+	return 'H'+(Math.abs(hash).toString(36)+Math.abs(h2).toString(36));
+};
+
 function bindThis(self, source, destination) {
 	if(!destination)
 		destination = {};

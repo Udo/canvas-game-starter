@@ -50,10 +50,6 @@
 				$('#frame-rate').text('FPS:'+info.fps+' CPU:'+info.threadLoadPercent+'%');
 			})
 
-			Stage.textures = {
-				char1 : PIXI.Texture.from('img/ship-512px.png'),
-			}
-
 			//grid = Grid.create(12, 12, {
 			grid = UGrid.create(12, 12, {
 
@@ -75,10 +71,10 @@
 
 			});
 
-			var c1 = new PIXI.Sprite(Stage.textures.char1);
-			c1.pivot.x = c1.width / 2;
-			c1.pivot.y = c1.height / 2;
-			c1.height = c1.width = cellSize;
+			var c1 = new PIXI.Graphics();
+			c1.beginFill(0xff0000, 1.0);
+			c1.lineStyle(1, 0x000000, 0.5);
+			c1.drawRect(-cellSize*0.25, -cellSize*0.25, cellSize*0.5, cellSize*0.5);
 			c1.grid = { x : 0, y : 0 };
 			grid.projectCellToMap(0, 0, c1);
 			Stage.layers.mobs.addChild(c1);

@@ -1,15 +1,15 @@
 var UGrid = {
-
+  
   options : {
     oddOffset : 0,
     evenOffset : 1,
   },
-
+  
   bind : function(dest, source) {
     for(var prop in source) if(source.hasOwnProperty(prop)) {
       var f = source[prop];
-      if(typeof f == 'function')
-        dest[prop] = f.bind(dest);
+      if(typeof f == 'function') 
+        dest[prop] = f.bind(dest); 
       else
         dest[prop] = f;
     }
@@ -21,7 +21,7 @@ var UGrid = {
     dest[f2] = f2Offset + (h2 + offset) * cellSize;
     return(dest);
   },
-
+  
   /* creates a hex grid backing store */
   create : function(colCount, rowCount, options) {
     if(!options) options = {};
@@ -58,20 +58,20 @@ var UGrid = {
   sqrt3 : Math.sqrt(3),
   pi6th : Math.PI/6,
   pi12th : Math.PI/12,
-
+  
   generic : {
-
+    
     cells : [],
     mapOffsetX : 0,
     mapOffsetY : 0,
-
+    
     setType : function(type) {
       UGrid.bind(this, type);
       this.each(function(cell) {
         cell.pos = this.projectCellToMap(cell.x, cell.y);
       });
     },
-
+    
     // for serialization/deserialization
     data : function(instantiateFromData) {
       // todo
@@ -82,13 +82,13 @@ var UGrid = {
         return(false);
       return(this.cells[y][x]);
     },
-
+    
     call : function(x, y, f) {
       if(x > this.colCount-1 || x < 0 || y > this.rowCount-1 || y < 0 || isNaN(x) || isNaN(y))
         return(false);
       return(f(this.cells[y][x], x, y));
     },
-
+    
     each : function(f) {
       this.cells.forEach(function(row, rowIndex) {
         row.forEach(function(cell, colIndex) {
@@ -132,7 +132,7 @@ var UGrid = {
         openList = newOpenList;
       }
     },
-
+    
     eachInLine : function(c1, c2, eachCellCallback) {
       if(!c1 || !c2)
         return;
@@ -173,7 +173,7 @@ var UGrid = {
       }
       return(distCounter);
     },
-
+    
     stepDistance : function(c1, c2) {
       return(this.eachInLine(c1, c2)-1);
     },
@@ -186,15 +186,15 @@ var UGrid = {
       var dy = y1 - y2;
       return(Math.sqrt(dx*dx + dy*dy));
     },
-
+    
   },
-
+  
   square : {
-
+    
     topology : 'square',
-
+    
     enableDiagonal : true,
-
+    
     eachNeighborOf : function(cell, eachNeighborCallback) {
       var x = cell.x;
       var y = cell.y;
@@ -209,15 +209,15 @@ var UGrid = {
       this.call(x+0, y-1, eachNeighborCallback);
       this.call(x+0, y+1, eachNeighborCallback);
     },
-
+    
     heightFromWidth : function(width) {
       return(width);
     },
-
+    
     rowHeightFromWidth : function(width) {
       return(width);
     },
-
+    
     createDrawPath : function(size) {
       var height = UGrid.square.heightFromWidth(size);
       var width = size;
@@ -227,9 +227,9 @@ var UGrid = {
         +0.50 * width,   +0.50 * height,
         -0.50 * width,   +0.50 * height,
         -0.50 * width,   -0.50 * height,
-      ]);
+      ]);  
     },
-
+    
     projectCellToMap : function(hx, hy, optionalDestination) {
       if(!optionalDestination)
         optionalDestination = {};
@@ -237,26 +237,26 @@ var UGrid = {
       optionalDestination.y = this.mapOffsetY + hy * this.cellSize;
       return(optionalDestination);
     },
-
+    
     // todo: this needs another pass to unify both hex topology functions
     projectMapToCell : function(xc, yc, optionalDestination) {
       if(!optionalDestination)
         optionalDestination = {};
-      optionalDestination.x = Math.floor(xc / this.cellSize);
-      optionalDestination.y = Math.floor(yc / this.cellSize);
+      optionalDestination.x = Math.round(xc / this.cellSize);
+      optionalDestination.y = Math.round(yc / this.cellSize);
       return(optionalDestination);
     },
-
+    
   },
 
   pointyTop : {
-
+    
     topology : 'hex',
 
     eachNeighborOf : function(cell, eachNeighborCallback) {
       var x = cell.x;
       var y = cell.y;
-      var offset1 = (y % 2 != 0 ? this.oddOffset : this.evenOffset);
+      var offset1 = (y % 2 != 0 ? this.oddOffset : this.evenOffset);        
       this.call(offset1+x-1, y-1, eachNeighborCallback);
       this.call(offset1+x+0, y-1, eachNeighborCallback);
       this.call(x+1, y+0, eachNeighborCallback);
@@ -264,15 +264,15 @@ var UGrid = {
       this.call(offset1+x-1, y+1, eachNeighborCallback);
       this.call(x-1, y+0, eachNeighborCallback);
     },
-
+    
     heightFromWidth : function(width) {
       return(width / (UGrid.sqrt3/2));
     },
-
+    
     rowHeightFromWidth : function(width) {
       return(width / (UGrid.sqrt3/2)) * 0.75;
     },
-
+    
     createDrawPath : function(size) {
       var height = UGrid.pointyTop.heightFromWidth(size);
       var width = size;
@@ -284,29 +284,29 @@ var UGrid = {
         -0.50 *width,    0.25 * height,
         -0.50 *width,   -0.25 * height,
         0.00 * width,   -0.50 * height,
-      ]);
+      ]);  
     },
-
+    
     projectCellToMap : function(hx, hy, optionalDestination) {
       if(!optionalDestination)
         optionalDestination = {};
       return(UGrid.projectHexToMap(
-        hy, hx,
-        this.cellSize,
-        optionalDestination,
-        'y', 'x',
-        UGrid.pointyTop.rowHeightFromWidth,
+        hy, hx, 
+        this.cellSize, 
+        optionalDestination, 
+        'y', 'x', 
+        UGrid.pointyTop.rowHeightFromWidth, 
         this,
         this.mapOffsetY, this.mapOffsetX));
     },
-
+    
     // todo: this needs another pass to unify both hex topology functions
     projectMapToCell : function(xc, yc, optionalDestination) {
       if(!optionalDestination)
         optionalDestination = {};
       var cellHeight = UGrid.pointyTop.rowHeightFromWidth(this.cellSize);
       var y = (yc / cellHeight) + 1/6;
-      var x = (xc / this.cellSize) -
+      var x = (xc / this.cellSize) - 
         (Math.round(y) % 2 == 0 ? this.evenOffset*0.5 : this.oddOffset*0.5);
       var fx = x - Math.round(x);
       var fy = y - Math.round(y);
@@ -318,7 +318,7 @@ var UGrid = {
       optionalDestination.y = Math.round(y);
       return(optionalDestination);
     },
-
+    
   },
 
   flatTop : {
@@ -328,7 +328,7 @@ var UGrid = {
     eachNeighborOf : function(cell, eachNeighborCallback) {
       var x = cell.x;
       var y = cell.y;
-      var offset1 = (x % 2 != 0 ? this.oddOffset : this.evenOffset);
+      var offset1 = (x % 2 != 0 ? this.oddOffset : this.evenOffset);        
       this.call(x+0, y-1, eachNeighborCallback);
       this.call(x+1, offset1+y-1, eachNeighborCallback);
       this.call(x+1, offset1+y+0, eachNeighborCallback);
@@ -340,43 +340,43 @@ var UGrid = {
     widthFromHeight : function(height) {
       return(height / (UGrid.sqrt3/2));
     },
-
+    
     colWidthFromHeight : function(height) {
       return(height / (UGrid.sqrt3/2) * 0.75);
     },
-
+    
     createDrawPath : function(size) {
       var width = UGrid.flatTop.widthFromHeight(size);
       var height = size;
       return([
         -0.50 * width,  0.00 * height,
-        -0.25 * width,  0.50 * height,
+        -0.25 * width,  0.50 * height,   
          0.25 * width,  0.50 * height,
-         0.50 * width,  0.00 * height,
-         0.25 * width, -0.50 * height,
+         0.50 * width,  0.00 * height,    
+         0.25 * width, -0.50 * height,    
         -0.25 * width, -0.50 * height,
-        -0.50 * width,  0.00 * height,
-      ]);
+        -0.50 * width,  0.00 * height,   
+      ]);  
     },
-
+    
     projectCellToMap : function(hx, hy, optionalDestination) {
       if(!optionalDestination)
         optionalDestination = {};
       return(UGrid.projectHexToMap(
-        hx, hy,
-        this.cellSize,
-        optionalDestination,
-        'x', 'y',
-        UGrid.flatTop.colWidthFromHeight,
+        hx, hy, 
+        this.cellSize, 
+        optionalDestination, 
+        'x', 'y', 
+        UGrid.flatTop.colWidthFromHeight, 
         this,
         this.mapOffsetX, this.mapOffsetY));
     },
-
+    
     // todo: this needs another pass to unify both hex topology functions
     projectMapToCell : function(xc, yc, cellSize) {
       var cellWidth = UGrid.flatTop.colWidthFromHeight(this.cellSize);
       var x = (xc / cellWidth) + 1/6;
-      var y = (yc / this.cellSize) -
+      var y = (yc / this.cellSize) - 
         (Math.round(x) % 2 == 0 ? this.evenOffset*0.5 : this.oddOffset*0.5);
       var fx = x - Math.round(x);
       var fy = y - Math.round(y);
@@ -386,7 +386,7 @@ var UGrid = {
       }
       return({ x : Math.round(x), y : Math.round(y) });
     },
-
+    
   },
-
+    
 }

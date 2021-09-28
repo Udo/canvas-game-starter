@@ -1,0 +1,9 @@
+#!/bin/bash
+
+declare -a sea=("css" "js" "screens")
+
+for vs in ${sea[@]}; do
+	grep -inr "$1" --include="*js" --color=tty $vs
+        grep -inr "$1" --include="*html" --color=tty .
+done
+
