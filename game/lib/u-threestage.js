@@ -6,45 +6,6 @@ var ThreeStage = {
 
 		pipeline : {
 
-			enable_fxaa : function(Stage, EffectComposer, opt) {
-				var fxaaPass = Stage.pipeline.fxaaPass = new opt.ShaderPass( opt.FXAAShader );
-				fxaaPass.material.uniforms[ 'resolution' ].value.x = 1 / ( window.innerWidth * pixelRatio );
-				fxaaPass.material.uniforms[ 'resolution' ].value.y = 1 / ( window.innerHeight * pixelRatio );
-				Stage.composer.addPass(fxaaPass);
-				//Stage.composer.addPass(new opt.ShaderPass( opt.CopyShader ));
-			},
-
-			enable_sao : function(Stage, EffectComposer, opt) {
-				var saoPass = Stage.pipeline.saoPass = new opt.SAOPass( Stage.root, Stage.camera, false, true );
-				saoPass.params.saoScale = 100.0;
-				saoPass.params.saoBias = 0.5;
-				saoPass.params.saoIntensity = 0.10;
-				saoPass.params.saoKernelRadius = 10.0;
-				console.log(saoPass.params);
-				Stage.composer.addPass(saoPass);
-			},
-
-			enable_ssao : function(Stage, EffectComposer, opt) {
-				var ssaoPass = Stage.pipeline.ssaoPass = new opt.SSAOPass( Stage.root, Stage.camera, window.innerWidth, window.innerHeight );
-				ssaoPass.kernelRadius = 10;
-				ssaoPass.minDistance = 0.01;
-				ssaoPass.maxDistance = 2;
-				Stage.composer.addPass(ssaoPass);
-			},
-
-			defaultSetup : function(Stage, EffectComposer, opt) {
-				var pixelRatio = Stage.renderer.getPixelRatio();
-				Stage.composer = new EffectComposer(Stage.renderer);
-				Stage.composer.addPass(new opt.RenderPass( Stage.root, Stage.camera ) );
-				//Stage.pipeline.enable_fxaa(Stage, EffectComposer, opt);
-				//Stage.composer.addPass(new opt.SMAAPass(window.innerWidth, window.innerHeight));
-				//Stage.composer.addPass(new opt.TAARenderPass(Stage.root, Stage.camera));
-				Stage.pipeline.enable_sao(Stage, EffectComposer, opt);
-				//Stage.pipeline.enable_ssao(Stage, EffectComposer, opt);
-				Stage.composer.addPass(new opt.UnrealBloomPass(new THREE.Vector2( window.innerWidth, window.innerHeight ), 1.5, 0.0, 0.70 ));
-				//Stage.composer.addPass(new opt.AdaptiveToneMappingPass(true, 256));
-			},
-
 		},
 
 		layers : {
