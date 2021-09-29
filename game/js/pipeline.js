@@ -67,6 +67,34 @@ var enable_ssao = function(Stage, EffectComposer) {
 	Stage.composer.addPass(ssaoPass);
 }
 
+
+const CustomShader = {
+	uniforms: {
+		tDiffuse: { value: null },
+		color:		{ value: new THREE.Color(0x00aa00) },
+	},
+	vertexShader: `
+		varying vec2 vUv;
+		void main() {
+			vUv = uv;
+			gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1);
+		}
+	`,
+	fragmentShader: `
+		float scan_lines = 100.0;
+		uniform vec3 color;
+		uniform sampler2D tDiffuse;
+		varying vec2 vUv;
+		void main() {
+			vec4 previousPassColor = texture2D(tDiffuse, vUv);
+			float lum = 0.5 + 0.5*round(mod(vUv.y*scan_lines, 1.0));
+			gl_FragColor = vec4(
+					previousPassColor.rgb * color * lum,
+					previousPassColor.a);
+		}
+	`,
+};
+
 var setup_pipeline = (Stage, EffectComposer) => {
 	var pixelRatio = Stage.renderer.getPixelRatio();
 	Stage.composer = new EffectComposer(Stage.renderer);
@@ -75,6 +103,7 @@ var setup_pipeline = (Stage, EffectComposer) => {
 	//Stage.composer.addPass(
 	//	new Shaders.UnrealBloomPass(new THREE.Vector2( window.innerWidth, window.innerHeight ), 1.5, 0.0, 0.70 ));
 	//Stage.composer.addPass( new BokehPass( Stage.root, Stage.camera, { focus : 20.0, aperture : 0.001, maxblur : 2 } ) );
+	//Stage.composer.addPass( new ShaderPass(CustomShader) );
 }
 
 var Shaders = {
