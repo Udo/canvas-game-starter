@@ -31,7 +31,7 @@
 		</footer>
 
 		<script type="module">
-		import { THREE, EffectComposer, Shaders, GLTFLoader, RGBELoader, RoughnessMipmapper, load_gltf } from './js/pipeline.js';
+		import { setup_pipeline, THREE, EffectComposer, Shaders, GLTFLoader, RGBELoader, RoughnessMipmapper, load_gltf } from './js/pipeline.js';
 
 		var Stage = {};
 		var grid = false;
@@ -48,7 +48,7 @@
 				smoothScroll : 0.15,
 				draggable : true,
 			});
-			Stage.pipeline.defaultSetup(Stage, EffectComposer, Shaders);
+			setup_pipeline(Stage, EffectComposer);
 			Game.init(Stage, $('#frame-rate'));
 			Stage.start();
 			Stage.layers.create('map');

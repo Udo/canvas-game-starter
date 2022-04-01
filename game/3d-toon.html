@@ -4,7 +4,6 @@
 		<title>three.js webgl - materials</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-		<link type="text/css" rel="stylesheet" href="./lib/three/examples/main.css">
 		<script src="lib/jquery.min.js"></script>
 		<script src="lib/howler.min.js"></script>
 		<script src="lib/u-pathastar.js"></script>
@@ -32,15 +31,15 @@
 			let camera, scene, renderer, effect;
 			let particleLight;
 
-			const loader = new THREE.FontLoader();
+			/*const loader = new THREE.FontLoader();
 			loader.load( './lib/three/examples/fonts/gentilis_regular.typeface.json', function ( font ) {
 
 				init( font );
 				animate();
 
-			} );
+			} );*/
 
-			function init( font ) {
+			function init( ) {
 
 				container = document.createElement( 'div' );
 				document.body.appendChild( container );
@@ -113,9 +112,8 @@
 
 				function addLabel( name, location ) {
 
+					return;
 					const textGeo = new THREE.TextGeometry( name, {
-
-						font: font,
 
 						size: 20,
 						height: 1,
@@ -201,6 +199,9 @@
 				effect.render( scene, camera );
 
 			}
+
+			init();
+			animate();
 
 		</script>
 

@@ -35,7 +35,7 @@ var debug_out = (ee) => {
 var signposts = [
 	{ start : '<script>', end : '</script>', type : 'code' },
 	{ start : '<defer>', end : '</defer>', type : 'defer' },
-	{ start : '<?=', end : '?>', type : 'var_out' },
+	{ start : '<?=', end : '?>', type : 'field' },
 	{ start : '<?:', end : '?>', type : 'var_out' },
 	{ start : '<?', end : '?>', type : 'code' },
 	{ start : '<!--?', end : '?-->', type : 'code' },

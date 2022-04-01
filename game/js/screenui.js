@@ -1,7 +1,7 @@
 ScreenUI = {
 
 	screens : {},
-	
+
 	update_interval : 200,
 
 	load_screen : (name, override_cache = true) => {
@@ -40,11 +40,8 @@ ScreenUI = {
 	},
 
 	init : () => {
-		ScreenUI.templates.titlebar = Macrobars.compile($('#t-titlebar').html());
 		setInterval(ScreenUI.update, ScreenUI.update_interval);
 	},
-
-	screen_update_hook : false,
 
 	diff_update : (element, new_content) => {
 		var old_html = element.html().replace(/\W/g, '');
@@ -54,11 +51,15 @@ ScreenUI = {
 		}
 	},
 
+	updates : {
+
+	},
+
 	update : () => {
 		if(Game.state.pause) return;
-		ScreenUI.diff_update($('nav'), ScreenUI.templates.titlebar(Game.state));
-		if(ScreenUI.screen_update_hook)
-			ScreenUI.screen_update_hook();
+		each(ScreenUI.updates, (f, k) => {
+			f();
+		});
 	},
 
 }
