@@ -10,6 +10,7 @@ function PixiStage2(opt = {}) {
 	this.map_root = {};
 	this.event_handlers = {};
 	var stage = this;
+	var animation = [];
 
 	this.trigger = function() {
 		if(stage.options.stopped || stage.options.stopEvents)
@@ -24,6 +25,74 @@ function PixiStage2(opt = {}) {
 		});
 		return(ret);
 	}
+
+	this.animate = (f) => {
+		this.animation.add(f);
+	}
+
+	var animation = {
+
+		list : [],
+		commandList : [],
+		queueSlots : {},
+		queueSlotsActive : {},
+
+		add : function(f, optionalQueueSlotID) {
+			if(optionalQueueSlotID) {
+				f.queueSlot = optionalQueueSlotID;
+				if(animation.queueSlotsActive[optionalQueueSlotID]) {
+					// if there is an active animation in this slot, we need to queue
+					if(!animation.queueSlots[optionalQueueSlotID])
+						animation.queueSlots[optionalQueueSlotID] = [f];
+					else
+						animation.queueSlots[optionalQueueSlotID].push(f);
+				} else {
+					animation.queueSlotsActive[optionalQueueSlotID] = true;
+					animation.add(f);
+				}
+			} else {
+				animation.list.push(f);
+				//trigger('animationstart', f, animation.list.length-1);
+			}
+		},
+
+		remove : function(f) {
+			var idx = animation.list.indexOf(f);
+			if(idx > -1) {
+				//trigger('animationend', f, idx);
+				animation.list.splice(idx, 1);
+			}
+			if(f.queueSlot) {
+				var qs = animation.queueSlots[f.queueSlot];
+				if(qs && qs.length > 0) {
+					var next = qs.shift();
+					if(qs.length == 0) {
+						delete animation.queueSlots[f.queueSlot];
+						animation.queueSlotsActive[optionalQueueSlotID] = false;
+					}
+					animation.add(next);
+				}
+			}
+		},
+
+		doAll : function(deltaTime) {
+			each(animation.list, (f) => {
+				try {
+					if(typeof f == 'function') {
+						var r = f(deltaTime);
+						if(r === false) {
+							animation.remove(f);
+						}
+					}
+				} catch(ee) {
+					console.error('error during animation', ee);
+					animation.remove(f);
+				}
+			});
+		},
+
+	};
+	this.animation = animation;
 
 	this.on = (eventName, handlerFunc) => {
 		if(!this.event_handlers[eventName])
@@ -167,6 +236,8 @@ function PixiStage2(opt = {}) {
 		this.trigger('frameinfo', this.debug);
 	}
 
+	this.speed_step = 1;
+
 	this.render = () => {
 		if(this.debug.frameSkipStatus > 0) {
 			this.debug.frameSkipStatus -= 1;
@@ -186,7 +257,11 @@ function PixiStage2(opt = {}) {
 					this.map_root.scale.y = this.mouse.zoom;
 				}
 			}*/
-			this.trigger('animate', (frame_start_time - this.debug.animationTimestamp) / 1000);
+			var dt = (frame_start_time - this.debug.animationTimestamp) / 1000;
+			this.speed_step = clamp(this.speed_step+dt*0.5, 0, 1);
+			dt = dt*this.speed_step;
+			this.trigger('animate', dt);
+			this.animation.doAll(dt);
 			this.renderer.render(this.root);
 			this.render_stats(frame_start_time);
 		}
@@ -204,6 +279,8 @@ function PixiStage2(opt = {}) {
 	}
 
 	this.start = function() {
+		const frame_start_time = new Date().getTime();
+		this.render_stats(frame_start_time);
 		this.options.stopAnimation = false;
 		this.options.stopped = false;
 		this.options.stopEvents = false;
@@ -212,6 +289,8 @@ function PixiStage2(opt = {}) {
 
 	this.stop = function() {
 		this.options.stopped = true;
+		this.options.stopAnimation = true;
+		this.options.stopEvents = true;
 	};
 
 	var drag_start = (o, e, button) =>	{
