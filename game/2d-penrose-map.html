@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>HTML/Canvas Game Starter</title>
+		<meta name="description" content="">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<link rel="stylesheet" href="css/game.css">
+		<link rel="stylesheet" href="css/hint.css">
+		<link rel="stylesheet" href="css/font-awesome.min.css">
+		<script src="lib/pixi.min.js"></script>
+		<script src="lib/jquery.min.js"></script>
+		<script src="lib/howler.min.js"></script>
+		<script src="lib/u-pathastar.js"></script>
+		<script src="lib/u-pixistage2.js"></script>
+		<script src="lib/u-helper.js"></script>
+		<script src="lib/u-grid.js"></script>
+
+		<script src="js/game.js"></script>
+	</head>
+	<body onunload="Game.quick_save();">
+
+		<nav>
+		</nav>
+
+		<footer>
+			<div id="frame-rate">0fps</div>
+		</footer>
+
+		<script>
+
+		$('nav').text($('title').text());
+
+		Stage = {};
+		//$( window ).on('unload', GameState.save);
+
+		var grid = false;
+		var Stage = false;
+		var cellSize = 128;
+
+		function make_highlighters(t) {
+			t.highlighters = []
+			for(var i = 0; i < t.draw_path.length - 1; i+=2) {
+				var px = t.draw_path[i] + (t.draw_path[i+2] - t.draw_path[i])*0.5;
+				var py = t.draw_path[i+1] + (t.draw_path[i+3] - t.draw_path[i+1])*0.5;
+				var h = new PIXI.Graphics();
+				t.addChild(h);
+				t.highlighters.push(h);
+				h.lineStyle(6, 0xffffff, 0.25);
+				h.beginFill(0xffffff, 0.25);
+				h.drawCircle(0, 0, 10);
+				h.position.x = px;
+				h.position.y = py;
+			}
+		}
+
+		function make_tile_a(x = 0, y = 0, s = 100.0) {
+			var g = new PIXI.Graphics();
+			g.beginFill(0x555555, 1.0);
+			g.lineStyle(1, 0xff00ff, 0.5);
+			g.draw_path = [
+				(75/150)*s, 0*s,
+				s, (54/150)*s,
+				(75/150)*s, (108/150)*s,
+				0*s, (54/150)*s,
+			]
+			g.drawPolygon(g.draw_path);
+			g.draw_path.push(g.draw_path[0]);
+			g.draw_path.push(g.draw_path[1]);
+			make_highlighters(g);
+			g.x = x;
+			g.y = y;
+			return(g);
+		}
+
+		function make_tile_b(x = 0, y = 0, s = 100.0) {
+			var g = new PIXI.Graphics();
+			g.beginFill(0x333333, 1.0);
+			g.lineStyle(1, 0xff00ff, 0.5);
+			g.draw_path = [
+				(91/150)*s, 0*s,
+				(182/150)*s, (28/150)*s,
+				(91/150)*s, (56/150)*s,
+				0*s, (28/150)*s,
+			]
+			g.drawPolygon(g.draw_path);
+			g.draw_path.push(g.draw_path[0]);
+			g.draw_path.push(g.draw_path[1]);
+			make_highlighters(g);
+			g.x = x;
+			g.y = y;
+			return(g);
+		}
+
+		function tiles_intersect(t0, t1) {
+			var result = { hits : 0, edges : [] }
+			t0.highlighters.forEach((h0, i0) => {
+				var p0 = h0.getGlobalPosition();
+				t1.highlighters.forEach((h1, i1) => {
+					var p1 = h1.getGlobalPosition();
+					var d = dist(p0.x, p0.y, p1.x, p1.y);
+					if(d < 64) {
+						result.hits += 1;
+						result.edges.push([ i0, i1 ]);
+					}
+				});
+			});
+			return(result);
+		}
+
+		$(function() {
+
+			Stage = new PixiStage2();
+			Stage.make_draggable(Stage.map_root, 'right');
+			Stage.create_layer('map');
+			Stage.create_layer('mobs');
+			Stage.create_layer('ui', Stage.root);
+
+			Stage.on('frameinfo', function(info) {
+				$('#frame-rate').text('FPS:'+info.fps+' CPU:'+info.threadLoadPercent+'%');
+			})
+
+			var t1, t2;
+			Stage.layers.map.addChild(t1 = make_tile_a(100, 200, 600));
+			Stage.layers.map.addChild(t2 = make_tile_b(400, 100, 600));
+
+			Stage.make_draggable(t1, 'left');
+			Stage.make_draggable(t2, 'left');
+
+			t1.ondragmove = (o) => {
+				var intersect_result = tiles_intersect(t1, t2);
+				if(intersect_result.hits > 0) {
+					t1.tint = 0xffff00;
+					for(var i = 0; i < t1.highlighters.length; i++)
+						t1.highlighters[i].tint = 0xffffff;
+					for(var i = 0; i < t2.highlighters.length; i++)
+						t2.highlighters[i].tint = 0xffffff;
+					intersect_result.edges.forEach(v => {
+						t1.highlighters[v[0]].tint = 0x44ff00;
+						t2.highlighters[v[1]].tint = 0x44ff00;
+					});
+				} else {
+					t1.tint = 0xffffff;
+					for(var i = 0; i < t1.highlighters.length; i++)
+						t1.highlighters[i].tint = 0xffffff;
+					for(var i = 0; i < t2.highlighters.length; i++)
+						t2.highlighters[i].tint = 0xffffff;
+				}
+			}
+
+		});
+
+		</script>
+
+	</body>
+</html>

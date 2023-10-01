@@ -9,7 +9,7 @@
 		<link rel="stylesheet" href="css/game.css">
 		<link rel="stylesheet" href="css/hint.css">
 		<link rel="stylesheet" href="css/font-awesome.min.css">
-		<script src="lib/pixi5.min.js"></script>
+		<script src="lib/pixi.min.js"></script>
 		<script src="lib/jquery.min.js"></script>
 		<script src="lib/howler.min.js"></script>
 		<script src="lib/u-pathastar.js"></script>
@@ -38,11 +38,14 @@
 		var grid = false;
 		var Stage = false;
 		var cellSize = 128;
+		var dim = 12;
 
 		$(function() {
 
 
 			Stage = new PixiStage2();
+			Stage.map_root.position.x = ($(window).width()-cellSize*dim) / 2;
+			Stage.map_root.position.y = ($(window).height()-cellSize*dim*0.7) / 2;
 			Stage.make_draggable(Stage.map_root, 'right');
 			Stage.create_layer('map');
 			Stage.create_layer('mobs');
@@ -52,8 +55,7 @@
 				$('#frame-rate').text('FPS:'+info.fps+' CPU:'+info.threadLoadPercent+'%');
 			})
 
-			//grid = Grid.create(12, 12, {
-			grid = UGrid.create(12, 12, {
+			grid = UGrid.create(dim, dim, {
 
 				cellSize : cellSize,
 

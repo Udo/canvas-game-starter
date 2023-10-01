@@ -321,8 +321,8 @@ function PixiStage2(opt = {}) {
 			var newPosition = o.drag_data.getLocalPosition(o.parent);
 			o.position.x = newPosition.x - o.drag_local_start_pos.x;
 			o.position.y = newPosition.y - o.drag_local_start_pos.y;
-			if(o.ondrag_move)
-				o.ondrag_move(o, e);
+			if(o.ondragmove)
+				o.ondragmove(o, e);
 		}
 	}
 
