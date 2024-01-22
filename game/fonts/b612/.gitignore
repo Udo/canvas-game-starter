@@ -1,0 +1,13 @@
+# Logs
+logs
+*.log
+
+# OS-specific temporary files
+Thumbs.db
+.DS_Store
+
+# font editor temporary files
+*(Autosaved).glyphs
+*.vfbak
+
+build

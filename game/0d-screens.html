@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Udo's Web Game Starter | 2D Screens</title>
+		<meta name="description" content="">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<link rel="stylesheet" href="css/0d-screens.css?">
+		<link rel="stylesheet" href="css/hint.css">
+		<link rel="stylesheet" href="css/font-awesome.min.css">
+		<script src="lib/jquery.min.js"></script>
+		<script src="lib/howler.min.js"></script>
+		<script src="lib/u-macrobars.js"></script>
+		<script src="lib/u-helper.js"></script>
+
+		<script src="js/game.js"></script>
+		<script src="js/screenui.js"></script>
+
+	</head>
+	<body onunload="Game.quick_save();">
+
+		<script id="t-titlebar" type="text/x-macrobars">
+			<div style="float:right">
+				<button title="pause" onclick="Game.state.time_flow = 0;"
+					class="mini <?= time_flow == '0' ? 'active' : '' ?>"><i class="fa fa-pause"></i></button>
+				<button title="game speed 1x" onclick="Game.state.time_flow = 10;"
+					class="mini <?= time_flow == '10' ? 'active' : '' ?>"><i class="fa fa-play"></i></button>
+				<button title="game speed 10x" onclick="Game.state.time_flow = 1;"
+					class="mini <?= time_flow == '1' ? 'active' : '' ?>"><i class="fa fa-forward"></i></button>
+			</div>
+			<div>
+				<button onclick="if(confirm('Do you want to start over?')) Game.start_new();">X</button>
+
+				Udo's Web Game Starter | 2D Screens | tick <?= tick_counter ?>
+
+			</div>
+		</script>
+
+		<nav></nav>
+
+		<footer>
+			<button onclick="ScreenUI.load_screen('main');"
+				class="sbtn sbtn-main">Main</button>
+			<button onclick="ScreenUI.load_screen('example-screen-1');"
+				class="sbtn sbtn-example-screen-1">Screen 1</button>
+			<button onclick="ScreenUI.load_screen('example-screen-2');"
+				class="sbtn sbtn-example-screen-2">Screen 2</button>
+			<button onclick="ScreenUI.load_screen('example-screen-3');"
+				class="sbtn sbtn-example-screen-3">Screen 3</button>
+			<button onclick="ScreenUI.load_screen('2d/map');"
+				class="sbtn sbtn-example-screen-3">Map</button>
+		</footer>
+
+		<div id="dscreen"></div>
+
+		<div id="template-staging" style="display:none"></div>
+
+	<script>
+
+	$(() => {
+
+		Game.init();
+
+		ScreenUI.init();
+		ScreenUI.templates.titlebar = Macrobars.compile($('#t-titlebar').html());
+		ScreenUI.updates.titlebar = () => {
+			ScreenUI.diff_update($('nav'), ScreenUI.templates.titlebar(Game.state));
+		}
+		ScreenUI.load_screen('main');
+
+		setInterval(Game.tick, 1000);
+
+	});
+
+	</script>
+
+	</body>
+</html>

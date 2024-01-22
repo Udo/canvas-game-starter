@@ -4,6 +4,8 @@ ScreenUI = {
 
 	update_interval : 200,
 
+	html_escape : (s) => { if(typeof s == 'undefined') s = ''; return((''+s).replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;')); },
+
 	load_screen : (name, override_cache = true) => {
 		Game.state.sp = 0;
 		var sclist = $('.generic-list');
