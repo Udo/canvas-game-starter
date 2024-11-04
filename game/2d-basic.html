@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>HTML/Canvas Game Starter</title>
+		<meta name="description" content="">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<link rel="stylesheet" href="css/game.css">
+		<link rel="stylesheet" href="css/hint.css">
+		<link rel="stylesheet" href="css/font-awesome.min.css">
+		<script src="lib/pixi8.min.js"></script>
+		<script src="lib/jquery.min.js"></script>
+		<script src="lib/howler.min.js"></script>
+		<script src="lib/u-pathastar.js"></script>
+		<script src="lib/u-helper.js"></script>
+		<script src="lib/u-grid.js"></script>
+		<script src="lib/u-pixistage8.js"></script>
+
+		<script src="js/game.js"></script>
+	</head>
+	<body onunload="Game.quick_save();" oncontextmenu="event.preventDefault();">
+
+		<nav>
+		</nav>
+
+		<footer>
+			<div id="frame-rate"></div>
+		</footer>
+
+		<script type="module">
+
+		let app = await PixiStage.init();
+		PixiStage.add_layer('base');
+
+		PixiStage.layers.base.make_draggable();
+
+		function updateFrameRate() {
+			let fps = app.ticker.FPS.toFixed(2);
+			document.getElementById('frame-rate').innerText = `FPS: ${fps}`;
+		}
+		app.ticker.add(updateFrameRate);
+
+		let glow_filter = new PIXI.filters.GlowFilter();
+		let prev_glow_filter_parent = false;
+
+		let tile_size = 120;
+		for (let ix = 0; ix < 5; ix++) {
+			for (let iy = 0; iy < 5; iy++) {
+				let square = new PIXI.Graphics();
+				square.beginFill(0xff0000 + (ix * 0x003300) + (iy * 0x000033));
+				square.drawRect(0, 0, tile_size*0.9, tile_size*0.9);
+				square.endFill();
+				square.x = ix * tile_size;
+				square.y = iy * tile_size;
+				PixiStage.layers.base.addChild(square);
+				square.make_draggable();
+				square.on('pick', () => {
+					PixiStage.director.focus_on(square, -0.5);
+				});
+				square.on('mouseout', () => {
+					if(prev_glow_filter_parent == square)
+						square.filters = [];
+				});
+				square.on('mouseover', () => {
+					if(prev_glow_filter_parent)
+						prev_glow_filter_parent.filters = [];
+					square.filters = [glow_filter];
+					prev_glow_filter_parent = square;
+				});
+				square.on('dragstart', () => {
+				PixiStage.director.focus_on(square, 0.35);
+				});
+				square.on('dragend', () => {
+					PixiStage.director.focus_on(PixiStage.layers.base);
+				});
+			}
+		}
+
+		PixiStage.event_handlers.wheel = (e) => {
+			if(e.deltaY > 0)
+				app.stage.target_scale *= 0.9;
+			else
+				app.stage.target_scale *= 1.1;
+			app.stage.target_scale = clamp(app.stage.target_scale, PixiStage.params.zoom.min, PixiStage.params.zoom.max);
+			PixiStage.director.zoom(app.stage, app.stage.target_scale);
+		}
+
+		PixiStage.director.focus_on(PixiStage.layers.base);
+
+		</script>
+
+	</body>
+</html>

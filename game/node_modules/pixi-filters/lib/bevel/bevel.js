@@ -1,0 +1,8 @@
+'use strict';
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+var source = "struct BevelUniforms {\n  uLightColor: vec3<f32>,\n  uLightAlpha: f32,\n  uShadowColor: vec3<f32>,\n  uShadowAlpha: f32,\n  uTransform: vec2<f32>,\n};\n\nstruct GlobalFilterUniforms {\n  uInputSize:vec4<f32>,\n  uInputPixel:vec4<f32>,\n  uInputClamp:vec4<f32>,\n  uOutputFrame:vec4<f32>,\n  uGlobalFrame:vec4<f32>,\n  uOutputTexture:vec4<f32>,\n};\n\n@group(0) @binding(0) var<uniform> gfu: GlobalFilterUniforms;\n\n@group(0) @binding(1) var uTexture: texture_2d<f32>; \n@group(0) @binding(2) var uSampler: sampler;\n@group(1) @binding(0) var<uniform> bevelUniforms : BevelUniforms;\n\n@fragment\nfn mainFragment(\n  @builtin(position) position: vec4<f32>,\n  @location(0) uv : vec2<f32>\n) -> @location(0) vec4<f32> {\n  let transform = vec2<f32>(1.0 / gfu.uInputSize.xy) * vec2<f32>(bevelUniforms.uTransform.x, bevelUniforms.uTransform.y);\n  var color: vec4<f32> = textureSample(uTexture, uSampler, uv);\n  let lightSample: f32 = textureSample(uTexture, uSampler, uv - transform).a;\n  let shadowSample: f32 = textureSample(uTexture, uSampler, uv + transform).a;\n\n  let light = vec4<f32>(bevelUniforms.uLightColor, bevelUniforms.uLightAlpha);\n  let shadow = vec4<f32>(bevelUniforms.uShadowColor, bevelUniforms.uShadowAlpha);\n\n  color = vec4<f32>(mix(color.rgb, light.rgb, clamp((color.a - lightSample) * light.a, 0.0, 1.0)), color.a);\n  color = vec4<f32>(mix(color.rgb, shadow.rgb, clamp((color.a - shadowSample) * shadow.a, 0.0, 1.0)), color.a);\n  \n  return vec4<f32>(color.rgb * color.a, color.a);\n}";
+
+exports["default"] = source;
+//# sourceMappingURL=bevel.js.map

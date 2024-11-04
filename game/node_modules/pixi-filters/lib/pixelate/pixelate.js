@@ -1,0 +1,8 @@
+'use strict';
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+var source = "struct PixelateUniforms {\n  uSize:vec2<f32>,\n};\n\nstruct GlobalFilterUniforms {\n  uInputSize:vec4<f32>,\n  uInputPixel:vec4<f32>,\n  uInputClamp:vec4<f32>,\n  uOutputFrame:vec4<f32>,\n  uGlobalFrame:vec4<f32>,\n  uOutputTexture:vec4<f32>,\n};\n\n@group(0) @binding(0) var<uniform> gfu: GlobalFilterUniforms;\n\n@group(0) @binding(1) var uTexture: texture_2d<f32>; \n@group(0) @binding(2) var uSampler: sampler;\n@group(1) @binding(0) var<uniform> pixelateUniforms : PixelateUniforms;\n\n@fragment\nfn mainFragment(\n  @location(0) uv: vec2<f32>,\n  @builtin(position) position: vec4<f32>\n) -> @location(0) vec4<f32> {\n  let pixelSize: vec2<f32> = pixelateUniforms.uSize;\n  let coord: vec2<f32> = mapCoord(uv);\n\n  var pixCoord: vec2<f32> = pixelate(coord, pixelSize);\n  pixCoord = unmapCoord(pixCoord);\n\n  return textureSample(uTexture, uSampler, pixCoord);\n}\n\nfn mapCoord(coord: vec2<f32> ) -> vec2<f32>\n{\n  var mappedCoord: vec2<f32> = coord;\n  mappedCoord *= gfu.uInputSize.xy;\n  mappedCoord += gfu.uOutputFrame.xy;\n  return mappedCoord;\n}\n\nfn unmapCoord(coord: vec2<f32> ) -> vec2<f32>\n{\n  var mappedCoord: vec2<f32> = coord;\n  mappedCoord -= gfu.uOutputFrame.xy;\n  mappedCoord /= gfu.uInputSize.xy;\n  return mappedCoord;\n}\n\nfn pixelate(coord: vec2<f32>, size: vec2<f32>) -> vec2<f32>\n{\n  return floor( coord / size ) * size;\n}\n\n";
+
+exports["default"] = source;
+//# sourceMappingURL=pixelate.js.map

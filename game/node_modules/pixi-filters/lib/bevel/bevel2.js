@@ -1,0 +1,8 @@
+'use strict';
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+var fragment = "precision highp float;\nin vec2 vTextureCoord;\nout vec4 finalColor;\n\nuniform sampler2D uTexture;\nuniform vec2 uTransform;\nuniform vec3 uLightColor;\nuniform float uLightAlpha;\nuniform vec3 uShadowColor;\nuniform float uShadowAlpha;\n\nuniform vec4 uInputSize;\n\nvoid main(void) {\n    vec2 transform = vec2(1.0 / uInputSize) * vec2(uTransform.x, uTransform.y);\n    vec4 color = texture(uTexture, vTextureCoord);\n    float light = texture(uTexture, vTextureCoord - transform).a;\n    float shadow = texture(uTexture, vTextureCoord + transform).a;\n\n    color.rgb = mix(color.rgb, uLightColor, clamp((color.a - light) * uLightAlpha, 0.0, 1.0));\n    color.rgb = mix(color.rgb, uShadowColor, clamp((color.a - shadow) * uShadowAlpha, 0.0, 1.0));\n    finalColor = vec4(color.rgb * color.a, color.a);\n}\n";
+
+exports["default"] = fragment;
+//# sourceMappingURL=bevel2.js.map

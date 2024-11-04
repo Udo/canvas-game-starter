@@ -1,0 +1,4 @@
+var source = "struct ExtractBrightnessUniforms {\n  uThreshold: f32,\n};\n\n@group(0) @binding(1) var uTexture: texture_2d<f32>; \n@group(0) @binding(2) var uSampler: sampler;\n@group(1) @binding(0) var<uniform> extractBrightnessUniforms : ExtractBrightnessUniforms;\n\n@fragment\nfn mainFragment(\n  @builtin(position) position: vec4<f32>,\n  @location(0) uv : vec2<f32>\n) -> @location(0) vec4<f32> {\n  let color: vec4<f32> = textureSample(uTexture, uSampler, uv);\n\n  // A simple & fast algorithm for getting brightness.\n  // It's inaccurate, but good enough for this feature.\n  let max: f32 = max(max(color.r, color.g), color.b);\n  let min: f32 = min(min(color.r, color.g), color.b);\n  let brightness: f32 = (max + min) * 0.5;\n\n  return select(vec4<f32>(0.), color, brightness > extractBrightnessUniforms.uThreshold);\n}\n";
+
+export { source as default };
+//# sourceMappingURL=extract-brightness.mjs.map

@@ -1,0 +1,8 @@
+'use strict';
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+var source = "struct DotUniforms {\n  uScale:f32,\n  uAngle:f32,\n  uGrayScale:f32,\n};\n\nstruct GlobalFilterUniforms {\n  uInputSize:vec4<f32>,\n  uInputPixel:vec4<f32>,\n  uInputClamp:vec4<f32>,\n  uOutputFrame:vec4<f32>,\n  uGlobalFrame:vec4<f32>,\n  uOutputTexture:vec4<f32>,\n};\n\n@group(0) @binding(0) var<uniform> gfu: GlobalFilterUniforms;\n\n@group(0) @binding(1) var uTexture: texture_2d<f32>; \n@group(0) @binding(2) var uSampler: sampler;\n@group(1) @binding(0) var<uniform> dotUniforms : DotUniforms;\n\n@fragment\nfn mainFragment(\n  @location(0) uv: vec2<f32>,\n  @builtin(position) position: vec4<f32>\n) -> @location(0) vec4<f32> {\n  let color: vec4<f32> = textureSample(uTexture, uSampler, uv);\n  let gray: vec3<f32> = vec3<f32>(dot(color.rgb, vec3<f32>(0.299, 0.587, 0.114)));\n  // dotUniforms.uGrayScale == 1 doesn't ever pass so it is converted to a float and compared to 0.5 instead \n  let finalColor: vec3<f32> = select(color.rgb, gray, f32(dotUniforms.uGrayScale) >= 0.5);\n\n  return vec4<f32>(finalColor * 10.0 - 5.0 + pattern(uv), color.a);\n}\n\nfn pattern(uv: vec2<f32>) -> f32\n{\n  let s: f32 = sin(dotUniforms.uAngle);\n  let c: f32 = cos(dotUniforms.uAngle);\n  \n  let tex: vec2<f32> = uv * gfu.uInputSize.xy;\n  \n  let p: vec2<f32> = vec2<f32>(\n      c * tex.x - s * tex.y,\n      s * tex.x + c * tex.y\n  ) * dotUniforms.uScale;\n\n  return (sin(p.x) * sin(p.y)) * 4.0;\n}";
+
+exports["default"] = source;
+//# sourceMappingURL=dot.js.map

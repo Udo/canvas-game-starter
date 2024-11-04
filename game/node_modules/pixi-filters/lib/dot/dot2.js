@@ -1,0 +1,8 @@
+'use strict';
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+var fragment = "precision highp float;\nin vec2 vTextureCoord;\nout vec4 finalColor;\n\nuniform sampler2D uTexture;\nuniform float uAngle;\nuniform float uScale;\nuniform bool uGrayScale;\n\nuniform vec4 uInputSize;\n\nfloat pattern()\n{\n    float s = sin(uAngle), c = cos(uAngle);\n    vec2 tex = vTextureCoord * uInputSize.xy;\n    vec2 point = vec2(\n        c * tex.x - s * tex.y,\n        s * tex.x + c * tex.y\n    ) * uScale;\n    return (sin(point.x) * sin(point.y)) * 4.0;\n    }\n\n    void main()\n    {\n    vec4 color = texture(uTexture, vTextureCoord);\n    vec3 colorRGB = vec3(color);\n\n    if (uGrayScale)\n    {\n        colorRGB = vec3(color.r + color.g + color.b) / 3.0;\n    }\n\n    finalColor = vec4(colorRGB * 10.0 - 5.0 + pattern(), color.a);\n}\n";
+
+exports["default"] = fragment;
+//# sourceMappingURL=dot2.js.map

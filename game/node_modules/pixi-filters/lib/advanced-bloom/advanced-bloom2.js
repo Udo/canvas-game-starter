@@ -1,0 +1,8 @@
+'use strict';
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+var source = "struct AdvancedBloomUniforms {\n  uBloomScale: f32,\n  uBrightness: f32,\n};\n\n@group(0) @binding(1) var uTexture: texture_2d<f32>; \n@group(0) @binding(2) var uSampler: sampler;\n@group(1) @binding(0) var<uniform> advancedBloomUniforms : AdvancedBloomUniforms;\n@group(1) @binding(1) var uMapTexture: texture_2d<f32>;\n\n@fragment\nfn mainFragment(\n  @builtin(position) position: vec4<f32>,\n  @location(0) uv : vec2<f32>\n) -> @location(0) vec4<f32> {\n  var color = textureSample(uTexture, uSampler, uv);\n  color = vec4<f32>(color.rgb * advancedBloomUniforms.uBrightness, color.a);\n\n  var bloomColor = vec4<f32>(textureSample(uMapTexture, uSampler, uv).rgb, 0.0);\n  bloomColor = vec4<f32>(bloomColor.rgb * advancedBloomUniforms.uBloomScale, bloomColor.a);\n  \n  return color + bloomColor;\n}\n";
+
+exports["default"] = source;
+//# sourceMappingURL=advanced-bloom2.js.map
