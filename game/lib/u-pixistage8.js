@@ -13,6 +13,10 @@ let PixiStage = {
 			min : 0.2,
 			max : 4.0,
 		},
+		stage : {
+			drag_button : 0,
+			draggable : true,
+		},
 	},
 
 	init : async () => {
@@ -30,6 +34,33 @@ let PixiStage = {
 			else if(PixiStage.event_handlers.wheel)
 				PixiStage.event_handlers.wheel(event);
 		});
+		app.view.addEventListener('mousedown', (e) => {
+			PixiStage.state['mouse_button_'+e.button] = true;
+			PixiStage.state.mouse = {
+				x_down : e.clientX,
+				y_down : e.clientY,
+				x_down_stage : PixiStage.app.stage.x,
+				y_down_stage : PixiStage.app.stage.y,
+			}
+			console.log('down');
+		});
+		app.view.addEventListener('mousemove', (e) => {
+			if(PixiStage.state['mouse_button_'+PixiStage.params.stage.drag_button] &&
+				!PixiStage.current_drag_object) {
+				let scale = PixiStage.app.stage.scale.x;
+				PixiStage.state.mouse.x_diff = (e.clientX-PixiStage.state.mouse.x_down);
+				PixiStage.state.mouse.y_diff = (e.clientY-PixiStage.state.mouse.y_down);
+				if(PixiStage.params.stage.draggable) {
+					if(app.stage.director_animation)
+						PixiStage.cancel_animation(app.stage.director_animation);
+					PixiStage.app.stage.x = PixiStage.state.mouse.x_diff+PixiStage.state.mouse.x_down_stage;
+					PixiStage.app.stage.y = PixiStage.state.mouse.y_diff+PixiStage.state.mouse.y_down_stage;
+				}
+			}
+		});
+		app.view.addEventListener('mouseup', (e) => {
+			PixiStage.state['mouse_button_'+e.button] = false;
+		});
 		PIXI.Container.prototype.bring_to_front = function () {
 			this.parent.setChildIndex(this, this.parent.children.length - 1);
 		};
@@ -41,6 +72,9 @@ let PixiStage = {
 		};
 		PIXI.Container.prototype.make_scrollable = function () {
 			PixiStage.make_scrollable(this);
+		};
+		PIXI.Container.prototype.make_clickable = function (f) {
+			PixiStage.make_clickable(this, f);
 		};
 		return app;
 	},
@@ -58,6 +92,11 @@ let PixiStage = {
 		});
 		if(f)
 			o.on('wheel', f);
+	},
+
+	make_clickable : (o, f = false) => {
+		o.interactive = true;
+		o.on('click', f);
 	},
 
 	make_draggable : (o, f = false) => {

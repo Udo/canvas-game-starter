@@ -33,8 +33,6 @@
 		let app = await PixiStage.init();
 		PixiStage.add_layer('base');
 
-		PixiStage.layers.base.make_draggable();
-
 		function updateFrameRate() {
 			let fps = app.ticker.FPS.toFixed(2);
 			document.getElementById('frame-rate').innerText = `FPS: ${fps}`;
