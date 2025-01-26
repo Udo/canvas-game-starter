@@ -6,62 +6,61 @@ ScreenUI = {
 
 	html_escape : (s) => { if(typeof s == 'undefined') s = ''; return((''+s).replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;')); },
 
-	load_screen : (name, override_cache = true) => {
-		Game.state.sp = 0;
-		var sclist = $('.generic-list');
-		if(sclist.length > 0) {
-			Game.state.sp = sclist.scrollTop();
-		}
+	default_target : 'dscreen',
 
-		if(override_cache)
-			ScreenUI.screens[name] = false;
-		ScreenUI.screen_update_hook = false;
+	window_template : false,
+
+	create_window : (_name, prop = false, content_prop = false) => {
+		if(!prop) prop = {};
+		prop.id = 'screen_'+_name;
+		//ScreenUI.close_window(_name);
+		$('#'+prop.id).remove();
+		$(document.body).append(ScreenUI.window_template(prop));
+		ScreenUI.load(_name, 'screen_'+_name+'_content', content_prop);
+		setTimeout(() => {
+			$('#'+prop.id)
+				.css('transform', 'rotate3d(0,0,0,0deg)')
+				.css('opacity', 1.0);
+			if(prop.position == 'middle') $('#'+prop.id)
+				.css('top', 0.5*($(window).height()-$('#screen_'+_name).height())+'px');
+		}, 50);
+	},
+
+	close_window : (_name) => {
+		$('#screen_'+_name).css('opacity', 0);
+	},
+
+	load : (name, to_element_id = false, prop = false) => {
+		if(!to_element_id) to_element_id = ScreenUI.default_target;
 		Game.state.current_screen = name;
-		$('.sbtn').removeClass('active');
-		try {
-			$('.sbtn-'+name).addClass('active');
-		} catch(ee) {}
+		Game.state.current_screen_element_id = to_element_id;
+		if(!prop) prop = Game.state;
 		if(ScreenUI.screens[name]) {
-			$('#dscreen').html(ScreenUI.screens[name](Game.state));
+			$('#'+to_element_id).html(ScreenUI.screens[name](prop));
 		} else {
 			$.get('screens/'+name+'.html?v='+Math.random(), (data) => {
 				var tmpl = Macrobars.compile(data);
 				ScreenUI.screens[name] = tmpl;
-				$('#dscreen').html(tmpl(Game.state));
+				$('#'+to_element_id).html(tmpl(prop));
 			});
 		}
-		$('.generic-list').scrollTop(Game.state.sp);
 	},
-
-	templates : {},
 
 	refresh : () => {
 		if(Game.state.pause) return;
-		ScreenUI.load_screen(Game.state.current_screen, false);
-		ScreenUI.update();
+		// refresh current dynamic screen
+		ScreenUI.load_screen(Game.state.current_screen, Game.state.current_screen_element_id);
 	},
 
 	init : () => {
+		ScreenUI.window_template = Macrobars.compile($('#window-template').html());
 		setInterval(ScreenUI.update, ScreenUI.update_interval);
-	},
-
-	diff_update : (element, new_content) => {
-		var old_html = element.html().replace(/\W/g, '');
-		var new_html = new_content.replace(/\W/g, '');
-		if(old_html != new_html) {
-			element.html(new_content);
-		}
-	},
-
-	updates : {
-
+		return true;
 	},
 
 	update : () => {
 		if(Game.state.pause) return;
-		each(ScreenUI.updates, (f, k) => {
-			f();
-		});
+		// to do: refresh other UI
 	},
 
 }

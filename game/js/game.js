@@ -1,34 +1,53 @@
-var Game = {
+Director = {
 
-	stage : false,
-
-	debugInfo : {
-		lastRenderTime : 0,
-	},
-
-	state : {
-		tick_counter : 0,
-		time_flow : 1,
-	},
-
-	quick_save : () => {
+	handlers : {
 
 	},
 
-	quick_load : () => {
+	tick_rate : 250,
 
-	},
+	tick : () => {
+		setTimeout(Director.tick, Director.tick_rate);
+		if(Connection.status != 'connected') return;
 
-	start_new : () => {
+		if(Graphics.stage)
+			$('#frame-rate').text(Graphics.stage.debug.fps+' FPS');
+
+		if(!isset(Game.state.time) && Connection.last_tx.type != 'request-gamestate')
+			Connection.send('request-gamestate');
 
 	},
 
 	init : () => {
+		Events.batch_subscribe(Director.handlers);
+		Director.tick();
+		return true;
+	},
+
+}
+
+Game = {
+
+	state : {
 
 	},
 
-	tick : () => {
-		Game.state.tick_counter += 1;
+	handlers : {
+		reset : () => {
+			Game.state = {};
+		},
+		gamestate : (msg) => {
+			each(msg.state, (v, k) => {
+				Game.state[k] = v;
+			});
+			if(msg.state.map)
+				Events.emit('newmap', msg);
+		},
+	},
+
+	init : () => {
+		Events.batch_subscribe(Game.handlers);
+		return true;
 	},
 
 }

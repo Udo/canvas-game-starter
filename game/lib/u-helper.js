@@ -30,6 +30,10 @@ function bindThis(self, source, destination) {
 	return(destination);
 }
 
+function isset(o) {
+	return typeof o == 'undefined' ? false : true;
+}
+
 function rgb(r, g, b) {
 	return( b + g*256 + r*65536 );
 }

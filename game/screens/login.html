@@ -1,0 +1,36 @@
+<h1>Sign In</h1>
+<div class="sections">
+	<div id="login-msg">
+
+	</div>
+	<div>
+
+		<label>Player Name</label>
+		<input
+			onkeypress="if(event.keyCode == 13)
+				UI.try_auth($('#f_username').val(), $('#f_password').val(), $('#login-msg'));"
+			type="text" id="f_username" placeholder="your player handle..." value="">
+
+	</div>
+	<div>
+
+		<label>Password</label>
+		<input
+			onkeypress="if(event.keyCode == 13)
+				UI.try_auth($('#f_username').val(), $('#f_password').val());"
+			type="password" id="f_password" placeholder="password (if any)" value="">
+
+	</div>
+	<div>
+
+		<button id="f_submit" onclick="UI.try_auth($('#f_username').val(), $('#f_password').val(), $('#login-msg'));">
+			Sign in / Create new
+		</button>
+
+	</div>
+</div>
+<defer>
+
+	$('#f_username').focus();
+
+</defer>

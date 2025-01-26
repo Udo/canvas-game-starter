@@ -1,6 +1,7 @@
 @font-face {
   font-family: console;
-  src: url('../fonts/Ac437_IBM_BIOS-2y.ttf');
+/*  src: url('../fonts/Ac437_IBM_BIOS-2y.ttf'); */
+  src: url('../fonts/morris_roman/MorrisRomanBlackAlt.otf');
 }
 
 * {
@@ -8,7 +9,6 @@
 	text-shadow: inherit;
 	font-family: inherit;
 	font-size: inherit;
-	transition: all 0.5s ease;
 	-webkit-touch-callout: none;
 	-webkit-user-select: none;
 	user-select: none;
@@ -30,7 +30,7 @@ body {
 	cursor: crosshair;
 	line-height: 150%;
 	font-family: console;
-	font-size: 26px;
+	font-size: 28px;
 }
 
 a {
@@ -48,7 +48,7 @@ nav {
 	top: 0;
 	left: 0;
 	right: 0;
-	padding: 16px;
+	padding: 8px;
 	background: rgba(100,100,100,0.3);
 }
 
@@ -70,48 +70,69 @@ footer > button {
 	font-size: 80%;
 }
 
+input[type=text], input[type=password], input[type=number], button {
+	border: 4px solid rgba(255,255,255,0.2);
+	padding: 8px;
+	transition: all 1s ease;
+	border-radius: 12px;
+}
+
 button {
 	display: inline-block;
-	color: black;
+	background: rgba(120,120,120,0.5);
 	cursor: pointer;
 	vertical-align: top;
-	border: 2px solid rgba(120,120,120,0.5);
-	background: rgba(120,120,120,0.5);
 	color: white;
 }
 
-button:hover {
+button:hover,input[type=text]:hover, input[type=text]:focus,
+input[type=password]:focus, input[type=number]:focus {
 	border-color: yellow;
 }
 
-input[type=text] {
-	background: #663300;
-	border: 2px solid #aa9922;
+input[type=text],input[type=password],input[type=number] {
+	background: #000000;
 	color: yellow;
-	padding: 12px;
 	width: 100%;
-	margin: -6px;
+	margin: -4px;
 }
 
-#dscreen {
+.screenui-window {
 	position: absolute;
+	border: 8px solid rgba(255,255,255,0.1);
+	overflow: auto;
+	background: rgba(120, 120, 120, 0.5);
+	backdrop-filter: blur(5px);
+
 	left: 0px;
 	right: 0px;
-	top: 64px;
-	bottom: 64px;
-	border: 8px solid rgba(100,100,100,0.3);
-	overflow: hidden;
+	margin-left: auto;
+	margin-right: auto;
+
+	width: 640px;
+	height: 420px;
+
+	transition: all 1s ease;
+	transform: rotate3d(0,1,0,90deg);
+	opacity: 0;
 }
 
-#dscreen > h1 {
+.sections > div {
+	margin: 16px;
+}
+
+h1 {
+	background: rgba(0,0,0,0.5);
 	margin: 0;
+	margin-bottom: 12px;
+	padding: 8px;
+}
+
+#screen_connection_status {
+	bottom: 40px;
+	text-align: center;
+	height: auto;
+	border-color: DarkOrange;
 	background: DarkOrange;
-}
-
-#dscreen > * {
-	padding: 16px;
-}
-
-.sbtn.active {
-	color: yellow;
+	color: black;
 }
