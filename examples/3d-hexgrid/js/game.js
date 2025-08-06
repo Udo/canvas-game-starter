@@ -19,7 +19,6 @@ Director = {
 	},
 
 	init : () => {
-		Events.batch_subscribe(Director.handlers);
 		Director.tick();
 		return true;
 	},
@@ -40,13 +39,10 @@ Game = {
 			each(msg.state, (v, k) => {
 				Game.state[k] = v;
 			});
-			if(msg.state.map)
-				Events.emit('newmap', msg);
 		},
 	},
 
 	init : () => {
-		Events.batch_subscribe(Game.handlers);
 		return true;
 	},
 

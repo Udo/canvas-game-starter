@@ -10,13 +10,12 @@
 		<link rel="stylesheet" href="../../css/hint.css">
 		<link rel="stylesheet" href="../../css/font-awesome.min.css">
 
-		<script src="../../lib/jquery.min.js"></script>
+		<script src="../../lib/u-events.js"></script>
 		<script src="../../lib/howler.min.js"></script>
 		<script src="../../lib/u-macrobars.js"></script>
 		<script src="../../lib/u-pathastar.js"></script>
 		<script src="../../lib/u-threestage.js"></script>
 		<script src="../../lib/u-helper.js"></script>
-		<script src="../../lib/u-events.js"></script>
 
 		<script src="js/game.js?"></script>
 	</head>
@@ -33,41 +32,47 @@
 		<script type="module">
 		import { THREE, EffectComposer, Shaders } from './js/pipeline.js';
 
-		var Stage = {};
-		//$( window ).on('unload', GameState.save);
-		$(function() {
-			Stage = ThreeStage.create({
+		let stage = null;
+
+		async function initStage() {
+			stage = await ThreeStage.create({
 				THREE : THREE,
 				smoothScroll : 0.85,
 			});
-			Game.init(Stage, $('#frame-rate'));
-			Stage.start();
 
-			var light = new THREE.PointLight( 0xff0000, 1, 100 );
+			Game.init(stage, document.getElementById('frame-rate'));
+			
+			stage.start();
+
+			const light = new THREE.PointLight( 0xff0000, 1, 100 );
 			light.position.set( 0, 50, 50 );
-			Stage.root.add( light );
+			stage.root.add( light );
 
-			light = new THREE.PointLight( 0x00ff00, 1, 100 );
-			light.position.set( 50, -50, -50 );
-			Stage.root.add( light );
+			const light2 = new THREE.PointLight( 0x00ff00, 1, 100 );
+			light2.position.set( 50, -50, -50 );
+			stage.root.add( light2 );
 
-			var ambient = new THREE.AmbientLight( 0x404040 ); // soft white light
-			Stage.root.add( ambient );
+			const ambient = new THREE.AmbientLight( 0x404040 );
+			stage.root.add( ambient );
 
-			var geometry = new THREE.BoxBufferGeometry( 10, 10, 10 );
-			var material = new THREE.MeshStandardMaterial( {color: 0xaaaaaa, metalness : 0.5, roughness : 0.5, } );
-			var cube = new THREE.Mesh( geometry, material );
-			Stage.root.add( cube );
+			const geometry = new THREE.BoxBufferGeometry( 10, 10, 10 );
+			const material = new THREE.MeshStandardMaterial( {color: 0xaaaaaa, metalness : 0.5, roughness : 0.5, } );
+			const cube = new THREE.Mesh( geometry, material );
+			stage.root.add( cube );
 
-			Stage.animate(function(dt) {
-
+			stage.animate(function(dt) {
 				cube.rotation.x += dt;
 				cube.rotation.y += dt*2;
-
-				return(true);
-
+				return true;
 			});
 
+			setInterval(() => {
+				document.getElementById('frame-rate').textContent = stage.debug.fps + ' FPS';
+			}, 100);
+		}
+
+		window.addEventListener('load', () => {
+			initStage().catch(console.error);
 		});
 		</script>
 

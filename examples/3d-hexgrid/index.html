@@ -10,7 +10,6 @@
 		<link rel="stylesheet" href="../../css/hint.css">
 		<link rel="stylesheet" href="../../css/font-awesome.min.css">
 
-		<script src="../../lib/jquery.min.js"></script>
 		<script src="../../lib/howler.min.js"></script>
 		<script src="../../lib/u-macrobars.js"></script>
 		<script src="../../lib/u-pathastar.js"></script>
@@ -35,99 +34,102 @@
 		<script type="module">
 		import { setup_pipeline, THREE, EffectComposer, Shaders } from './js/pipeline.js';
 
-		var Stage = {};
-		var grid = false;
-		var cellSize = 3;
-		var gridSize = 12;
+		let stage = null;
+		let grid = false;
+		const cellSize = 3;
+		const gridSize = 12;
 
-		var Shapes = {};
-		var Mat = {};
-		var Obj = {};
+		const Shapes = {};
+		const Mat = {};
+		const Obj = {};
 
-		$(function() {
-			Stage = ThreeStage.create({
+		async function initStage() {
+			stage = await ThreeStage.create({
 				THREE : THREE,
 				smoothScroll : 0.85,
 				draggable : true,
 			});
-			setup_pipeline(Stage, EffectComposer, Shaders);
-			Game.init(Stage, $('#frame-rate'));
-			Stage.start();
-			Stage.layers.create('map');
-			Stage.layers.create('mobs');
-			Stage.layers.create('ui');
 
-			var light = new THREE.DirectionalLight( 0xffffff, 0.40 );
+			setup_pipeline(stage, EffectComposer, Shaders);
+			Game.init(stage, document.getElementById('frame-rate'));
+			
+			stage.start();
+
+			const mapLayer = stage.layers.add('map');
+			const mobsLayer = stage.layers.add('mobs');
+			const uiLayer = stage.layers.add('ui');
+
+			const light = new THREE.DirectionalLight( 0xffffff, 0.40 );
 			light.position.set( 0.3, 1, 0.3 );
-			Stage.root.add( light );
+			stage.root.add( light );
 
-			var ambient = new THREE.AmbientLight( 0x404040 ); // soft white light
-			Stage.root.add( ambient );
+			const ambient = new THREE.AmbientLight( 0x404040 );
+			stage.root.add( ambient );
 
-			Stage.shapes.tile = new THREE.CylinderBufferGeometry( cellSize*0.56, cellSize*0.56, cellSize, 6);
-			Stage.mat.tile = new THREE.MeshStandardMaterial( {color: 0xaaffaa, metalness : 0} );
-			Stage.mat.highlight = new THREE.MeshStandardMaterial( {color: 0xaaffaa, emissive : 0x888888} );
+			stage.shapes.tile = new THREE.CylinderBufferGeometry( cellSize*0.56, cellSize*0.56, cellSize, 6);
+			stage.mat.tile = new THREE.MeshStandardMaterial( {color: 0xaaffaa, metalness : 0} );
+			stage.mat.highlight = new THREE.MeshStandardMaterial( {color: 0xaaffaa, emissive : 0x888888} );
+			stage.mat.cursor = new THREE.MeshStandardMaterial( {color: 0xff0000, emissive : 0x444444} );
 
-			var mapOffset = -0.5*cellSize*gridSize;
+			const mapOffset = -0.5*cellSize*gridSize;
 
-			merge(Stage.camera.position, { x : 0, y : -20, z : 15 });
-			merge(Stage.camera.rotation, { x : 0.7, y : 0, z : 0 });
-			Stage.camera.updateMatrixWorld();
+			Object.assign(stage.camera.position, { x : 0, y : -20, z : 15 });
+			Object.assign(stage.camera.rotation, { x : 0.7, y : 0, z : 0 });
+			stage.camera.updateMatrixWorld();
 
 			grid = UGrid.create(gridSize, gridSize, {
-
 				cellSize : cellSize,
-
 				type : UGrid.pointyTop,
-
 				mapOffsetX : mapOffset,
 				mapOffsetY : mapOffset,
 
 				onCreateCell : function(cell) {
-					var tile = new THREE.Mesh( Stage.shapes.tile, Stage.mat.tile );
+					const tile = new THREE.Mesh( stage.shapes.tile, stage.mat.tile );
 					tile.rotation.x = Math.PI * 0.5;
 					tile.position.x = cell.pos.x;
 					tile.position.y = cell.pos.y;
 					tile.position.z = -cellSize*0.5;
 					tile.cell = cell;
-					cell.goIndex = Stage.layers.map.children.length;
-					Stage.layers.map.add(tile);
+					cell.goIndex = mapLayer.children.length;
+					mapLayer.add(tile);
 				},
-
 			});
 
-			GridMap3D.init(grid, Stage);
+			// Fix GridMap3D layer access
+			if (!stage.layers.ui) {
+				stage.layers.ui = stage.layers.get('ui');
+			}
+			if (!stage.layers.map) {
+				stage.layers.map = stage.layers.get('map');
+			}
 
-			Stage.on('click', function(e) {
-				/*
-				// select all the objects under the mouse cursor
-				Stage.eachMouseSelect(Stage.layers.map.children, function(hit) {
-					console.log(hit);
-					}, true);
-				*/
-				var hit = Stage.getNearestMouseIntersect(Stage.layers.map.children);
+			GridMap3D.init(grid, stage);
+
+			stage.events.on('click', function(e) {
+				const hit = stage.getNearestMouseIntersect(mapLayer.children);
 				if(hit) {
-					//console.log('hit', hit);
 					GridMap3D.placeXY(GridMap3D.cursor, hit.object.cell);
 				}
 			});
 
-			Stage.on('mousemove', function(e) {
+			stage.events.on('mousemove', function(e) {
 				GridMap3D.mouseToGroundPlane();
-				//console.log(GridMap3D.mousePlane.cell);
 				GridMap3D.resetHighlight();
 				GridMap3D.highlightTileAt(GridMap3D.mousePlane.x, GridMap3D.mousePlane.y);
 			});
 
-
-			Stage.animate(function(dt) {
-
-				Stage.root.rotation.z += dt*0.1;
-
-				return(true);
-
+			stage.animate(function(dt) {
+				stage.root.rotation.z += dt*0.1;
+				return true;
 			});
 
+			setInterval(() => {
+				document.getElementById('frame-rate').textContent = stage.debug.fps + ' FPS';
+			}, 100);
+		}
+
+		window.addEventListener('load', () => {
+			initStage().catch(console.error);
 		});
 		</script>
 

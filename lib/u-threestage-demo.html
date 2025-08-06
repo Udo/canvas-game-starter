@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>u-threestage Demo</title>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 0; 
+            font-family: Arial, sans-serif; 
+            background: #111;
+            overflow: hidden;
+        }
+        .ui-panel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            max-width: 300px;
+            z-index: 1000;
+        }
+        .ui-panel h3 {
+            margin-top: 0;
+            color: #4CAF50;
+        }
+        .ui-section {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #555;
+        }
+        .ui-section:last-child {
+            border-bottom: none;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            margin: 3px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .info-text {
+            font-size: 12px;
+            color: #ccc;
+            margin: 5px 0;
+        }
+        input[type="range"] {
+            width: 100%;
+        }
+        .stats {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .controls {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="ui-panel">
+        <h3>u-threestage Demo</h3>
+        
+        <div class="ui-section">
+            <strong>3D Objects:</strong><br>
+            <button onclick="addCube()">Add Cube</button>
+            <button onclick="addSphere()">Add Sphere</button>
+            <button onclick="addTorus()">Add Torus</button>
+            <button onclick="addWireframe()">Add Wireframe</button>
+            <div class="info-text">Click objects to interact</div>
+        </div>
+
+        <div class="ui-section">
+            <strong>Camera Control:</strong><br>
+            <button onclick="resetCamera()">Reset Camera</button>
+            <button onclick="autoRotate()">Auto Rotate</button>
+            <button onclick="stopAutoRotate()">Stop Rotation</button>
+            <div class="info-text">Mouse wheel: zoom, Drag: pan</div>
+        </div>
+
+        <div class="ui-section">
+            <strong>Layers:</strong><br>
+            <button onclick="toggleLayer('objects')">Toggle Objects</button>
+            <button onclick="toggleLayer('wireframes')">Toggle Wireframes</button>
+            <button onclick="toggleLayer('lights')">Toggle Lights</button>
+        </div>
+
+        <div class="ui-section">
+            <strong>Lighting:</strong><br>
+            <button onclick="addDirectionalLight()">Add Directional</button>
+            <button onclick="addPointLight()">Add Point Light</button>
+            <button onclick="addAmbientLight()">Add Ambient</button>
+            <button onclick="clearLights()">Clear Lights</button>
+        </div>
+
+        <div class="ui-section">
+            <strong>Animations:</strong><br>
+            <button onclick="startSpinning()">Spinning Objects</button>
+            <button onclick="startFloating()">Floating Motion</button>
+            <button onclick="startPulsing()">Pulsing Scale</button>
+            <button onclick="stopAllAnimations()">Stop All</button>
+        </div>
+
+        <div class="ui-section">
+            <strong>Scene:</strong><br>
+            <button onclick="clearScene()">Clear All Objects</button>
+            <button onclick="randomScene()">Random Scene</button>
+        </div>
+    </div>
+
+    <div class="stats" id="stats">
+        Objects: 0<br>
+        Animations: 0<br>
+        FPS: 0<br>
+        Load: 0%<br>
+        Camera: (0, 0, 30)
+    </div>
+
+    <div class="controls">
+        <strong>Controls:</strong><br>
+        Mouse Wheel: Zoom in/out<br>
+        Left Click + Drag: Pan camera<br>
+        Click Objects: Select/interact
+    </div>
+
+    <script src="three.js"></script>
+    <script src="u-events.js"></script>
+    <script src="u-query.js"></script>
+    <script>
+        // Simple jQuery compatibility shim for u-threestage
+        window.$ = function(selector) {
+            if (selector === document) {
+                return {
+                    width: () => window.innerWidth,
+                    height: () => window.innerHeight
+                };
+            } else if (selector === window) {
+                return {
+                    on: (event, handler) => window.addEventListener(event, handler)
+                };
+            } else {
+                const elements = typeof selector === 'string' ? 
+                    document.querySelectorAll(selector) : [selector];
+                return {
+                    on: (event, handler) => {
+                        elements.forEach(el => el.addEventListener(event, handler));
+                    }
+                };
+            }
+        };
+        
+        // Global each function expected by u-threestage
+        window.each = function(array, callback) {
+            if (array && array.length !== undefined) {
+                for (let i = 0; i < array.length; i++) {
+                    callback(array[i], i);
+                }
+            } else if (array) {
+                // Handle objects
+                for (let key in array) {
+                    if (array.hasOwnProperty(key)) {
+                        callback(array[key], key);
+                    }
+                }
+            }
+        };
+    </script>
+    <script src="u-threestage.js"></script>
+    <script>
+        let stage;
+        let demoObjects = [];
+        let selectedObject = null;
+        let autoRotateAnimation = null;
+
+        // Initialize ThreeStage
+        async function initDemo() {
+            try {
+                stage = await ThreeStage.create({
+                    THREE: THREE,
+                    draggable: true,
+                    frameSkipThreshold: 50,
+                    minZoom: 0.1,
+                    maxZoom: 10.0,
+                    zoomStep: 0.1
+                });
+
+                // Create layers
+                stage.layers.add('objects');
+                stage.layers.add('wireframes');
+                stage.layers.add('lights');
+
+                // Set up event handlers
+                setupEventHandlers();
+
+                // Add initial scene
+                createInitialScene();
+
+                // Start the stage
+                stage.start();
+
+                // Set up periodic stats update
+                setInterval(updateStats, 500);
+
+                console.log('u-threestage demo initialized');
+            } catch (error) {
+                console.error('Failed to initialize ThreeStage:', error);
+            }
+        }
+
+        function setupEventHandlers() {
+            // Mouse interaction
+            stage.events.on('click', (e) => {
+                const intersect = stage.getNearestMouseIntersect(demoObjects, true);
+                if (intersect) {
+                    selectObject(intersect.object);
+                } else {
+                    deselectObject();
+                }
+            });
+
+            // Stage drag handling is built into ThreeStage now
+            stage.events.on('stage:drag', (data) => {
+                updateStats();
+            });
+
+            // Update stats on various events
+            stage.events.on('resize', () => {
+                updateStats();
+            });
+        }
+
+        function createInitialScene() {
+            // Add basic lighting
+            addAmbientLight();
+            addDirectionalLight();
+
+            // Add some initial objects
+            addCube();
+            addSphere();
+            addTorus();
+
+            // Position them nicely
+            if (demoObjects.length >= 3) {
+                demoObjects[0].position.set(-5, 0, 0);
+                demoObjects[1].position.set(0, 0, 0);
+                demoObjects[2].position.set(5, 0, 0);
+            }
+        }
+
+        function addCube() {
+            const geometry = new THREE.BoxGeometry(2, 2, 2);
+            const material = new THREE.MeshLambertMaterial({ 
+                color: Math.random() * 0xffffff 
+            });
+            const cube = new THREE.Mesh(geometry, material);
+            
+            cube.position.set(
+                (Math.random() - 0.5) * 20,
+                (Math.random() - 0.5) * 10,
+                (Math.random() - 0.5) * 10
+            );
+            
+            cube.userData = { type: 'cube', id: demoObjects.length };
+            
+            stage.layers.get('objects').add(cube);
+            demoObjects.push(cube);
+            
+            console.log('Added cube');
+        }
+
+        function addSphere() {
+            const geometry = new THREE.SphereGeometry(1.5, 16, 16);
+            const material = new THREE.MeshLambertMaterial({ 
+                color: Math.random() * 0xffffff 
+            });
+            const sphere = new THREE.Mesh(geometry, material);
+            
+            sphere.position.set(
+                (Math.random() - 0.5) * 20,
+                (Math.random() - 0.5) * 10,
+                (Math.random() - 0.5) * 10
+            );
+            
+            sphere.userData = { type: 'sphere', id: demoObjects.length };
+            
+            stage.layers.get('objects').add(sphere);
+            demoObjects.push(sphere);
+            
+            console.log('Added sphere');
+        }
+
+        function addTorus() {
+            const geometry = new THREE.TorusGeometry(1.5, 0.5, 8, 16);
+            const material = new THREE.MeshLambertMaterial({ 
+                color: Math.random() * 0xffffff 
+            });
+            const torus = new THREE.Mesh(geometry, material);
+            
+            torus.position.set(
+                (Math.random() - 0.5) * 20,
+                (Math.random() - 0.5) * 10,
+                (Math.random() - 0.5) * 10
+            );
+            
+            torus.userData = { type: 'torus', id: demoObjects.length };
+            
+            stage.layers.get('objects').add(torus);
+            demoObjects.push(torus);
+            
+            console.log('Added torus');
+        }
+
+        function addWireframe() {
+            const geometry = new THREE.IcosahedronGeometry(2, 0);
+            const material = new THREE.MeshBasicMaterial({ 
+                color: Math.random() * 0xffffff,
+                transparent: true,
+                opacity: 0.7
+            });
+            const mesh = new THREE.Mesh(geometry, material);
+            
+            mesh.position.set(
+                (Math.random() - 0.5) * 20,
+                (Math.random() - 0.5) * 10,
+                (Math.random() - 0.5) * 10
+            );
+            
+            // Use ThreeStage's wireframe helper
+            const wireframeGroup = stage.wireframe(mesh);
+            wireframeGroup.userData = { type: 'wireframe', id: demoObjects.length };
+            
+            stage.layers.get('wireframes').add(wireframeGroup);
+            demoObjects.push(wireframeGroup);
+            
+            console.log('Added wireframe');
+        }
+
+        function addDirectionalLight() {
+            const light = new THREE.DirectionalLight(0xffffff, 1);
+            light.position.set(10, 10, 10);
+            light.userData = { type: 'directional' };
+            
+            stage.layers.get('lights').add(light);
+            console.log('Added directional light');
+        }
+
+        function addPointLight() {
+            const light = new THREE.PointLight(0xff4444, 1, 50);
+            light.position.set(
+                (Math.random() - 0.5) * 30,
+                (Math.random() - 0.5) * 20,
+                (Math.random() - 0.5) * 20
+            );
+            light.userData = { type: 'point' };
+            
+            stage.layers.get('lights').add(light);
+            console.log('Added point light');
+        }
+
+        function addAmbientLight() {
+            const light = new THREE.AmbientLight(0x404040, 0.5);
+            light.userData = { type: 'ambient' };
+            
+            stage.layers.get('lights').add(light);
+            console.log('Added ambient light');
+        }
+
+        function clearLights() {
+            // Remove all children from the lights layer
+            const lightsLayer = stage.layers.get('lights');
+            while (lightsLayer.children.length > 0) {
+                lightsLayer.remove(lightsLayer.children[0]);
+            }
+            console.log('Cleared all lights');
+        }
+
+        function selectObject(obj) {
+            deselectObject();
+            selectedObject = obj;
+            
+            // Highlight selected object
+            if (obj.material) {
+                obj.originalEmissive = obj.material.emissive.getHex();
+                obj.material.emissive.setHex(0x444444);
+            }
+            
+            console.log('Selected object:', obj.userData);
+        }
+
+        function deselectObject() {
+            if (selectedObject && selectedObject.material) {
+                selectedObject.material.emissive.setHex(selectedObject.originalEmissive || 0x000000);
+            }
+            selectedObject = null;
+        }
+
+        function resetCamera() {
+            stage.director.camera.reset();
+            console.log('Reset camera');
+        }
+
+        function autoRotate() {
+            if (autoRotateAnimation) return;
+            
+            autoRotateAnimation = stage.animate((deltaTime) => {
+                stage.root.rotation.y += 0.5 * deltaTime;
+                return true; // Continue animation
+            });
+            
+            console.log('Started auto rotation');
+        }
+
+        function stopAutoRotate() {
+            if (autoRotateAnimation) {
+                stage.animation.remove(autoRotateAnimation);
+                autoRotateAnimation = null;
+                console.log('Stopped auto rotation');
+            }
+        }
+
+        function toggleLayer(layerName) {
+            const layer = stage.layers.get(layerName);
+            if (layer) {
+                layer.visible = !layer.visible;
+                console.log(`Layer ${layerName} ${layer.visible ? 'shown' : 'hidden'}`);
+            }
+        }
+
+        function startSpinning() {
+            demoObjects.forEach((obj, index) => {
+                stage.animate((deltaTime) => {
+                    obj.rotation.x += (1 + index * 0.1) * deltaTime;
+                    obj.rotation.y += (0.5 + index * 0.05) * deltaTime;
+                    return true;
+                });
+            });
+            console.log('Started spinning animation');
+        }
+
+        function startFloating() {
+            demoObjects.forEach((obj, index) => {
+                const originalY = obj.position.y;
+                const amplitude = 2;
+                const frequency = 1 + index * 0.2;
+                
+                stage.animate((deltaTime) => {
+                    obj.position.y = originalY + Math.sin(Date.now() * 0.001 * frequency) * amplitude;
+                    return true;
+                });
+            });
+            console.log('Started floating animation');
+        }
+
+        function startPulsing() {
+            demoObjects.forEach((obj, index) => {
+                const baseScale = 1;
+                const amplitude = 0.3;
+                const frequency = 2 + index * 0.3;
+                
+                stage.animate((deltaTime) => {
+                    const scale = baseScale + Math.sin(Date.now() * 0.001 * frequency) * amplitude;
+                    obj.scale.set(scale, scale, scale);
+                    return true;
+                });
+            });
+            console.log('Started pulsing animation');
+        }
+
+        function stopAllAnimations() {
+            stage.animation.clear();
+            autoRotateAnimation = null;
+            
+            demoObjects.forEach(obj => {
+                obj.scale.set(1, 1, 1);
+            });
+            
+            console.log('Stopped all animations');
+        }
+
+        function clearScene() {
+            demoObjects.forEach(obj => {
+                if (obj.parent) {
+                    obj.parent.remove(obj);
+                }
+            });
+            demoObjects.length = 0;
+            selectedObject = null;
+            console.log('Cleared scene');
+        }
+
+        function randomScene() {
+            clearScene();
+            
+            const objectTypes = ['cube', 'sphere', 'torus', 'wireframe'];
+            const count = 5 + Math.floor(Math.random() * 10);
+            
+            for (let i = 0; i < count; i++) {
+                const type = objectTypes[Math.floor(Math.random() * objectTypes.length)];
+                switch (type) {
+                    case 'cube': addCube(); break;
+                    case 'sphere': addSphere(); break;
+                    case 'torus': addTorus(); break;
+                    case 'wireframe': addWireframe(); break;
+                }
+            }
+            
+            console.log(`Created random scene with ${count} objects`);
+        }
+
+        function updateStats(debug) {
+            const stats = document.getElementById('stats');
+            const camera = stage.camera;
+            
+            stats.innerHTML = `
+                Objects: ${demoObjects.length}<br>
+                Animations: ${stage.animations.length}<br>
+                FPS: ${stage.debug.fps}<br>
+                Load: ${Math.round(stage.debug.frameTime)}ms<br>
+                Camera: (${Math.round(camera.position.x)}, ${Math.round(camera.position.y)}, ${Math.round(camera.position.z)})
+            `;
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', initDemo);
+    </script>
+</body>
+</html>

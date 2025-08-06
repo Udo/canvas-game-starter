@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>WebRTC P2P Chat Example</title>
+		<meta name="description" content="Peer-to-peer WebRTC chat demonstration">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<link rel="stylesheet" href="css/chat.css">
+		<link rel="stylesheet" href="../../css/hint.css">
+		<link rel="stylesheet" href="../../css/font-awesome.min.css">
+
+		<script src="../../lib/u-events.js"></script>
+		<script src="js/webrtc-chat.js"></script>
+	</head>
+	<body>
+
+		<nav>
+			WebRTC P2P Chat Example
+		</nav>
+
+		<main class="chat-container">
+			<div class="connection-panel">
+				<h3>Connection</h3>
+				<div class="connection-status">
+					<span id="status">Disconnected</span>
+					<div class="status-indicator" id="statusIndicator"></div>
+				</div>
+				
+				<div class="connection-controls">
+					<button id="createRoomBtn" class="btn btn-primary">Create Room</button>
+					<div class="room-info" id="roomInfo" style="display: none;">
+						<label>Room ID:</label>
+						<input type="text" id="roomId" readonly>
+						<button id="copyRoomBtn" class="btn btn-small">Copy</button>
+					</div>
+					
+					<div class="join-room">
+						<label>Join Room:</label>
+						<input type="text" id="joinRoomId" placeholder="Enter Room ID">
+						<button id="joinRoomBtn" class="btn btn-secondary">Join</button>
+					</div>
+				</div>
+			</div>
+
+			<div class="chat-panel">
+				<h3>Chat</h3>
+				<div class="messages" id="messages">
+					<div class="system-message">Welcome! Create a room or join an existing one to start chatting.</div>
+				</div>
+				
+				<div class="chat-input-container">
+					<input type="text" id="messageInput" placeholder="Type your message..." disabled>
+					<button id="sendBtn" class="btn btn-primary" disabled>Send</button>
+				</div>
+			</div>
+
+			<div class="info-panel">
+				<h3>How it works</h3>
+				<div class="info-content">
+                    <p><strong>Instructions:</strong></p>
+					<ol>
+						<li>Click "Create Room" to generate a room ID</li>
+						<li>Share the room ID with someone</li>
+						<li>They enter the room ID and click "Join"</li>
+						<li>Start chatting directly peer-to-peer!</li>
+					</ol>
+					
+					<p><em>Note: This demo uses a simple signaling mechanism. In production, you'd use a proper signaling server.</em></p>
+				</div>
+			</div>
+		</main>
+
+		<footer>
+			<div class="tech-info">
+				
+			</div>
+		</footer>
+
+	</body>
+</html>

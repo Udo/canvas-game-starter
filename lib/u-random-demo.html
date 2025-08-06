@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>u-random.js Demo</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+        .demo-section { margin-bottom: 30px; padding: 20px; border: 1px solid #ccc; border-radius: 5px; }
+        .demo-section h3 { margin-top: 0; color: #333; }
+        canvas { border: 1px solid #ccc; margin: 10px 0; }
+        .controls { margin: 10px 0; }
+        .control-group { margin: 5px 0; }
+        input[type="number"], input[type="range"] { margin: 5px; }
+        button { padding: 8px 12px; margin: 5px; cursor: pointer; }
+        .output { background: #f9f9f9; padding: 10px; border-radius: 3px; margin: 10px 0; font-family: monospace; }
+        .noise-pixel { display: inline-block; margin: 1px; }
+        .stats { background: #e8f5e8; padding: 10px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>u-random.js Deterministic Random Number Generator Demo</h1>
+    <p>Based on the Squirrel3 hash algorithm, providing consistent pseudo-random sequences.</p>
+
+    <div class="demo-section">
+        <h3>1. Basic Random Number Generation</h3>
+        <div class="controls">
+            <div class="control-group">
+                <label>Seed: </label>
+                <input type="number" id="basic-seed" value="12345" min="0">
+                <label>Position: </label>
+                <input type="number" id="basic-position" value="0" min="0">
+                <button onclick="generateBasicRandom()">Generate</button>
+            </div>
+        </div>
+        <div class="output" id="basic-output"></div>
+        <p><strong>Note:</strong> Same seed + position = same result every time!</p>
+    </div>
+
+    <div class="demo-section">
+        <h3>2. Random Series Generator</h3>
+        <div class="controls">
+            <div class="control-group">
+                <label>Series Seed: </label>
+                <input type="number" id="series-seed" value="42" min="0">
+                <button onclick="createRandomSeries()">Create Series</button>
+                <button onclick="generateFromSeries()">Get Next 10 Numbers</button>
+                <button onclick="resetSeries()">Reset Series</button>
+            </div>
+        </div>
+        <div class="output" id="series-output"></div>
+        <div id="series-stats" class="stats"></div>
+    </div>
+
+    <div class="demo-section">
+        <h3>3. Noise Visualization</h3>
+        <p>Visualize 1D noise patterns using different seeds:</p>
+        <div class="controls">
+            <div class="control-group">
+                <label>Seed: </label>
+                <input type="range" id="noise-seed" min="0" max="1000" value="100" oninput="updateNoise()">
+                <span id="noise-seed-value">100</span>
+                <label>Width: </label>
+                <input type="range" id="noise-width" min="50" max="500" value="200" oninput="updateNoise()">
+                <span id="noise-width-value">200</span>
+            </div>
+        </div>
+        <canvas id="noise-canvas" width="600" height="150"></canvas>
+        <p>Each vertical line represents get_noise_01(position, seed)</p>
+    </div>
+
+    <div class="demo-section">
+        <h3>4. 2D Noise Pattern</h3>
+        <p>Generate 2D noise patterns by combining X and Y coordinates:</p>
+        <div class="controls">
+            <div class="control-group">
+                <label>Seed: </label>
+                <input type="range" id="noise2d-seed" min="0" max="1000" value="200" oninput="updateNoise2D()">
+                <span id="noise2d-seed-value">200</span>
+                <label>Scale: </label>
+                <input type="range" id="noise2d-scale" min="1" max="20" value="5" oninput="updateNoise2D()">
+                <span id="noise2d-scale-value">5</span>
+            </div>
+        </div>
+        <canvas id="noise2d-canvas" width="200" height="200"></canvas>
+        <p>Each pixel color represents noise value at that coordinate</p>
+    </div>
+
+    <div class="demo-section">
+        <h3>5. Random Distribution Analysis</h3>
+        <div class="controls">
+            <div class="control-group">
+                <label>Sample Size: </label>
+                <input type="number" id="analysis-samples" value="10000" min="1000" max="100000" step="1000">
+                <label>Seed: </label>
+                <input type="number" id="analysis-seed" value="777" min="0">
+                <button onclick="analyzeDistribution()">Analyze Distribution</button>
+            </div>
+        </div>
+        <canvas id="histogram-canvas" width="600" height="300"></canvas>
+        <div id="distribution-stats" class="stats"></div>
+    </div>
+
+    <div class="demo-section">
+        <h3>6. Practical Applications</h3>
+        
+        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+            <div>
+                <h4>Procedural Terrain</h4>
+                <canvas id="terrain-canvas" width="200" height="150"></canvas>
+                <div>
+                    <button onclick="generateTerrain()">Generate New Terrain</button>
+                </div>
+            </div>
+            
+            <div>
+                <h4>Random Color Palette</h4>
+                <canvas id="palette-canvas" width="200" height="150"></canvas>
+                <div>
+                    <button onclick="generatePalette()">Generate Palette</button>
+                </div>
+            </div>
+            
+            <div>
+                <h4>Particle System</h4>
+                <canvas id="particles-canvas" width="200" height="150"></canvas>
+                <div>
+                    <button onclick="startParticles()">Start Animation</button>
+                    <button onclick="stopParticles()">Stop</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="demo-section">
+        <h3>7. Seed Comparison</h3>
+        <p>Compare how different seeds affect the same sequence:</p>
+        <div class="controls">
+            <button onclick="compareSeedsVisualization()">Generate Comparison</button>
+        </div>
+        <canvas id="comparison-canvas" width="600" height="400"></canvas>
+    </div>
+
+    <script src="u-random.js"></script>
+    <script>
+        let currentSeries = null;
+        let particleAnimation = null;
+
+        function generateBasicRandom() {
+            const seed = parseInt(document.getElementById('basic-seed').value);
+            const position = parseInt(document.getElementById('basic-position').value);
+            
+            const result = get_noise_01(position, seed);
+            
+            document.getElementById('basic-output').innerHTML = `
+get_noise_01(${position}, ${seed}) = ${result.toFixed(6)}
+
+Try changing the position to see the next values in the sequence:
+Position ${position + 1}: ${get_noise_01(position + 1, seed).toFixed(6)}
+Position ${position + 2}: ${get_noise_01(position + 2, seed).toFixed(6)}
+Position ${position + 3}: ${get_noise_01(position + 3, seed).toFixed(6)}
+            `;
+        }
+
+        function createRandomSeries() {
+            const seed = parseInt(document.getElementById('series-seed').value);
+            currentSeries = new RandomSeries(seed);
+            
+            document.getElementById('series-output').innerHTML = `
+Random series created with seed: ${seed}
+Click "Get Next 10 Numbers" to generate values.
+            `;
+            
+            updateSeriesStats();
+        }
+
+        function generateFromSeries() {
+            if (!currentSeries) {
+                createRandomSeries();
+            }
+            
+            let output = 'Next 10 numbers from series:\n';
+            for (let i = 0; i < 10; i++) {
+                const value = currentSeries.get();
+                output += `${i + 1}: ${value.toFixed(6)}\n`;
+            }
+            
+            document.getElementById('series-output').innerHTML = output;
+            updateSeriesStats();
+        }
+
+        function resetSeries() {
+            const seed = parseInt(document.getElementById('series-seed').value);
+            currentSeries = new RandomSeries(seed);
+            document.getElementById('series-output').innerHTML = `Series reset to seed: ${seed}`;
+            updateSeriesStats();
+        }
+
+        function updateSeriesStats() {
+            if (!currentSeries) return;
+            
+            document.getElementById('series-stats').innerHTML = `
+                <strong>Series Info:</strong><br>
+                Seed: ${currentSeries.seed}<br>
+                Current Position: ${currentSeries.position}
+            `;
+        }
+
+        function updateNoise() {
+            const seed = parseInt(document.getElementById('noise-seed').value);
+            const width = parseInt(document.getElementById('noise-width').value);
+            
+            document.getElementById('noise-seed-value').textContent = seed;
+            document.getElementById('noise-width-value').textContent = width;
+            
+            const canvas = document.getElementById('noise-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw noise
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            
+            for (let x = 0; x < width; x++) {
+                const noise = get_noise_01(x, seed);
+                const y = canvas.height - (noise * canvas.height);
+                
+                if (x === 0) {
+                    ctx.moveTo(x * (canvas.width / width), y);
+                } else {
+                    ctx.lineTo(x * (canvas.width / width), y);
+                }
+            }
+            ctx.stroke();
+            
+            // Draw grid
+            ctx.strokeStyle = '#eee';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 10; i++) {
+                const y = (i / 10) * canvas.height;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+        }
+
+        function updateNoise2D() {
+            const seed = parseInt(document.getElementById('noise2d-seed').value);
+            const scale = parseInt(document.getElementById('noise2d-scale').value);
+            
+            document.getElementById('noise2d-seed-value').textContent = seed;
+            document.getElementById('noise2d-scale-value').textContent = scale;
+            
+            const canvas = document.getElementById('noise2d-canvas');
+            const ctx = canvas.getContext('2d');
+            const imageData = ctx.createImageData(canvas.width, canvas.height);
+            
+            for (let y = 0; y < canvas.height; y++) {
+                for (let x = 0; x < canvas.width; x++) {
+                    // Combine x and y into a single position value
+                    const position = (x * scale) + (y * scale * canvas.width);
+                    const noise = get_noise_01(position, seed);
+                    
+                    const intensity = Math.floor(noise * 255);
+                    const index = (y * canvas.width + x) * 4;
+                    
+                    imageData.data[index] = intensity;     // R
+                    imageData.data[index + 1] = intensity; // G
+                    imageData.data[index + 2] = intensity; // B
+                    imageData.data[index + 3] = 255;       // A
+                }
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        function analyzeDistribution() {
+            const samples = parseInt(document.getElementById('analysis-samples').value);
+            const seed = parseInt(document.getElementById('analysis-seed').value);
+            
+            const canvas = document.getElementById('histogram-canvas');
+            const ctx = canvas.getContext('2d');
+            const bins = 50;
+            const histogram = new Array(bins).fill(0);
+            
+            let sum = 0;
+            let min = 1;
+            let max = 0;
+            
+            // Generate samples and build histogram
+            for (let i = 0; i < samples; i++) {
+                const value = get_noise_01(i, seed);
+                sum += value;
+                min = Math.min(min, value);
+                max = Math.max(max, value);
+                
+                const binIndex = Math.floor(value * bins);
+                if (binIndex < bins) {
+                    histogram[binIndex]++;
+                }
+            }
+            
+            const mean = sum / samples;
+            
+            // Calculate standard deviation
+            let variance = 0;
+            for (let i = 0; i < samples; i++) {
+                const value = get_noise_01(i, seed);
+                variance += Math.pow(value - mean, 2);
+            }
+            const stdDev = Math.sqrt(variance / samples);
+            
+            // Draw histogram
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const maxCount = Math.max(...histogram);
+            const barWidth = canvas.width / bins;
+            const margin = 40;
+            const plotHeight = canvas.height - 2 * margin;
+            
+            ctx.fillStyle = '#4ecdc4';
+            for (let i = 0; i < bins; i++) {
+                const barHeight = (histogram[i] / maxCount) * plotHeight;
+                const x = i * barWidth;
+                const y = canvas.height - margin - barHeight;
+                
+                ctx.fillRect(x, y, barWidth - 1, barHeight);
+            }
+            
+            // Draw mean line
+            ctx.strokeStyle = '#e74c3c';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            const meanX = mean * canvas.width;
+            ctx.moveTo(meanX, margin);
+            ctx.lineTo(meanX, canvas.height - margin);
+            ctx.stroke();
+            
+            // Update stats
+            document.getElementById('distribution-stats').innerHTML = `
+                <strong>Distribution Analysis (${samples} samples):</strong><br>
+                Mean: ${mean.toFixed(6)} (should be ~0.5)<br>
+                Standard Deviation: ${stdDev.toFixed(6)} (should be ~0.289)<br>
+                Min: ${min.toFixed(6)}<br>
+                Max: ${max.toFixed(6)}<br>
+                Range: ${(max - min).toFixed(6)}<br>
+                <span style="color: #e74c3c;">■</span> Red line shows mean value
+            `;
+        }
+
+        function generateTerrain() {
+            const canvas = document.getElementById('terrain-canvas');
+            const ctx = canvas.getContext('2d');
+            const seed = Math.floor(Math.random() * 1000);
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Generate terrain height map
+            const heights = [];
+            for (let x = 0; x < canvas.width; x++) {
+                let height = 0;
+                // Multiple octaves of noise
+                height += get_noise_01(x * 0.01, seed) * 0.5;
+                height += get_noise_01(x * 0.02, seed + 1) * 0.25;
+                height += get_noise_01(x * 0.05, seed + 2) * 0.125;
+                heights.push(height * canvas.height);
+            }
+            
+            // Draw terrain
+            ctx.fillStyle = '#4a5d23';
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height);
+            for (let x = 0; x < canvas.width; x++) {
+                ctx.lineTo(x, canvas.height - heights[x]);
+            }
+            ctx.lineTo(canvas.width, canvas.height);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Draw sky
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#87CEEB');
+            gradient.addColorStop(1, '#E0F6FF');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, Math.min(...heights.map(h => canvas.height - h)));
+        }
+
+        function generatePalette() {
+            const canvas = document.getElementById('palette-canvas');
+            const ctx = canvas.getContext('2d');
+            const seed = Math.floor(Math.random() * 1000);
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const colorCount = 8;
+            const colorWidth = canvas.width / colorCount;
+            
+            for (let i = 0; i < colorCount; i++) {
+                const r = Math.floor(get_noise_01(i * 3, seed) * 255);
+                const g = Math.floor(get_noise_01(i * 3 + 1, seed + 100) * 255);
+                const b = Math.floor(get_noise_01(i * 3 + 2, seed + 200) * 255);
+                
+                ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+                ctx.fillRect(i * colorWidth, 0, colorWidth, canvas.height);
+            }
+        }
+
+        function startParticles() {
+            if (particleAnimation) return;
+            
+            const canvas = document.getElementById('particles-canvas');
+            const ctx = canvas.getContext('2d');
+            const seed = Math.floor(Math.random() * 1000);
+            const particles = [];
+            
+            // Initialize particles
+            for (let i = 0; i < 50; i++) {
+                particles.push({
+                    x: get_noise_01(i * 2, seed) * canvas.width,
+                    y: get_noise_01(i * 2 + 1, seed + 100) * canvas.height,
+                    vx: (get_noise_01(i * 3, seed + 200) - 0.5) * 2,
+                    vy: (get_noise_01(i * 3 + 1, seed + 300) - 0.5) * 2,
+                    color: `hsl(${get_noise_01(i, seed + 400) * 360}, 70%, 60%)`
+                });
+            }
+            
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                particles.forEach(particle => {
+                    // Update position
+                    particle.x += particle.vx;
+                    particle.y += particle.vy;
+                    
+                    // Bounce off walls
+                    if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1;
+                    if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1;
+                    
+                    // Keep in bounds
+                    particle.x = Math.max(0, Math.min(canvas.width, particle.x));
+                    particle.y = Math.max(0, Math.min(canvas.height, particle.y));
+                    
+                    // Draw particle
+                    ctx.fillStyle = particle.color;
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, 3, 0, 2 * Math.PI);
+                    ctx.fill();
+                });
+                
+                particleAnimation = requestAnimationFrame(animate);
+            }
+            
+            animate();
+        }
+
+        function stopParticles() {
+            if (particleAnimation) {
+                cancelAnimationFrame(particleAnimation);
+                particleAnimation = null;
+            }
+        }
+
+        function compareSeedsVisualization() {
+            const canvas = document.getElementById('comparison-canvas');
+            const ctx = canvas.getContext('2d');
+            const seeds = [42, 123, 456, 789];
+            const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12'];
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw grid
+            ctx.strokeStyle = '#f0f0f0';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 10; i++) {
+                const y = (i / 10) * canvas.height;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+            
+            // Draw each seed's sequence
+            seeds.forEach((seed, seedIndex) => {
+                ctx.strokeStyle = colors[seedIndex];
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                
+                for (let x = 0; x < canvas.width; x++) {
+                    const noise = get_noise_01(x, seed);
+                    const y = canvas.height - (noise * canvas.height);
+                    
+                    if (x === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.stroke();
+            });
+            
+            // Draw legend
+            ctx.fillStyle = '#333';
+            ctx.font = '12px Arial';
+            seeds.forEach((seed, index) => {
+                ctx.fillStyle = colors[index];
+                ctx.fillText(`■ Seed ${seed}`, 10 + index * 80, 20);
+            });
+        }
+
+        // Initialize demos
+        document.addEventListener('DOMContentLoaded', function() {
+            generateBasicRandom();
+            updateNoise();
+            updateNoise2D();
+            generateTerrain();
+            generatePalette();
+        });
+    </script>
+</body>
+</html>

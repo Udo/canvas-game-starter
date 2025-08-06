@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>u-parametrics.js Demo</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+        .demo-section { margin-bottom: 30px; padding: 20px; border: 1px solid #ccc; border-radius: 5px; }
+        .demo-section h3 { margin-top: 0; color: #333; }
+        canvas { border: 1px solid #ccc; margin: 10px 0; }
+        .controls { margin: 10px 0; }
+        .control-group { margin: 5px 0; }
+        input[type="range"] { width: 200px; }
+        .function-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+        .function-btn { padding: 8px; cursor: pointer; border: 1px solid #ccc; text-align: center; border-radius: 3px; }
+        .function-btn:hover { background-color: #f0f0f0; }
+        .function-btn.active { background-color: #d4edda; border-color: #28a745; }
+    </style>
+</head>
+<body>
+    <h1>u-parametrics.js Easing Functions Demo</h1>
+    <p>A collection of parametric easing functions for smooth animations and transitions.</p>
+
+    <div class="demo-section">
+        <h3>1. Interactive Function Visualizer</h3>
+        <p>Select an easing function to see its curve:</p>
+        
+        <div class="function-list" id="function-buttons">
+            <!-- Function buttons will be populated by JavaScript -->
+        </div>
+        
+        <canvas id="curve-canvas" width="600" height="300"></canvas>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>Animation Speed: </label>
+                <input type="range" id="speed-slider" min="0.5" max="5" step="0.1" value="2">
+                <span id="speed-value">2.0</span>s
+            </div>
+            <div class="control-group">
+                <button onclick="toggleAnimation()" id="anim-btn">Start Animation</button>
+                <button onclick="resetAnimation()">Reset</button>
+            </div>
+        </div>
+        
+        <div id="function-info"></div>
+    </div>
+
+    <div class="demo-section">
+        <h3>2. Function Comparison</h3>
+        <p>Compare multiple easing functions side by side:</p>
+        <canvas id="comparison-canvas" width="600" height="400"></canvas>
+        
+        <div class="controls">
+            <button onclick="addFunctionToComparison('smooth_start21')">Add Smooth Start²</button>
+            <button onclick="addFunctionToComparison('smooth_start31')">Add Smooth Start³</button>
+            <button onclick="addFunctionToComparison('parabola1')">Add Parabola</button>
+            <button onclick="addFunctionToComparison('sin1')">Add Sine</button>
+            <button onclick="addFunctionToComparison('logistic1')">Add Logistic</button>
+            <button onclick="clearComparison()">Clear All</button>
+        </div>
+        
+        <div id="comparison-legend"></div>
+    </div>
+
+    <div class="demo-section">
+        <h3>3. Real-world Animation Examples</h3>
+        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+            <div>
+                <h4>Bouncing Ball</h4>
+                <canvas id="ball-canvas" width="200" height="150"></canvas>
+                <div>
+                    <button onclick="animateBall('parabola1')">Parabola</button>
+                    <button onclick="animateBall('smooth_start31')">Cubic</button>
+                </div>
+            </div>
+            
+            <div>
+                <h4>Loading Bar</h4>
+                <canvas id="loading-canvas" width="200" height="50"></canvas>
+                <div>
+                    <button onclick="animateLoading('lerp')">Linear</button>
+                    <button onclick="animateLoading('logistic1')">Logistic</button>
+                </div>
+            </div>
+            
+            <div>
+                <h4>UI Element Fade</h4>
+                <canvas id="fade-canvas" width="200" height="100"></canvas>
+                <div>
+                    <button onclick="animateFade('sin1')">Sine</button>
+                    <button onclick="animateFade('tanh1')">Tanh</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="demo-section">
+        <h3>4. Custom Function Builder</h3>
+        <p>Experiment with function parameters:</p>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>Logistic steepness (a): </label>
+                <input type="range" id="logistic-a" min="1" max="20" step="0.5" value="10" oninput="updateCustomFunction()">
+                <span id="logistic-a-value">10</span>
+            </div>
+            <div class="control-group">
+                <label>Step position: </label>
+                <input type="range" id="step-pos" min="0" max="1" step="0.05" value="0.5" oninput="updateCustomFunction()">
+                <span id="step-pos-value">0.5</span>
+            </div>
+        </div>
+        
+        <canvas id="custom-canvas" width="600" height="300"></canvas>
+    </div>
+
+    <script src="u-parametrics.js"></script>
+    <script>
+        // Available functions with descriptions
+        const easingFunctions = {
+            'lerp': { func: (t) => lerp(t), name: 'Linear', desc: 'Constant rate of change' },
+            'sin1': { func: sin1, name: 'Sine', desc: 'Smooth start and end' },
+            'smooth_start21': { func: smooth_start21, name: 'Smooth Start²', desc: 'Slow start, fast end' },
+            'smooth_start31': { func: smooth_start31, name: 'Smooth Start³', desc: 'Very slow start, very fast end' },
+            'parabola1': { func: parabola1, name: 'Parabola', desc: 'Fast start and end, slow middle' },
+            'flip1': { func: flip1, name: 'Flip', desc: 'Inverts the value (1-t)' },
+            'step1': { func: (t) => step1(t), name: 'Step', desc: 'Sharp transition at midpoint' },
+            'logistic1': { func: (t) => logistic1(t), name: 'Logistic', desc: 'S-curve transition' },
+            'tanh1': { func: (t) => tanh1(t), name: 'Tanh', desc: 'Smooth S-curve' }
+        };
+
+        let currentFunction = 'sin1';
+        let animationRunning = false;
+        let animationTime = 0;
+        let comparisonFunctions = [];
+        const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3', '#54a0ff'];
+
+        // Initialize function buttons
+        function initializeFunctionButtons() {
+            const container = document.getElementById('function-buttons');
+            Object.keys(easingFunctions).forEach(key => {
+                const btn = document.createElement('div');
+                btn.className = `function-btn ${key === currentFunction ? 'active' : ''}`;
+                btn.textContent = easingFunctions[key].name;
+                btn.onclick = () => selectFunction(key);
+                btn.id = `btn-${key}`;
+                container.appendChild(btn);
+            });
+        }
+
+        function selectFunction(funcName) {
+            // Update active button
+            document.querySelectorAll('.function-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`btn-${funcName}`).classList.add('active');
+            
+            currentFunction = funcName;
+            drawCurve();
+            updateFunctionInfo();
+        }
+
+        function drawCurve() {
+            const canvas = document.getElementById('curve-canvas');
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            const margin = 40;
+            const plotWidth = width - 2 * margin;
+            const plotHeight = height - 2 * margin;
+
+            // Clear canvas
+            ctx.clearRect(0, 0, width, height);
+
+            // Draw grid
+            ctx.strokeStyle = '#f0f0f0';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 10; i++) {
+                const x = margin + (i / 10) * plotWidth;
+                const y = margin + (i / 10) * plotHeight;
+                
+                ctx.beginPath();
+                ctx.moveTo(x, margin);
+                ctx.lineTo(x, height - margin);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(margin, y);
+                ctx.lineTo(width - margin, y);
+                ctx.stroke();
+            }
+
+            // Draw axes
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(margin, margin);
+            ctx.lineTo(margin, height - margin);
+            ctx.lineTo(width - margin, height - margin);
+            ctx.stroke();
+
+            // Draw function curve
+            ctx.strokeStyle = '#e74c3c';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            
+            const func = easingFunctions[currentFunction].func;
+            for (let i = 0; i <= plotWidth; i++) {
+                const t = i / plotWidth;
+                const value = clamp1(func(t));
+                const x = margin + i;
+                const y = height - margin - value * plotHeight;
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            ctx.stroke();
+
+            // Draw animated point if animation is running
+            if (animationRunning) {
+                const t = (animationTime % 1);
+                const value = clamp1(func(t));
+                const x = margin + t * plotWidth;
+                const y = height - margin - value * plotHeight;
+                
+                ctx.fillStyle = '#3498db';
+                ctx.beginPath();
+                ctx.arc(x, y, 6, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+
+            // Add labels
+            ctx.fillStyle = '#333';
+            ctx.font = '12px Arial';
+            ctx.fillText('0', margin - 15, height - margin + 5);
+            ctx.fillText('1', margin - 15, margin + 5);
+            ctx.fillText('0', margin - 5, height - margin + 15);
+            ctx.fillText('1', width - margin - 5, height - margin + 15);
+            ctx.fillText('t →', width / 2 - 10, height - 10);
+            
+            ctx.save();
+            ctx.translate(15, height / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('f(t) →', -20, 0);
+            ctx.restore();
+        }
+
+        function updateFunctionInfo() {
+            const info = easingFunctions[currentFunction];
+            document.getElementById('function-info').innerHTML = `
+                <strong>${info.name}</strong>: ${info.desc}
+            `;
+        }
+
+        function toggleAnimation() {
+            const btn = document.getElementById('anim-btn');
+            if (animationRunning) {
+                animationRunning = false;
+                btn.textContent = 'Start Animation';
+            } else {
+                animationRunning = true;
+                btn.textContent = 'Stop Animation';
+                animate();
+            }
+        }
+
+        function resetAnimation() {
+            animationTime = 0;
+            drawCurve();
+        }
+
+        function animate() {
+            if (!animationRunning) return;
+            
+            const speed = parseFloat(document.getElementById('speed-slider').value);
+            animationTime += 0.016 * speed; // ~60fps
+            
+            drawCurve();
+            requestAnimationFrame(animate);
+        }
+
+        // Update speed display
+        document.getElementById('speed-slider').oninput = function() {
+            document.getElementById('speed-value').textContent = this.value;
+        };
+
+        // Comparison functions
+        function addFunctionToComparison(funcName) {
+            if (!comparisonFunctions.includes(funcName)) {
+                comparisonFunctions.push(funcName);
+                drawComparison();
+                updateComparisonLegend();
+            }
+        }
+
+        function clearComparison() {
+            comparisonFunctions = [];
+            drawComparison();
+            updateComparisonLegend();
+        }
+
+        function drawComparison() {
+            const canvas = document.getElementById('comparison-canvas');
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            const margin = 40;
+            const plotWidth = width - 2 * margin;
+            const plotHeight = height - 2 * margin;
+
+            // Clear canvas
+            ctx.clearRect(0, 0, width, height);
+
+            // Draw grid and axes (same as before)
+            ctx.strokeStyle = '#f0f0f0';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 10; i++) {
+                const x = margin + (i / 10) * plotWidth;
+                const y = margin + (i / 10) * plotHeight;
+                
+                ctx.beginPath();
+                ctx.moveTo(x, margin);
+                ctx.lineTo(x, height - margin);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(margin, y);
+                ctx.lineTo(width - margin, y);
+                ctx.stroke();
+            }
+
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(margin, margin);
+            ctx.lineTo(margin, height - margin);
+            ctx.lineTo(width - margin, height - margin);
+            ctx.stroke();
+
+            // Draw each function
+            comparisonFunctions.forEach((funcName, index) => {
+                const func = easingFunctions[funcName].func;
+                ctx.strokeStyle = colors[index % colors.length];
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                
+                for (let i = 0; i <= plotWidth; i++) {
+                    const t = i / plotWidth;
+                    const value = clamp1(func(t));
+                    const x = margin + i;
+                    const y = height - margin - value * plotHeight;
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.stroke();
+            });
+        }
+
+        function updateComparisonLegend() {
+            const legend = document.getElementById('comparison-legend');
+            let html = '';
+            comparisonFunctions.forEach((funcName, index) => {
+                const color = colors[index % colors.length];
+                const name = easingFunctions[funcName].name;
+                html += `<span style="color: ${color}; font-weight: bold;">■ ${name}</span> `;
+            });
+            legend.innerHTML = html;
+        }
+
+        // Animation examples
+        function animateBall(easingFunc) {
+            const canvas = document.getElementById('ball-canvas');
+            const ctx = canvas.getContext('2d');
+            const func = easingFunctions[easingFunc].func;
+            let t = 0;
+
+            function frame() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                const value = func(t);
+                const x = 20 + (canvas.width - 40) * t;
+                const y = canvas.height - 20 - value * (canvas.height - 40);
+                
+                ctx.fillStyle = '#e74c3c';
+                ctx.beginPath();
+                ctx.arc(x, y, 10, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                t += 0.01;
+                if (t <= 1) {
+                    requestAnimationFrame(frame);
+                }
+            }
+            frame();
+        }
+
+        function animateLoading(easingFunc) {
+            const canvas = document.getElementById('loading-canvas');
+            const ctx = canvas.getContext('2d');
+            const func = easingFunctions[easingFunc].func;
+            let t = 0;
+
+            function frame() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Background
+                ctx.fillStyle = '#f0f0f0';
+                ctx.fillRect(10, 15, canvas.width - 20, 20);
+                
+                // Progress
+                const progress = func(t);
+                ctx.fillStyle = '#4ecdc4';
+                ctx.fillRect(10, 15, progress * (canvas.width - 20), 20);
+                
+                t += 0.01;
+                if (t <= 1) {
+                    requestAnimationFrame(frame);
+                }
+            }
+            frame();
+        }
+
+        function animateFade(easingFunc) {
+            const canvas = document.getElementById('fade-canvas');
+            const ctx = canvas.getContext('2d');
+            const func = easingFunctions[easingFunc].func;
+            let t = 0;
+
+            function frame() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                const alpha = func(t);
+                ctx.fillStyle = `rgba(52, 152, 219, ${alpha})`;
+                ctx.fillRect(50, 25, 100, 50);
+                
+                ctx.fillStyle = '#333';
+                ctx.font = '12px Arial';
+                ctx.fillText(`Alpha: ${alpha.toFixed(2)}`, 10, 90);
+                
+                t += 0.01;
+                if (t <= 1) {
+                    requestAnimationFrame(frame);
+                }
+            }
+            frame();
+        }
+
+        // Custom function builder
+        function updateCustomFunction() {
+            const aValue = parseFloat(document.getElementById('logistic-a').value);
+            const stepPos = parseFloat(document.getElementById('step-pos').value);
+            
+            document.getElementById('logistic-a-value').textContent = aValue;
+            document.getElementById('step-pos-value').textContent = stepPos;
+            
+            drawCustomFunctions(aValue, stepPos);
+        }
+
+        function drawCustomFunctions(aValue, stepPos) {
+            const canvas = document.getElementById('custom-canvas');
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            const margin = 40;
+            const plotWidth = width - 2 * margin;
+            const plotHeight = height - 2 * margin;
+
+            // Clear and draw grid/axes
+            ctx.clearRect(0, 0, width, height);
+            
+            // Grid
+            ctx.strokeStyle = '#f0f0f0';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 10; i++) {
+                const x = margin + (i / 10) * plotWidth;
+                const y = margin + (i / 10) * plotHeight;
+                
+                ctx.beginPath();
+                ctx.moveTo(x, margin);
+                ctx.lineTo(x, height - margin);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(margin, y);
+                ctx.lineTo(width - margin, y);
+                ctx.stroke();
+            }
+
+            // Axes
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(margin, margin);
+            ctx.lineTo(margin, height - margin);
+            ctx.lineTo(width - margin, height - margin);
+            ctx.stroke();
+
+            // Draw custom logistic function
+            ctx.strokeStyle = '#e74c3c';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            
+            for (let i = 0; i <= plotWidth; i++) {
+                const t = i / plotWidth;
+                const value = clamp1(logistic1(t, aValue));
+                const x = margin + i;
+                const y = height - margin - value * plotHeight;
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            ctx.stroke();
+
+            // Draw custom step function
+            ctx.strokeStyle = '#3498db';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            
+            for (let i = 0; i <= plotWidth; i++) {
+                const t = i / plotWidth;
+                const value = clamp1(step1(t, stepPos));
+                const x = margin + i;
+                const y = height - margin - value * plotHeight;
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            ctx.stroke();
+
+            // Legend
+            ctx.fillStyle = '#333';
+            ctx.font = '12px Arial';
+            ctx.fillStyle = '#e74c3c';
+            ctx.fillText(`■ Logistic (a=${aValue})`, margin, height - 10);
+            ctx.fillStyle = '#3498db';
+            ctx.fillText(`■ Step (pos=${stepPos})`, margin + 150, height - 10);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeFunctionButtons();
+            drawCurve();
+            updateFunctionInfo();
+            drawComparison();
+            updateCustomFunction();
+        });
+    </script>
+</body>
+</html>

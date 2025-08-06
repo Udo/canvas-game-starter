@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>u-query Demo</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+        .demo-section { margin-bottom: 30px; padding: 20px; border: 1px solid #ccc; border-radius: 5px; }
+        .demo-section h3 { margin-top: 0; color: #333; }
+        .code-block { background: #f5f5f5; padding: 10px; border-radius: 3px; margin: 10px 0; font-family: monospace; }
+        .output { background: #e8f5e8; padding: 10px; border-radius: 3px; margin: 10px 0; min-height: 40px; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        input { padding: 5px; margin: 5px; }
+        .test-element { padding: 10px; margin: 5px; border: 2px solid #ccc; background: #f9f9f9; }
+        .highlighted { background: yellow !important; }
+        .hidden { display: none; }
+        textarea { width: 100%; height: 100px; }
+        #ajax-result { border: 1px solid #ddd; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>u-query Demo</h1>
+    <p>A lightweight jQuery-like DOM manipulation library with modern JavaScript features.</p>
+
+    <div class="demo-section">
+        <h3>1. Element Selection</h3>
+        <div class="code-block">
+            $('selector') // Returns NodeList/Array<br>
+            $('.class'), $('#id'), $('tag')
+        </div>
+        <div class="test-element" id="test-1">Test Element 1</div>
+        <div class="test-element" id="test-2">Test Element 2</div>
+        <div class="test-element special" id="test-3">Test Element 3 (special)</div>
+        <button onclick="selectionDemo()">Test Selection</button>
+        <div class="output" id="selection-output"></div>
+    </div>
+
+    <div class="demo-section">
+        <h3>2. DOM Manipulation</h3>
+        <div class="code-block">
+            .html(content), .text(content), .append(content)
+        </div>
+        <div id="manipulation-target">Original content</div>
+        <button onclick="htmlDemo()">Change HTML</button>
+        <button onclick="textDemo()">Change Text</button>
+        <button onclick="appendDemo()">Append Content</button>
+        <button onclick="resetManipulation()">Reset</button>
+        <div class="output" id="manipulation-output"></div>
+    </div>
+
+    <div class="demo-section">
+        <h3>3. CSS and Classes</h3>
+        <div class="code-block">
+            .css(styles), .addClass(class), .removeClass(class)
+        </div>
+        <div class="test-element" id="css-target">CSS Target Element</div>
+        <button onclick="cssDemo()">Apply CSS</button>
+        <button onclick="addClassDemo()">Add Class</button>
+        <button onclick="removeClassDemo()">Remove Class</button>
+        <button onclick="resetCSS()">Reset CSS</button>
+        <div class="output" id="css-output"></div>
+    </div>
+
+    <div class="demo-section">
+        <h3>4. Event Handling</h3>
+        <div class="code-block">
+            .on(event, handler), .off(event, handler)
+        </div>
+        <button id="event-button">Click Me!</button>
+        <button onclick="addEventHandler()">Add Click Handler</button>
+        <button onclick="removeEventHandler()">Remove Handler</button>
+        <div class="output" id="event-output"></div>
+    </div>
+
+    <div class="demo-section">
+        <h3>5. Show/Hide/Toggle</h3>
+        <div class="code-block">
+            .show(), .hide(), .toggle()
+        </div>
+        <div class="test-element" id="toggle-target">Toggle me!</div>
+        <button onclick="$('#toggle-target').hide()">Hide</button>
+        <button onclick="$('#toggle-target').show()">Show</button>
+        <button onclick="$('#toggle-target').toggle()">Toggle</button>
+        <div class="output" id="toggle-output">Element visibility controls above</div>
+    </div>
+
+    <div class="demo-section">
+        <h3>6. AJAX Utilities</h3>
+        <div class="code-block">
+            $.get(url, callback), $.post(url, data, callback)
+        </div>
+        <button onclick="ajaxDemo()">Test AJAX (JSON Placeholder)</button>
+        <button onclick="postDemo()">Test POST</button>
+        <div id="ajax-result">AJAX results will appear here...</div>
+    </div>
+
+    <div class="demo-section">
+        <h3>7. Global Event System</h3>
+        <div class="code-block">
+            $.on(event, handler), $.emit(event, data), $.off(event, handler)
+        </div>
+        <input type="text" id="global-event-data" placeholder="Event data" value="Hello global events!">
+        <button onclick="addGlobalListener()">Add Global Listener</button>
+        <button onclick="emitGlobalEvent()">Emit Global Event</button>
+        <button onclick="removeGlobalListener()">Remove Listener</button>
+        <div class="output" id="global-output"></div>
+    </div>
+
+    <div class="demo-section">
+        <h3>8. Utility Functions</h3>
+        <div class="code-block">
+            $.each(selector, callback), $.ready(callback)
+        </div>
+        <div class="test-element util-target">Utility Element 1</div>
+        <div class="test-element util-target">Utility Element 2</div>
+        <div class="test-element util-target">Utility Element 3</div>
+        <button onclick="eachDemo()">Test $.each</button>
+        <button onclick="readyDemo()">Test $.ready</button>
+        <div class="output" id="utility-output"></div>
+    </div>
+
+    <div class="demo-section">
+        <h3>9. Method Chaining</h3>
+        <div class="code-block">
+            $('.test-element').addClass('highlighted').css({color: 'red'}).show()
+        </div>
+        <button onclick="chainingDemo()">Demo Method Chaining</button>
+        <button onclick="resetChaining()">Reset</button>
+        <div class="output" id="chaining-output"></div>
+    </div>
+
+    <script src="u-query.js"></script>
+    <script>
+        let clickHandler, globalHandler;
+
+        // Demo 1: Selection
+        function selectionDemo() {
+            const output = document.getElementById('selection-output');
+            output.innerHTML = '';
+            
+            const allTestElements = $('.test-element');
+            const specialElement = $('.special');
+            const byId = $('#test-2');
+            
+            output.innerHTML += `Found ${allTestElements.length} .test-element elements<br>`;
+            output.innerHTML += `Found ${specialElement.length} .special elements<br>`;
+            output.innerHTML += `Found by ID: ${byId.length > 0 ? byId[0].textContent : 'none'}<br>`;
+        }
+
+        // Demo 2: DOM Manipulation
+        function htmlDemo() {
+            $('#manipulation-target').html('<strong>HTML content changed!</strong>');
+            $('#manipulation-output').html('HTML content updated');
+        }
+
+        function textDemo() {
+            $('#manipulation-target').text('Text content changed!');
+            $('#manipulation-output').html('Text content updated');
+        }
+
+        function appendDemo() {
+            $('#manipulation-target').append(' <em>Appended content!</em>');
+            $('#manipulation-output').html('Content appended');
+        }
+
+        function resetManipulation() {
+            $('#manipulation-target').html('Original content');
+            $('#manipulation-output').html('Content reset');
+        }
+
+        // Demo 3: CSS and Classes
+        function cssDemo() {
+            $('#css-target').css({
+                'background-color': 'lightblue',
+                'color': 'darkblue',
+                'border-radius': '10px'
+            });
+            $('#css-output').html('CSS styles applied');
+        }
+
+        function addClassDemo() {
+            $('#css-target').addClass('highlighted');
+            $('#css-output').html('Class "highlighted" added');
+        }
+
+        function removeClassDemo() {
+            $('#css-target').removeClass('highlighted');
+            $('#css-output').html('Class "highlighted" removed');
+        }
+
+        function resetCSS() {
+            $('#css-target').css({
+                'background-color': '',
+                'color': '',
+                'border-radius': ''
+            }).removeClass('highlighted');
+            $('#css-output').html('CSS reset');
+        }
+
+        // Demo 4: Event Handling
+        function addEventHandler() {
+            clickHandler = function() {
+                $('#event-output').html('Button clicked! Handler is active.');
+            };
+            $('#event-button').on('click', clickHandler);
+            $('#event-output').html('Click handler added');
+        }
+
+        function removeEventHandler() {
+            if (clickHandler) {
+                $('#event-button').off('click', clickHandler);
+                $('#event-output').html('Click handler removed');
+            }
+        }
+
+        // Demo 6: AJAX
+        function ajaxDemo() {
+            $('#ajax-result').html('Loading...');
+            $.get('https://jsonplaceholder.typicode.com/posts/1', function(data) {
+                $('#ajax-result').html(`
+                    <h4>GET Response:</h4>
+                    <strong>Title:</strong> ${data.title}<br>
+                    <strong>Body:</strong> ${data.body}
+                `);
+            });
+        }
+
+        function postDemo() {
+            $('#ajax-result').html('Posting...');
+            $.post('https://jsonplaceholder.typicode.com/posts', {
+                title: 'u-query test',
+                body: 'This is a test post from u-query demo',
+                userId: 1
+            }, function(data) {
+                $('#ajax-result').html(`
+                    <h4>POST Response:</h4>
+                    <strong>Created ID:</strong> ${data.id}<br>
+                    <strong>Title:</strong> ${data.title}
+                `);
+            });
+        }
+
+        // Demo 7: Global Events
+        function addGlobalListener() {
+            globalHandler = function(data) {
+                $('#global-output').append(`Global event received: ${data}<br>`);
+            };
+            $.on('demo-event', globalHandler);
+            $('#global-output').html('Global listener added<br>');
+        }
+
+        function emitGlobalEvent() {
+            const data = $('#global-event-data')[0].value;
+            const count = $.emit('demo-event', data);
+            $('#global-output').append(`Event emitted to ${count} listeners<br>`);
+        }
+
+        function removeGlobalListener() {
+            if (globalHandler) {
+                $.off('demo-event', globalHandler);
+                $('#global-output').append('Global listener removed<br>');
+            }
+        }
+
+        // Demo 8: Utilities
+        function eachDemo() {
+            $('#utility-output').html('');
+            $.each('.util-target', function(element, index) {
+                $('#utility-output').append(`Element ${index + 1}: ${element.textContent}<br>`);
+            });
+        }
+
+        function readyDemo() {
+            $.ready(function() {
+                $('#utility-output').append('$.ready() callback executed<br>');
+            });
+        }
+
+        // Demo 9: Method Chaining
+        function chainingDemo() {
+            $('.test-element')
+                .addClass('highlighted')
+                .css({ 'color': 'red', 'font-weight': 'bold' })
+                .show();
+            $('#chaining-output').html('Method chaining applied: highlighted + red + bold');
+        }
+
+        function resetChaining() {
+            $('.test-element')
+                .removeClass('highlighted')
+                .css({ 'color': '', 'font-weight': '' });
+            $('#chaining-output').html('Chaining effects reset');
+        }
+
+        // Initialize
+        $.ready(function() {
+            console.log('u-query demo loaded and ready!');
+        });
+    </script>
+</body>
+</html>

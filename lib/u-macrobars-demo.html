@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Macrobars.js Demo</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+        .demo-section { margin-bottom: 30px; padding: 20px; border: 1px solid #ccc; border-radius: 5px; }
+        .demo-section h3 { margin-top: 0; color: #333; }
+        .template-code { background: #f5f5f5; padding: 10px; border-radius: 3px; margin: 10px 0; }
+        .output { background: #e8f5e8; padding: 10px; border-radius: 3px; margin: 10px 0; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        input { padding: 5px; margin: 5px; }
+        #dynamic-content { min-height: 100px; border: 1px solid #ddd; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Macrobars.js Template Engine Demo</h1>
+    <p>A lightweight JavaScript templating engine with PHP-style syntax and Handlebars-inspired features.</p>
+
+    <div class="demo-section">
+        <h3>1. Basic Field Output</h3>
+        <div class="template-code">
+            Template: <code>{{name}} is {{age}} years old and works as {{job or "unemployed"}}</code>
+        </div>
+        <div class="output" id="basic-output"></div>
+        <button onclick="runBasicDemo()">Run Demo</button>
+    </div>
+
+    <div class="demo-section">
+        <h3>2. Number Formatting</h3>
+        <div class="template-code">
+            Template: <code>Price: ${{%price}} | Large Number: {{~bigNumber}}</code>
+        </div>
+        <div class="output" id="number-output"></div>
+        <button onclick="runNumberDemo()">Run Demo</button>
+    </div>
+
+    <div class="demo-section">
+        <h3>3. Conditionals</h3>
+        <div class="template-code">
+            Template: 
+            <pre>{{#if isLoggedIn}}
+Welcome back, {{username}}!
+{{#else}}
+Please log in to continue.
+{{/if}}</pre>
+        </div>
+        <div class="output" id="conditional-output"></div>
+        <button onclick="runConditionalDemo(true)">Logged In</button>
+        <button onclick="runConditionalDemo(false)">Not Logged In</button>
+    </div>
+
+    <div class="demo-section">
+        <h3>4. Loops</h3>
+        <div class="template-code">
+            Template: 
+            <pre>{{#each items}}
+{{data.number}}. {{data.name}} - ${{data.price}}
+{{/each}}</pre>
+        </div>
+        <div class="output" id="loop-output"></div>
+        <button onclick="runLoopDemo()">Run Demo</button>
+    </div>
+
+    <div class="demo-section">
+        <h3>5. Event Binding</h3>
+        <div class="template-code">
+            Template: <code>&lt;button {{@click="handleClick"}}&gt;Click Count: {{clickCount}}&lt;/button&gt;</code>
+        </div>
+        <div class="output" id="event-output"></div>
+        <button onclick="runEventDemo()">Setup Interactive Button</button>
+    </div>
+
+    <div class="demo-section">
+        <h3>6. Interactive Template Editor</h3>
+        <p>Edit the template and data below to see live results:</p>
+        <textarea id="template-input" rows="4" cols="80" placeholder="Enter your template here...">
+Hello {{name}}! 
+{{#if age}}You are {{age}} years old.{{/if}}
+{{#each hobbies}}
+- {{data}}
+{{/each}}
+        </textarea><br>
+        <textarea id="data-input" rows="4" cols="80" placeholder="Enter JSON data here...">
+{
+  "name": "Alice",
+  "age": 25,
+  "hobbies": ["reading", "coding", "gaming"]
+}
+        </textarea><br>
+        <button onclick="runCustomTemplate()">Render Template</button>
+        <div id="dynamic-content"></div>
+    </div>
+
+    <script src="jquery.min.js"></script>
+    <script src="u-macrobars.js"></script>
+    <script>
+        // Demo 1: Basic field output
+        function runBasicDemo() {
+            const template = Macrobars.compile('{{name}} is {{age}} years old and works as {{job or "unemployed"}}');
+            const data = { name: "John Doe", age: 30 };
+            const result = template(data);
+            document.getElementById('basic-output').innerHTML = result;
+        }
+
+        // Demo 2: Number formatting
+        function runNumberDemo() {
+            const template = Macrobars.compile('Price: ${{%price}} | Large Number: {{~bigNumber}}');
+            const data = { price: 123.456, bigNumber: 1234567 };
+            const result = template(data);
+            document.getElementById('number-output').innerHTML = result;
+        }
+
+        // Demo 3: Conditionals
+        function runConditionalDemo(isLoggedIn) {
+            const template = Macrobars.compile(`
+                {{#if isLoggedIn}}
+                    Welcome back, {{username}}!
+                {{#else}}
+                    Please log in to continue.
+                {{/if}}
+            `);
+            const data = { 
+                isLoggedIn: isLoggedIn, 
+                username: "Alice" 
+            };
+            const result = template(data);
+            document.getElementById('conditional-output').innerHTML = result;
+        }
+
+        // Demo 4: Loops
+        function runLoopDemo() {
+            const template = Macrobars.compile(
+                '{{#each items}}' +
+                    '{{number}}. {{name}} - ${{price}}<br>' +
+                '{{/each}}'
+            );
+            const data = {
+                items: [
+                    { number: 1, name: "Widget A", price: 19.99 },
+                    { number: 2, name: "Gadget B", price: 29.50 },
+                    { number: 3, name: "Tool C", price: 15.75 }
+                ]
+            };
+            const result = template(data);
+            document.getElementById('loop-output').innerHTML = result;
+        }
+
+        // Demo 5: Event binding
+        let clickCount = 0;
+        function runEventDemo() {
+            const template = Macrobars.compile('<button {{@click="handleClick"}}>Click Count: {{clickCount}}</button>');
+            
+            // Create the template with event handling
+            const result = template({ clickCount: clickCount });
+            document.getElementById('event-output').innerHTML = result;
+            
+            // Manually bind the click event (since renderTo would handle this automatically)
+            const button = document.querySelector('#event-output button');
+            button.addEventListener('click', function() {
+                clickCount++;
+                runEventDemo(); // Re-render with new count
+            });
+        }
+
+        // Demo 6: Custom template editor
+        function runCustomTemplate() {
+            try {
+                const templateStr = document.getElementById('template-input').value;
+                const dataStr = document.getElementById('data-input').value;
+                const data = JSON.parse(dataStr);
+                
+                const template = Macrobars.compile(templateStr);
+                const result = template(data);
+                
+                document.getElementById('dynamic-content').innerHTML = result;
+            } catch (error) {
+                document.getElementById('dynamic-content').innerHTML = `
+                    <div style="color: red;">Error: ${error.message}</div>
+                `;
+            }
+        }
+
+        // Initialize some demos on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            runBasicDemo();
+            runNumberDemo();
+        });
+    </script>
+</body>
+</html>

@@ -11,11 +11,11 @@
 		<link rel="stylesheet" href="../../css/font-awesome.min.css">
 
 		<script src="../../lib/pixi8.min.js"></script>
-		<script src="../../lib/jquery.min.js"></script>
 		<script src="../../lib/howler.min.js"></script>
 		<script src="../../lib/u-pathastar.js"></script>
 		<script src="../../lib/u-helper.js"></script>
 		<script src="../../lib/u-grid.js"></script>
+		<script src="../../lib/u-events.js"></script>
 		<script src="../../lib/u-pixistage8.js"></script>
 
 		<script src="js/game.js"></script>
@@ -31,92 +31,106 @@
 
 		<script type="module">
 
-		let app = await PixiStage.init();
-		PixiStage.add_layer('base');
-		PixiStage.add_layer('map');
-		PixiStage.add_layer('mobs');
+		async function initGame() {
+			const stage = await PixiStage.create();
+			
+			stage.layers.add('base');
+			stage.layers.add('map');
+			stage.layers.add('mobs');
 
-		function updateFrameRate() {
-			let fps = app.ticker.FPS.toFixed(2);
-			document.getElementById('frame-rate').innerText = `FPS: ${fps}`;
-		}
-		app.ticker.add(updateFrameRate);
-
-		$('nav').text($('title').text());
-
-		var grid = false;
-		var cellSize = 128;
-		var dim = 12;
-		var Stage = PixiStage;
-		var root = PixiStage.layers.base;
-
-		root.position.x = ($(window).width()-cellSize*dim) / 2;
-		root.position.y = ($(window).height()-cellSize*dim*0.7) / 2;
-		//Stage.make_draggable(root, 'right');
-
-		grid = UGrid.create(dim, dim, {
-
-			cellSize : cellSize,
-
-			type : UGrid.square,
-
-			onCreateCell : function(cell) {
-				let g = new PIXI.Graphics();
-				g.beginFill(0xff8800);
-				g.poly(this.createDrawPath(this.cellSize-2));
-				g.endFill();
-				g.x = cell.pos.x;
-				g.y = cell.pos.y;
-				g.cell = cell;
-				cell.goIndex = Stage.layers.map.children.length;
-				Stage.layers.base.addChild(g);
-			},
-
-		});
-
-		var c1 = new PIXI.Graphics();
-		c1.beginFill(0xff0000, 1.0);
-		c1.lineStyle(1, 0x000000, 0.5);
-		c1.drawRect(-cellSize*0.25, -cellSize*0.25, cellSize*0.5, cellSize*0.5);
-		c1.grid = { x : 0, y : 0 };
-		grid.projectCellToMap(0, 0, c1);
-		Stage.layers.mobs.addChild(c1);
-
-		PixiStage.director.focus_on(PixiStage.layers.base)
-
-		/*
-
-		Stage.on('click', function(e) {
-			var m = grid.projectMapToCell(e.x, e.y);
-			console.log(m);
-			grid.projectCellToMap(m.x, m.y, c1);
-			c1.grid.x = m.x;
-			c1.grid.y = m.y;
-		});
-
-		var lastHighlightedTiles = [];
-		Stage.on('mousemove', function(e) {
-			var m = grid.projectMapToCell(e.x, e.y);
-			var cell = grid.get(m.x, m.y);
-			each(lastHighlightedTiles, function(tile) {
-				tile.tint = 0xffffff;
-			});
-			lastHighlightedTiles = [];
-			if(cell) {
-				var g = Stage.layers.map.children[cell.goIndex];
-				grid.eachInAreaOf([cell], 1, function(pathCell, tier) {
-					var g = Stage.layers.map.children[pathCell.goIndex];
-					g.tint = rgb(32+tier*32, 255, 32+tier*32);
-					lastHighlightedTiles.push(g);
-					});
-				grid.eachInLine(grid.get(c1.grid.x, c1.grid.y), cell, function(pathCell) {
-					var g = Stage.layers.map.children[pathCell.goIndex];
-					g.tint = 0x3366cc;
-					lastHighlightedTiles.push(g);
-					});
+			function updateFrameRate() {
+				let fps = stage.app.ticker.FPS.toFixed(2);
+				document.getElementById('frame-rate').innerText = `FPS: ${fps}`;
 			}
-		});
-		*/
+			stage.app.ticker.add(updateFrameRate);
+
+			document.querySelector('nav').textContent = document.querySelector('title').textContent;
+
+			var grid = false;
+			var cellSize = 128;
+			var dim = 12;
+			var root = stage.layers.get('base');
+
+			root.position.x = (window.innerWidth - cellSize * dim) / 2;
+			root.position.y = (window.innerHeight - cellSize * dim * 0.7) / 2;
+			
+			stage.make_draggable(root, 'right');
+
+			grid = UGrid.create(dim, dim, {
+				cellSize : cellSize,
+				type : UGrid.square,
+
+				onCreateCell : function(cell) {
+					let g = new PIXI.Graphics();
+					g.beginFill(0xff8800);
+					g.poly(this.createDrawPath(this.cellSize-2));
+					g.endFill();
+					g.x = cell.pos.x;
+					g.y = cell.pos.y;
+					g.cell = cell;
+					g.interactive = true;
+					g.buttonMode = true;
+					cell.goIndex = stage.layers.get('base').children.length;
+					stage.layers.get('base').addChild(g);
+
+					g.on('click', function(e) {
+						grid.projectCellToMap(cell.x, cell.y, c1);
+						c1.grid.x = cell.x;
+						c1.grid.y = cell.y;
+						console.log('Moved to cell:', cell.x, cell.y);
+					});
+
+					g.on('mouseover', function(e) {
+						lastHighlightedTiles.forEach(function(tile) {
+							tile.tint = 0xffffff;
+						});
+						lastHighlightedTiles = [];
+
+						grid.eachInAreaOf([cell], 1, function(pathCell, tier) {
+							var tileGraphic = stage.layers.get('base').children[pathCell.goIndex];
+							tileGraphic.tint = rgb(32+tier*32, 255, 32+tier*32);
+							lastHighlightedTiles.push(tileGraphic);
+						});
+
+						grid.eachInLine(grid.get(c1.grid.x, c1.grid.y), cell, function(pathCell) {
+							var tileGraphic = stage.layers.get('base').children[pathCell.goIndex];
+							tileGraphic.tint = 0x3366cc;
+							lastHighlightedTiles.push(tileGraphic);
+						});
+					});
+				},
+			});
+
+			var c1 = new PIXI.Graphics();
+			c1.beginFill(0xff0000, 1.0);
+			c1.lineStyle(1, 0x000000, 0.5);
+			c1.drawRect(-cellSize*0.25, -cellSize*0.25, cellSize*0.5, cellSize*0.5);
+			c1.grid = { x : 0, y : 0 };
+			grid.projectCellToMap(0, 0, c1);
+			stage.layers.get('mobs').addChild(c1);
+
+			var lastHighlightedTiles = [];
+
+			stage.director.focus_on(stage.layers.get('base'));
+
+			stage.app.view.addEventListener('wheel', function(e) {
+				e.preventDefault();
+				
+				const rect = stage.app.view.getBoundingClientRect();
+				const mouseX = e.clientX - rect.left;
+				const mouseY = e.clientY - rect.top;
+				
+				const zoomFactor = stage.app.stage.scale.x * (e.deltaY > 0 ? 0.7 : 1.3);
+
+				stage.director.zoom(root, zoomFactor, { x: mouseX, y: mouseY });
+			});
+
+			function rgb(r, g, b) {
+				return (r << 16) + (g << 8) + b;
+			}
+		}
+
+		initGame();
 
 		</script>
 

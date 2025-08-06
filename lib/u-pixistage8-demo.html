@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>u-pixistage8 Demo</title>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 0; 
+            font-family: Arial, sans-serif; 
+            background: #333;
+            overflow: hidden;
+        }
+        .ui-panel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            max-width: 300px;
+            z-index: 1000;
+        }
+        .ui-panel h3 {
+            margin-top: 0;
+            color: #4CAF50;
+        }
+        .ui-section {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #555;
+        }
+        .ui-section:last-child {
+            border-bottom: none;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            margin: 3px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .info-text {
+            font-size: 12px;
+            color: #ccc;
+            margin: 5px 0;
+        }
+        .color-button {
+            width: 30px;
+            height: 20px;
+            margin: 2px;
+            border: 1px solid #fff;
+            cursor: pointer;
+        }
+        input[type="range"] {
+            width: 100%;
+        }
+        .stats {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="ui-panel">
+        <h3>u-pixistage8 Demo</h3>
+        
+        <div class="ui-section">
+            <strong>Objects:</strong><br>
+            <button onclick="addDraggableBox()">Add Draggable Box</button>
+            <button onclick="addClickableCircle()">Add Clickable Circle</button>
+            <button onclick="addScrollableArea()">Add Scrollable Area</button>
+            <div class="info-text">Click and drag boxes, click circles, scroll in areas</div>
+        </div>
+
+        <div class="ui-section">
+            <strong>Camera Control:</strong><br>
+            <button onclick="resetView()">Reset View</button>
+            <button onclick="zoomIn()">Zoom In</button>
+            <button onclick="zoomOut()">Zoom Out</button>
+            <button onclick="focusOnRandomObject()">Focus Random Object</button>
+            <button onclick="showStageBounds()">Show Stage Bounds</button>
+            <div class="info-text">Mouse wheel: zoom, Left drag: pan</div>
+        </div>
+
+        <div class="ui-section">
+            <strong>Layers:</strong><br>
+            <button onclick="toggleLayer('background')">Toggle Background</button>
+            <button onclick="toggleLayer('objects')">Toggle Objects</button>
+            <button onclick="toggleLayer('effects')">Toggle Effects</button>
+        </div>
+
+        <div class="ui-section">
+            <strong>Animations:</strong><br>
+            <button onclick="startFloatingAnimation()">Floating Objects</button>
+            <button onclick="startRotationAnimation()">Rotating Objects</button>
+            <button onclick="stopAllAnimations()">Stop Animations</button>
+        </div>
+
+        <div class="ui-section">
+            <strong>Effects:</strong><br>
+            <button onclick="addParticleEffect()">Add Particles</button>
+            <button onclick="addTrailEffect()">Add Trail Effect</button>
+            <button onclick="clearEffects()">Clear Effects</button>
+        </div>
+    </div>
+
+    <div class="stats" id="stats">
+        Objects: 0<br>
+        Animations: 0<br>
+        FPS: 0<br>
+        Zoom: 1.0x<br>
+        Position: (0, 0)
+    </div>
+
+    <script src="pixi.min.js"></script>
+    <script src="u-events.js"></script>
+    <script src="u-pixistage8.js"></script>
+
+    <script>
+        let demoObjects = [];
+        let animationCount = 0;
+        let lastTime = performance.now();
+        let frameCount = 0;
+        let fps = 0;
+        let stage = null;
+
+        async function initDemo() {
+            stage = await PixiStage.create();
+            
+            if(stage.events) {
+                stage.events.on('init:complete', () => {
+                    console.log('PixiStage initialization complete');
+                });
+                stage.events.on('drag:start', (data) => {
+                    console.log('Drag started:', data.object);
+                });
+                stage.events.on('object:click', (data) => {
+                    console.log('Object clicked:', data.object);
+                });
+                stage.events.on('wheel', (event) => {
+                    console.log('Wheel event:', event.deltaY);
+                });
+            }
+            
+            // Create layers after initialization is complete
+            stage.layers.add('background');
+            stage.layers.add('objects');
+            stage.layers.add('effects');
+            
+            // Set up wheel zoom handler
+            stage.event_handlers.wheel = (event) => {
+                event.preventDefault();
+                const scaleFactor = event.deltaY > 0 ? 0.9 : 1.1;
+                const newScale = Math.max(0.1, Math.min(5, stage.app.stage.scale.x * scaleFactor));
+                stage.director.zoom(stage.app.stage, newScale);
+            };
+            
+            // Add initial objects
+            createInitialScene();
+            
+            // Start stats update
+            setInterval(updateStats, 100);
+            
+            console.log('u-pixistage8 demo initialized');
+        }
+
+        function createInitialScene() {
+            // Add background grid
+            createBackgroundGrid();
+            
+            // Add some initial objects
+            for (let i = 0; i < 5; i++) {
+                addDraggableBox();
+            }
+            
+            for (let i = 0; i < 3; i++) {
+                addClickableCircle();
+            }
+            
+            // Center the camera on the objects after a short delay
+            setTimeout(() => {
+                centerViewOnObjects();
+            }, 100);
+        }
+
+        function centerViewOnObjects() {
+            if (demoObjects.length === 0) return;
+            
+            // Get the bounds of all objects first
+            const bounds = stage.director.getStageBounds();
+            
+            // Then use the centerViewOnBounds helper function with those bounds
+            stage.director.centerViewOnBounds(bounds);
+            
+            console.log('Centered view on objects using helper function');
+        }
+
+        function createBackgroundGrid() {
+            const gridContainer = new PIXI.Container();
+            const graphics = new PIXI.Graphics();
+            
+            const gridSize = 50;
+            const gridWidth = 2000;
+            const gridHeight = 1500;
+            
+            graphics.stroke({ color: 0x333333, width: 1 });
+            
+            // Vertical lines
+            for (let x = -gridWidth; x <= gridWidth; x += gridSize) {
+                graphics.moveTo(x, -gridHeight);
+                graphics.lineTo(x, gridHeight);
+            }
+            
+            // Horizontal lines
+            for (let y = -gridHeight; y <= gridHeight; y += gridSize) {
+                graphics.moveTo(-gridWidth, y);
+                graphics.lineTo(gridWidth, y);
+            }
+            
+            gridContainer.addChild(graphics);
+            stage.layerStorage.background.addChild(gridContainer);
+        }
+
+        function addDraggableBox() {
+            const graphics = new PIXI.Graphics();
+            const size = 40 + Math.random() * 40;
+            const color = Math.random() * 0xFFFFFF;
+            
+            graphics.rect(0, 0, size, size);
+            graphics.fill(color);
+            graphics.stroke({ color: 0xFFFFFF, width: 2 });
+            
+            graphics.x = (Math.random() - 0.5) * 800;
+            graphics.y = (Math.random() - 0.5) * 600;
+            
+            // Make it draggable
+            stage.make_draggable(graphics, (obj) => {
+                console.log(`Box dragged to (${obj.x.toFixed(1)}, ${obj.y.toFixed(1)})`);
+            });
+            
+            // Add drag events
+            graphics.on('dragstart', () => {
+                graphics.alpha = 0.8;
+                graphics.bring_to_front();
+            });
+            
+            graphics.on('dragend', () => {
+                graphics.alpha = 1.0;
+            });
+            
+            stage.layerStorage.objects.addChild(graphics);
+            demoObjects.push(graphics);
+            
+            console.log('Added draggable box');
+        }
+
+        function addClickableCircle() {
+            const graphics = new PIXI.Graphics();
+            const radius = 20 + Math.random() * 30;
+            const color = Math.random() * 0xFFFFFF;
+            
+            graphics.circle(0, 0, radius);
+            graphics.fill(color);
+            graphics.stroke({ color: 0xFFFFFF, width: 2 });
+            
+            graphics.x = (Math.random() - 0.5) * 800;
+            graphics.y = (Math.random() - 0.5) * 600;
+            
+            // Make it clickable
+            stage.make_clickable(graphics, () => {
+                // Flash effect on click
+                graphics.tint = 0xFF0000;
+                setTimeout(() => {
+                    graphics.tint = 0xFFFFFF;
+                }, 200);
+                
+                console.log('Circle clicked!');
+            });
+            
+            stage.layerStorage.objects.addChild(graphics);
+            demoObjects.push(graphics);
+            
+            console.log('Added clickable circle');
+        }
+
+        function addScrollableArea() {
+            const container = new PIXI.Container();
+            const background = new PIXI.Graphics();
+            
+            // Create scrollable background
+            background.rect(0, 0, 200, 150);
+            background.fill(0x444444);
+            background.stroke({ color: 0xFFFFFF, width: 2 });
+            container.addChild(background);
+            
+            // Add content that extends beyond the container
+            for (let i = 0; i < 20; i++) {
+                const dot = new PIXI.Graphics();
+                dot.circle(0, 0, 5);
+                dot.fill(0x00FF00);
+                dot.x = Math.random() * 400;
+                dot.y = Math.random() * 300;
+                container.addChild(dot);
+            }
+            
+            container.x = (Math.random() - 0.5) * 600;
+            container.y = (Math.random() - 0.5) * 400;
+            
+            // Make it scrollable
+            stage.make_scrollable(container, (event) => {
+                event.preventDefault();
+                const scrollSpeed = 10;
+                const deltaY = event.deltaY > 0 ? scrollSpeed : -scrollSpeed;
+                
+                // Scroll the contents
+                for (let i = 1; i < container.children.length; i++) {
+                    container.children[i].y += deltaY;
+                }
+                
+                console.log('Scrolled in area');
+            });
+            
+            stage.layerStorage.objects.addChild(container);
+            demoObjects.push(container);
+            
+            console.log('Added scrollable area');
+        }
+
+        function resetView() {
+            stage.director.camera.reset();
+            centerViewOnObjects();
+        }
+
+        function zoomIn() {
+            const currentScale = stage.app.stage.scale.x;
+            stage.director.camera.zoom(Math.min(5, currentScale * 1.5));
+        }
+
+        function zoomOut() {
+            const currentScale = stage.app.stage.scale.x;
+            stage.director.camera.zoom(Math.max(0.1, currentScale * 0.67));
+        }
+
+        function focusOnRandomObject() {
+            if (demoObjects.length === 0) return;
+            
+            const randomObject = demoObjects[Math.floor(Math.random() * demoObjects.length)];
+            stage.director.focus_on(randomObject, 0.8);
+            
+            console.log('Focused on random object');
+        }
+
+        function showStageBounds() {
+            const bounds = stage.director.getStageBounds();
+            console.log('Stage bounds:', bounds);
+            
+            // Visualize the bounds with a temporary rectangle
+            const boundsRect = new PIXI.Graphics();
+            boundsRect.rect(bounds.x, bounds.y, bounds.width, bounds.height);
+            boundsRect.stroke({ color: 0xFF0000, width: 3 });
+            boundsRect.alpha = 0.8;
+            
+            stage.layerStorage.effects.addChild(boundsRect);
+            
+            // Remove the visualization after 3 seconds
+            setTimeout(() => {
+                stage.layerStorage.effects.removeChild(boundsRect);
+            }, 3000);
+            
+            alert(`Stage bounds: x=${bounds.x.toFixed(1)}, y=${bounds.y.toFixed(1)}, width=${bounds.width.toFixed(1)}, height=${bounds.height.toFixed(1)}`);
+        }
+
+        function toggleLayer(layerName) {
+            const layer = stage.layerStorage[layerName];
+            if (layer) {
+                layer.visible = !layer.visible;
+                console.log(`Layer ${layerName} ${layer.visible ? 'shown' : 'hidden'}`);
+            }
+        }
+
+        function startFloatingAnimation() {
+            const animation = stage.animate((dt) => {
+                demoObjects.forEach((obj, index) => {
+                    obj.y += Math.sin(performance.now() * 0.001 + index) * 0.5;
+                });
+                return true; // Continue animation
+            });
+            animationCount++;
+            console.log('Started floating animation');
+        }
+
+        function startRotationAnimation() {
+            const animation = stage.animate((dt) => {
+                demoObjects.forEach((obj) => {
+                    obj.rotation += 0.01 * dt;
+                });
+                return true; // Continue animation
+            });
+            animationCount++;
+            console.log('Started rotation animation');
+        }
+
+        function stopAllAnimations() {
+            stage.animation.clear();
+            animationCount = 0;
+            console.log('Stopped all animations');
+        }
+
+        function addParticleEffect() {
+            const particleContainer = new PIXI.Container();
+            
+            // Create particles
+            for (let i = 0; i < 50; i++) {
+                const particle = new PIXI.Graphics();
+                particle.circle(0, 0, 2);
+                particle.fill(0xFFFFFF);
+                
+                particle.x = (Math.random() - 0.5) * 400;
+                particle.y = (Math.random() - 0.5) * 400;
+                particle.vx = (Math.random() - 0.5) * 5;
+                particle.vy = (Math.random() - 0.5) * 5;
+                particle.life = 1.0;
+                
+                particleContainer.addChild(particle);
+            }
+            
+            // Animate particles
+            stage.animate((dt) => {
+                let aliveCount = 0;
+                
+                particleContainer.children.forEach((particle) => {
+                    particle.x += particle.vx * dt;
+                    particle.y += particle.vy * dt;
+                    particle.life -= 0.01 * dt;
+                    particle.alpha = particle.life;
+                    
+                    if (particle.life > 0) aliveCount++;
+                });
+                
+                if (aliveCount === 0) {
+                    stage.layerStorage.effects.removeChild(particleContainer);
+                    return false; // Stop animation
+                }
+                
+                return true;
+            });
+            
+            stage.layerStorage.effects.addChild(particleContainer);
+            console.log('Added particle effect');
+        }
+
+        function addTrailEffect() {
+            const trail = [];
+            const maxTrailLength = 20;
+            
+            stage.animate((dt) => {
+                // Add current mouse position to trail (simplified)
+                const mousePos = { x: Math.random() * 400 - 200, y: Math.random() * 300 - 150 };
+                trail.push(mousePos);
+                
+                if (trail.length > maxTrailLength) {
+                    trail.shift();
+                }
+                
+                // Draw trail
+                const graphics = new PIXI.Graphics();
+                trail.forEach((pos, index) => {
+                    const alpha = index / trail.length;
+                    graphics.circle(pos.x, pos.y, 3);
+                    graphics.fill({ color: 0x00FF00, alpha: alpha });
+                });
+                
+                // Clear previous trail
+                stage.layerStorage.effects.children.forEach(child => {
+                    if (child.isTrail) {
+                        stage.layerStorage.effects.removeChild(child);
+                    }
+                });
+                
+                graphics.isTrail = true;
+                stage.layerStorage.effects.addChild(graphics);
+                
+                return true;
+            });
+            
+            console.log('Added trail effect');
+        }
+
+        function clearEffects() {
+            stage.layerStorage.effects.removeChildren();
+            console.log('Cleared effects');
+        }
+
+        function updateStats() {
+            // Calculate FPS
+            frameCount++;
+            const currentTime = performance.now();
+            if (currentTime - lastTime >= 1000) {
+                fps = Math.round(frameCount * 1000 / (currentTime - lastTime));
+                frameCount = 0;
+                lastTime = currentTime;
+            }
+            
+            const stats = document.getElementById('stats');
+            const stageObj = stage.app.stage;
+            
+            stats.innerHTML = `
+                Objects: ${demoObjects.length}<br>
+                Animations: ${stage.animations.length}<br>
+                FPS: ${fps}<br>
+                Zoom: ${stageObj.scale.x.toFixed(2)}x<br>
+                Position: (${Math.round(stageObj.x)}, ${Math.round(stageObj.y)})
+            `;
+        }
+
+        window.addEventListener('load', initDemo);
+    </script>
+</body>
+</html>

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>u-helper.js Demo</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+        .demo-section { margin-bottom: 30px; padding: 20px; border: 1px solid #ccc; border-radius: 5px; }
+        .demo-section h3 { margin-top: 0; color: #333; }
+        .function-demo { background: #f9f9f9; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .output { background: #e8f5e8; padding: 10px; border-radius: 3px; margin: 10px 0; }
+        button { padding: 8px 12px; margin: 5px; cursor: pointer; }
+        input { padding: 5px; margin: 5px; width: 80px; }
+        canvas { border: 1px solid #ccc; }
+        .color-box { display: inline-block; width: 30px; height: 30px; margin: 5px; border: 1px solid #000; }
+    </style>
+</head>
+<body>
+    <h1>u-helper.js Utility Functions Demo</h1>
+    <p>A collection of useful utility functions for game development and general programming.</p>
+
+    <div class="demo-section">
+        <h3>1. Hash Generation</h3>
+        <div class="function-demo">
+            <h4>make_hash(string)</h4>
+            <p>Generate a unique hash from any string:</p>
+            <input type="text" id="hash-input" value="Hello World" placeholder="Enter text">
+            <button onclick="generateHash()">Generate Hash</button>
+            <div class="output" id="hash-output"></div>
+        </div>
+    </div>
+
+    <div class="demo-section">
+        <h3>2. Color Functions</h3>
+        <div class="function-demo">
+            <h4>rgb(r, g, b) and frgb(r, g, b)</h4>
+            <p>Convert RGB values to color integers:</p>
+            R: <input type="number" id="r-input" value="255" min="0" max="255">
+            G: <input type="number" id="g-input" value="128" min="0" max="255">
+            B: <input type="number" id="b-input" value="64" min="0" max="255">
+            <button onclick="demonstrateColors()">Show Colors</button>
+            <div class="output" id="color-output"></div>
+        </div>
+    </div>
+
+    <div class="demo-section">
+        <h3>3. Mathematical Functions</h3>
+        <div class="function-demo">
+            <h4>lerp(a, b, t) - Linear Interpolation</h4>
+            <p>Interpolate between two values:</p>
+            From: <input type="number" id="lerp-a" value="0" step="0.1">
+            To: <input type="number" id="lerp-b" value="100" step="0.1">
+            T: <input type="number" id="lerp-t" value="0.5" min="0" max="1" step="0.1">
+            <button onclick="demonstrateLerp()">Calculate</button>
+            <div class="output" id="lerp-output"></div>
+        </div>
+
+        <div class="function-demo">
+            <h4>clamp(value, min, max)</h4>
+            <p>Constrain a value between min and max:</p>
+            Value: <input type="number" id="clamp-val" value="150" step="1">
+            Min: <input type="number" id="clamp-min" value="0" step="1">
+            Max: <input type="number" id="clamp-max" value="100" step="1">
+            <button onclick="demonstrateClamp()">Clamp</button>
+            <div class="output" id="clamp-output"></div>
+        </div>
+    </div>
+
+    <div class="demo-section">
+        <h3>4. Distance and Geometry</h3>
+        <div class="function-demo">
+            <h4>dist(x1, y1, x2, y2)</h4>
+            <p>Calculate distance between two points:</p>
+            Point 1: X:<input type="number" id="p1x" value="0"> Y:<input type="number" id="p1y" value="0">
+            Point 2: X:<input type="number" id="p2x" value="3"> Y:<input type="number" id="p2y" value="4">
+            <button onclick="calculateDistance()">Calculate Distance</button>
+            <div class="output" id="distance-output"></div>
+        </div>
+
+        <div class="function-demo">
+            <h4>bresenham_line(x0, y0, x1, y1)</h4>
+            <p>Generate points along a line using Bresenham's algorithm:</p>
+            <canvas id="line-canvas" width="300" height="200"></canvas><br>
+            Start: X:<input type="number" id="line-x0" value="10"> Y:<input type="number" id="line-y0" value="10">
+            End: X:<input type="number" id="line-x1" value="150"> Y:<input type="number" id="line-y1" value="100">
+            <button onclick="drawBresenhamLine()">Draw Line</button>
+        </div>
+    </div>
+
+    <div class="demo-section">
+        <h3>5. Utility Functions</h3>
+        <div class="function-demo">
+            <h4>first(...arguments)</h4>
+            <p>Return the first non-empty value:</p>
+            <button onclick="demonstrateFirst()">Test with: "", null, undefined, "Hello", "World"</button>
+            <div class="output" id="first-output"></div>
+        </div>
+
+        <div class="function-demo">
+            <h4>isset(value)</h4>
+            <p>Check if a value is set (not undefined):</p>
+            <button onclick="demonstrateIsset()">Test Various Values</button>
+            <div class="output" id="isset-output"></div>
+        </div>
+    </div>
+
+    <div class="demo-section">
+        <h3>6. Interactive Interpolation Visualizer</h3>
+        <canvas id="lerp-canvas" width="400" height="200"></canvas><br>
+        <input type="range" id="lerp-slider" min="0" max="1" step="0.01" value="0.5" oninput="updateLerpVisualization()">
+        <p>T value: <span id="t-value">0.5</span></p>
+        <p>Red line shows linear interpolation between start (green) and end (blue) points.</p>
+    </div>
+
+    <script src="u-helper.js"></script>
+    <script>
+        function generateHash() {
+            const input = document.getElementById('hash-input').value;
+            const hash = make_hash(input);
+            document.getElementById('hash-output').innerHTML = `Hash of "${input}": <strong>${hash}</strong>`;
+        }
+
+        function demonstrateColors() {
+            const r = parseInt(document.getElementById('r-input').value);
+            const g = parseInt(document.getElementById('g-input').value);
+            const b = parseInt(document.getElementById('b-input').value);
+            
+            const rgbValue = rgb(r, g, b);
+            const frgbValue = frgb(r/255, g/255, b/255);
+            const hexColor = '#' + r.toString(16).padStart(2, '0') + g.toString(16).padStart(2, '0') + b.toString(16).padStart(2, '0');
+            
+            document.getElementById('color-output').innerHTML = `
+                <div style="background-color: ${hexColor}" class="color-box"></div>
+                RGB values: (${r}, ${g}, ${b})<br>
+                rgb() result: ${rgbValue}<br>
+                frgb() result: ${frgbValue}<br>
+                Hex equivalent: ${hexColor}
+            `;
+        }
+
+        function demonstrateLerp() {
+            const a = parseFloat(document.getElementById('lerp-a').value);
+            const b = parseFloat(document.getElementById('lerp-b').value);
+            const t = parseFloat(document.getElementById('lerp-t').value);
+            
+            const result = lerp(a, b, t);
+            document.getElementById('lerp-output').innerHTML = `
+                lerp(${a}, ${b}, ${t}) = <strong>${result.toFixed(2)}</strong>
+            `;
+        }
+
+        function demonstrateClamp() {
+            const val = parseFloat(document.getElementById('clamp-val').value);
+            const min = parseFloat(document.getElementById('clamp-min').value);
+            const max = parseFloat(document.getElementById('clamp-max').value);
+            
+            const result = clamp(val, min, max);
+            document.getElementById('clamp-output').innerHTML = `
+                clamp(${val}, ${min}, ${max}) = <strong>${result}</strong>
+            `;
+        }
+
+        function calculateDistance() {
+            const x1 = parseFloat(document.getElementById('p1x').value);
+            const y1 = parseFloat(document.getElementById('p1y').value);
+            const x2 = parseFloat(document.getElementById('p2x').value);
+            const y2 = parseFloat(document.getElementById('p2y').value);
+            
+            const distance = dist(x1, y1, x2, y2);
+            document.getElementById('distance-output').innerHTML = `
+                Distance between (${x1}, ${y1}) and (${x2}, ${y2}) = <strong>${distance.toFixed(2)}</strong>
+            `;
+        }
+
+        function drawBresenhamLine() {
+            const canvas = document.getElementById('line-canvas');
+            const ctx = canvas.getContext('2d');
+            const x0 = parseInt(document.getElementById('line-x0').value);
+            const y0 = parseInt(document.getElementById('line-y0').value);
+            const x1 = parseInt(document.getElementById('line-x1').value);
+            const y1 = parseInt(document.getElementById('line-y1').value);
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw background grid
+            ctx.strokeStyle = '#f0f0f0';
+            for (let x = 0; x < canvas.width; x += 10) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += 10) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+            
+            // Get line points using Bresenham
+            const points = bresenham_line(x0, y0, x1, y1);
+            
+            // Draw points
+            ctx.fillStyle = 'red';
+            points.forEach(([x, y]) => {
+                ctx.fillRect(x - 1, y - 1, 3, 3);
+            });
+            
+            // Draw start and end points
+            ctx.fillStyle = 'green';
+            ctx.fillRect(x0 - 3, y0 - 3, 6, 6);
+            ctx.fillStyle = 'blue';
+            ctx.fillRect(x1 - 3, y1 - 3, 6, 6);
+        }
+
+        function demonstrateFirst() {
+            const result = first("", null, undefined, "Hello", "World");
+            document.getElementById('first-output').innerHTML = `
+                first("", null, undefined, "Hello", "World") = <strong>"${result}"</strong>
+            `;
+        }
+
+        function demonstrateIsset() {
+            const tests = [
+                { value: undefined, name: 'undefined' },
+                { value: null, name: 'null' },
+                { value: "", name: '""' },
+                { value: 0, name: '0' },
+                { value: false, name: 'false' },
+                { value: "hello", name: '"hello"' }
+            ];
+            
+            let output = '';
+            tests.forEach(test => {
+                const result = isset(test.value);
+                output += `isset(${test.name}) = <strong>${result}</strong><br>`;
+            });
+            
+            document.getElementById('isset-output').innerHTML = output;
+        }
+
+        function updateLerpVisualization() {
+            const slider = document.getElementById('lerp-slider');
+            const t = parseFloat(slider.value);
+            document.getElementById('t-value').textContent = t.toFixed(2);
+            
+            const canvas = document.getElementById('lerp-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Define start and end points
+            const startX = 50, startY = 100;
+            const endX = 350, endY = 100;
+            
+            // Calculate interpolated position
+            const currentX = lerp(startX, endX, t);
+            const currentY = lerp(startY, endY, t);
+            
+            // Draw line
+            ctx.strokeStyle = '#ccc';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+            
+            // Draw start point (green)
+            ctx.fillStyle = 'green';
+            ctx.beginPath();
+            ctx.arc(startX, startY, 8, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Draw end point (blue)
+            ctx.fillStyle = 'blue';
+            ctx.beginPath();
+            ctx.arc(endX, endY, 8, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Draw current position (red)
+            ctx.fillStyle = 'red';
+            ctx.beginPath();
+            ctx.arc(currentX, currentY, 6, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Add labels
+            ctx.fillStyle = 'black';
+            ctx.font = '12px Arial';
+            ctx.fillText('Start', startX - 20, startY - 15);
+            ctx.fillText('End', endX - 10, endY - 15);
+            ctx.fillText(`t=${t.toFixed(2)}`, currentX - 20, currentY - 15);
+        }
+
+        // Initialize demos
+        document.addEventListener('DOMContentLoaded', function() {
+            generateHash();
+            demonstrateColors();
+            updateLerpVisualization();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>u-pathastar.js Demo</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        canvas { border: 1px solid #ccc; margin: 10px 0; }
+        button { padding: 8px 12px; margin: 5px; cursor: pointer; }
+        .info { background: #f0f0f0; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>u-pathastar.js Demo</h1>
+    <p>A* pathfinding algorithm implementation</p>
+    
+    <button onclick="generateMaze()">Generate Maze</button>
+    <button onclick="findPath()">Find Path</button>
+    <button onclick="clearGrid()">Clear</button>
+    <canvas id="pathfinder-canvas" width="500" height="400"></canvas>
+    <div class="info" id="pathfinder-info">Click Generate Maze, then Find Path to see A* in action</div>
+
+    <script src="u-pathastar.js"></script>
+    <script>
+        const gridWidth = 25;
+        const gridHeight = 20;
+        const cellSize = 20;
+        let grid = [];
+        let startX = 1, startY = 1;
+        let endX = 23, endY = 18;
+        let path = [];
+
+        function initGrid() {
+            grid = [];
+            for (let y = 0; y < gridHeight; y++) {
+                grid[y] = [];
+                for (let x = 0; x < gridWidth; x++) {
+                    grid[y][x] = 0; // 0 = walkable, 1 = wall
+                }
+            }
+        }
+
+        function generateMaze() {
+            initGrid();
+            
+            // Add random walls
+            for (let y = 0; y < gridHeight; y++) {
+                for (let x = 0; x < gridWidth; x++) {
+                    if (Math.random() < 0.3 && 
+                        !(x === startX && y === startY) && 
+                        !(x === endX && y === endY)) {
+                        grid[y][x] = 1;
+                    }
+                }
+            }
+            
+            path = [];
+            drawGrid();
+            document.getElementById('pathfinder-info').innerHTML = 'Maze generated. Click Find Path to run A* algorithm.';
+        }
+
+        function findPath() {
+            if (grid.length === 0) {
+                generateMaze();
+                return;
+            }
+
+            // Create start and end nodes
+            const startNode = { x: startX, y: startY, id: `${startX},${startY}` };
+            const endNode = { x: endX, y: endY, id: `${endX},${endY}` };
+            
+            // Create a node cache to ensure we return the same object for same coordinates
+            const nodeCache = new Map();
+            
+            function getOrCreateNode(x, y) {
+                const id = `${x},${y}`;
+                if (!nodeCache.has(id)) {
+                    nodeCache.set(id, { x, y, id });
+                }
+                return nodeCache.get(id);
+            }
+            
+            // Cache the start and end nodes
+            nodeCache.set(startNode.id, startNode);
+            nodeCache.set(endNode.id, endNode);
+            
+            // Define neighbor function for grid
+            function getNeighbors(node, callback) {
+                const directions = [
+                    { x: 0, y: -1 }, // up
+                    { x: 1, y: 0 },  // right
+                    { x: 0, y: 1 },  // down
+                    { x: -1, y: 0 }  // left
+                ];
+                
+                for (const dir of directions) {
+                    const newX = node.x + dir.x;
+                    const newY = node.y + dir.y;
+                    
+                    if (newX >= 0 && newX < gridWidth && 
+                        newY >= 0 && newY < gridHeight && 
+                        grid[newY][newX] === 0) { // walkable
+                        
+                        const neighbor = getOrCreateNode(newX, newY);
+                        callback(neighbor);
+                    }
+                }
+            }
+            
+            const result = PathAStar.find(startNode, endNode, getNeighbors);
+            
+            console.log('PathAStar result:', result); // Debug output
+            
+            if (result.result === 'path' && result.path.length > 0) {
+                path = result.path;
+                drawGrid();
+                document.getElementById('pathfinder-info').innerHTML = `Path found! Length: ${result.path.length} steps`;
+            } else {
+                document.getElementById('pathfinder-info').innerHTML = `No path found! Nodes considered: ${result.debug?.nodesConsidered || 0}`;
+            }
+        }
+
+        function clearGrid() {
+            initGrid();
+            path = [];
+            drawGrid();
+            document.getElementById('pathfinder-info').innerHTML = 'Grid cleared.';
+        }
+
+        function drawGrid() {
+            const canvas = document.getElementById('pathfinder-canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let y = 0; y < gridHeight; y++) {
+                for (let x = 0; x < gridWidth; x++) {
+                    const px = x * cellSize;
+                    const py = y * cellSize;
+
+                    // Draw cell background
+                    if (grid[y] && grid[y][x] === 1) {
+                        ctx.fillStyle = '#333'; // Wall
+                    } else {
+                        ctx.fillStyle = '#fff'; // Walkable
+                    }
+                    
+                    ctx.fillRect(px, py, cellSize, cellSize);
+                    ctx.strokeStyle = '#ccc';
+                    ctx.strokeRect(px, py, cellSize, cellSize);
+                }
+            }
+
+            // Draw path
+            ctx.fillStyle = '#4CAF50';
+            for (const point of path) {
+                const px = point.x * cellSize;
+                const py = point.y * cellSize;
+                ctx.fillRect(px + 2, py + 2, cellSize - 4, cellSize - 4);
+            }
+
+            // Draw start and end
+            ctx.fillStyle = '#2196F3';
+            ctx.fillRect(startX * cellSize + 2, startY * cellSize + 2, cellSize - 4, cellSize - 4);
+            
+            ctx.fillStyle = '#F44336';
+            ctx.fillRect(endX * cellSize + 2, endY * cellSize + 2, cellSize - 4, cellSize - 4);
+        }
+
+        // Initialize
+        initGrid();
+        drawGrid();
+    </script>
+</body>
+</html>

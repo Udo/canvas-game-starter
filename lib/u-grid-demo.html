@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>U-Grid Demo</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .demo-section { margin-bottom: 30px; padding: 15px; border: 1px solid #ccc; }
+        .grid-display { background: #f5f5f5; padding: 10px; margin: 10px 0; font-family: monospace; }
+        button { margin: 5px; padding: 8px 16px; }
+        input { margin: 5px; padding: 4px; }
+        #gridCanvas { border: 2px solid #333; margin: 10px 0; }
+        .grid-type { margin: 10px 0; }
+        .grid-type label { margin-right: 15px; }
+    </style>
+</head>
+<body>
+    <h1>U-Grid Library Demo</h1>
+    <p>Demonstration of the u-grid.js utility library for 2D grid operations.</p>
+
+    <div class="demo-section">
+        <h2>Basic Grid Operations</h2>
+        <div class="grid-type">
+            <label><input type="radio" name="gridType" value="square" checked> Square Grid</label>
+            <label><input type="radio" name="gridType" value="hex"> Hex Grid (Pointy Top)</label>
+        </div>
+        <button onclick="createGrid()">Create 8x6 Grid</button>
+        <button onclick="fillGrid()">Fill with Random Values</button>
+        <button onclick="clearGrid()">Clear Grid</button>
+        <canvas id="gridCanvas" width="400" height="300"></canvas>
+        <div class="grid-display" id="gridDisplay">No grid created yet</div>
+    </div>
+
+    <div class="demo-section">
+        <h2>Grid Access</h2>
+        <input type="number" id="getX" placeholder="X" min="0" max="7" value="3">
+        <input type="number" id="getY" placeholder="Y" min="0" max="5" value="2">
+        <button onclick="getValue()">Get Value</button>
+        <button onclick="setValue()">Set Random Value</button>
+        <div id="accessResult">No operations performed</div>
+    </div>
+
+    <div class="demo-section">
+        <h2>Grid Information</h2>
+        <button onclick="showInfo()">Show Grid Info</button>
+        <div id="infoResult">No info available</div>
+    </div>
+
+    <script src="u-grid.js"></script>
+    <script>
+        let grid = null;
+        let canvas = null;
+        let ctx = null;
+
+        window.onload = function() {
+            canvas = document.getElementById('gridCanvas');
+            ctx = canvas.getContext('2d');
+        };
+
+        function createGrid() {
+            const gridType = document.querySelector('input[name="gridType"]:checked').value;
+            const type = gridType === 'hex' ? UGrid.pointyTop : UGrid.square;
+            const cellSize = gridType === 'hex' ? 25 : 30;
+            
+            grid = UGrid.create(8, 6, { 
+                type: type, 
+                cellSize: cellSize,
+                mapOffsetX: 50,
+                mapOffsetY: 50
+            });
+            
+            drawGrid();
+            document.getElementById('accessResult').textContent = `Grid created: 8x6 ${gridType} grid`;
+        }
+
+        function fillGrid() {
+            if (!grid) {
+                alert('Create a grid first!');
+                return;
+            }
+            for (let x = 0; x < grid.colCount; x++) {
+                for (let y = 0; y < grid.rowCount; y++) {
+                    let cell = grid.get(x, y);
+                    if (cell) cell.value = Math.floor(Math.random() * 10);
+                }
+            }
+            drawGrid();
+            document.getElementById('accessResult').textContent = 'Grid filled with random values (0-9)';
+        }
+
+        function clearGrid() {
+            if (!grid) {
+                alert('Create a grid first!');
+                return;
+            }
+            grid.each(function(cell) {
+                cell.value = 0;
+            });
+            drawGrid();
+            document.getElementById('accessResult').textContent = 'Grid cleared to zeros';
+        }
+
+        function getValue() {
+            if (!grid) {
+                alert('Create a grid first!');
+                return;
+            }
+            const x = parseInt(document.getElementById('getX').value);
+            const y = parseInt(document.getElementById('getY').value);
+            const cell = grid.get(x, y);
+            const value = cell ? (cell.value || 0) : 'Invalid coordinates';
+            document.getElementById('accessResult').textContent = `Value at (${x}, ${y}): ${value}`;
+            
+            // Highlight the selected cell
+            drawGrid();
+            if (cell) {
+                highlightCell(cell, '#ff0000');
+            }
+        }
+
+        function setValue() {
+            if (!grid) {
+                alert('Create a grid first!');
+                return;
+            }
+            const x = parseInt(document.getElementById('getX').value);
+            const y = parseInt(document.getElementById('getY').value);
+            const newValue = Math.floor(Math.random() * 10);
+            const cell = grid.get(x, y);
+            if (cell) {
+                cell.value = newValue;
+                drawGrid();
+                document.getElementById('accessResult').textContent = `Set (${x}, ${y}) to: ${newValue}`;
+                // Highlight the modified cell
+                highlightCell(cell, '#00ff00');
+            } else {
+                document.getElementById('accessResult').textContent = `Invalid coordinates: (${x}, ${y})`;
+            }
+        }
+
+        function showInfo() {
+            if (!grid) {
+                document.getElementById('infoResult').textContent = 'No grid created';
+                return;
+            }
+            const info = `
+                Width: ${grid.colCount}
+                Height: ${grid.rowCount}
+                Total cells: ${grid.colCount * grid.rowCount}
+                Topology: ${grid.topology}
+                Cell size: ${grid.cellSize}
+            `;
+            document.getElementById('infoResult').innerHTML = `<pre>${info}</pre>`;
+        }
+
+        function drawGrid() {
+            if (!grid || !ctx) return;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw each cell
+            grid.each(function(cell) {
+                drawCell(cell);
+            });
+            
+            // Update text display
+            displayGrid();
+        }
+
+        function drawCell(cell) {
+            const pos = cell.pos;
+            const value = cell.value || 0;
+            
+            // Color based on value (grayscale)
+            const intensity = Math.floor((value / 9) * 255);
+            const color = `rgb(${255 - intensity}, ${255 - intensity}, ${255 - intensity})`;
+            
+            ctx.fillStyle = color;
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            
+            if (grid.topology === 'square') {
+                drawSquareCell(pos, grid.cellSize);
+            } else {
+                drawHexCell(pos, grid.cellSize);
+            }
+            
+            // Draw value text
+            ctx.fillStyle = intensity > 127 ? '#000' : '#fff';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(value.toString(), pos.x, pos.y);
+        }
+
+        function drawSquareCell(pos, size) {
+            const halfSize = size / 2;
+            ctx.fillRect(pos.x - halfSize, pos.y - halfSize, size, size);
+            ctx.strokeRect(pos.x - halfSize, pos.y - halfSize, size, size);
+        }
+
+        function drawHexCell(pos, size) {
+            const path = UGrid.pointyTop.createDrawPath(size);
+            ctx.beginPath();
+            ctx.moveTo(pos.x + path[0], pos.y + path[1]);
+            for (let i = 2; i < path.length; i += 2) {
+                ctx.lineTo(pos.x + path[i], pos.y + path[i + 1]);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        function highlightCell(cell, color) {
+            const pos = cell.pos;
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 3;
+            
+            if (grid.topology === 'square') {
+                const halfSize = grid.cellSize / 2;
+                ctx.strokeRect(pos.x - halfSize, pos.y - halfSize, grid.cellSize, grid.cellSize);
+            } else {
+                const path = UGrid.pointyTop.createDrawPath(grid.cellSize);
+                ctx.beginPath();
+                ctx.moveTo(pos.x + path[0], pos.y + path[1]);
+                for (let i = 2; i < path.length; i += 2) {
+                    ctx.lineTo(pos.x + path[i], pos.y + path[i + 1]);
+                }
+                ctx.closePath();
+                ctx.stroke();
+            }
+        }
+
+        function displayGrid() {
+            if (!grid) return;
+            
+            let display = '';
+            for (let y = 0; y < grid.rowCount; y++) {
+                for (let x = 0; x < grid.colCount; x++) {
+                    const cell = grid.get(x, y);
+                    const value = cell && cell.value !== undefined ? cell.value : 0;
+                    display += value.toString().padStart(2, ' ') + ' ';
+                }
+                display += '\n';
+            }
+            document.getElementById('gridDisplay').innerHTML = `<pre>${display}</pre>`;
+        }
+    </script>
+</body>
+</html>

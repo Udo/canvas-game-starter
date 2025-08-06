@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>EventEmitter Demo</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+        .demo-section { margin-bottom: 30px; padding: 20px; border: 1px solid #ccc; border-radius: 5px; }
+        .demo-section h3 { margin-top: 0; color: #333; }
+        .code-block { background: #f5f5f5; padding: 10px; border-radius: 3px; margin: 10px 0; font-family: monospace; }
+        .output { background: #e8f5e8; padding: 10px; border-radius: 3px; margin: 10px 0; min-height: 40px; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        input { padding: 5px; margin: 5px; width: 200px; }
+        .event-log { background: #f9f9f9; border: 1px solid #ddd; padding: 10px; height: 150px; overflow-y: auto; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h1>EventEmitter Demo</h1>
+    <p>A lightweight event system for custom events and communication between components.</p>
+
+    <div class="demo-section">
+        <h3>1. Basic Event Subscription and Emission</h3>
+        <div class="code-block">
+            emitter.on('greeting', (name) => log(`Hello, ${name}!`))<br>
+            emitter.emit('greeting', 'World')
+        </div>
+        <button onclick="basicDemo()">Run Basic Demo</button>
+        <div class="output" id="basic-output"></div>
+    </div>
+
+    <div class="demo-section">
+        <h3>2. Multiple Listeners</h3>
+        <div class="code-block">
+            Multiple functions can listen to the same event
+        </div>
+        <button onclick="multipleListenersDemo()">Add Listeners</button>
+        <button onclick="emitToMultiple()">Emit Event</button>
+        <div class="output" id="multiple-output"></div>
+    </div>
+
+    <div class="demo-section">
+        <h3>3. Slot-based Deduplication</h3>
+        <div class="code-block">
+            emitter.on('update', handler, 'my-slot') // Same slot key replaces previous
+        </div>
+        <button onclick="slotDemo()">Add Handler with Slot</button>
+        <button onclick="replaceSlotHandler()">Replace Handler</button>
+        <button onclick="emitSlotEvent()">Emit Event</button>
+        <div class="output" id="slot-output"></div>
+    </div>
+
+    <div class="demo-section">
+        <h3>4. Auto-removal with 'remove_handler'</h3>
+        <div class="code-block">
+            Handlers returning 'remove_handler' are automatically unsubscribed
+        </div>
+        <button onclick="autoRemovalDemo()">Add Self-removing Handler</button>
+        <button onclick="triggerAutoRemoval()">Trigger Event (removes after 1st call)</button>
+        <div class="output" id="removal-output"></div>
+    </div>
+
+    <div class="demo-section">
+        <h3>5. Interactive Event System</h3>
+        <input type="text" id="event-name" placeholder="Event name (e.g., 'test')" value="chat">
+        <input type="text" id="event-data" placeholder="Event data" value="Hello from interactive demo!">
+        <br>
+        <button onclick="addListener()">Add Listener</button>
+        <button onclick="emitCustomEvent()">Emit Event</button>
+        <button onclick="removeAllListeners()">Remove All Listeners</button>
+        <div class="event-log" id="event-log">Event log will appear here...</div>
+    </div>
+
+    <div class="demo-section">
+        <h3>6. Return Values and Handler Count</h3>
+        <div class="code-block">
+            emit() returns the number of handlers that were called
+        </div>
+        <button onclick="handlerCountDemo()">Demo Handler Counting</button>
+        <div class="output" id="count-output"></div>
+    </div>
+
+    <script src="u-query.js"></script>
+    <script>
+        // Create a demo EventEmitter instance
+        const demoEmitter = new EventEmitter();
+        
+        function log(message, outputId = 'basic-output') {
+            const output = document.getElementById(outputId);
+            output.innerHTML += message + '<br>';
+        }
+
+        function clearOutput(outputId) {
+            document.getElementById(outputId).innerHTML = '';
+        }
+
+        // Demo 1: Basic subscription and emission
+        function basicDemo() {
+            clearOutput('basic-output');
+            
+            demoEmitter.on('greeting', (name) => {
+                log(`Hello, ${name}!`, 'basic-output');
+            });
+            
+            demoEmitter.emit('greeting', 'World');
+            demoEmitter.emit('greeting', 'EventEmitter');
+        }
+
+        // Demo 2: Multiple listeners
+        let multipleHandlersAdded = false;
+        function multipleListenersDemo() {
+            clearOutput('multiple-output');
+            
+            if (!multipleHandlersAdded) {
+                demoEmitter.on('multi-test', (data) => {
+                    log(`Handler 1 received: ${data}`, 'multiple-output');
+                });
+                
+                demoEmitter.on('multi-test', (data) => {
+                    log(`Handler 2 received: ${data}`, 'multiple-output');
+                });
+                
+                demoEmitter.on('multi-test', (data) => {
+                    log(`Handler 3 received: ${data}`, 'multiple-output');
+                });
+                
+                multipleHandlersAdded = true;
+                log('Added 3 listeners for "multi-test" event', 'multiple-output');
+            } else {
+                log('Listeners already added', 'multiple-output');
+            }
+        }
+
+        function emitToMultiple() {
+            const count = demoEmitter.emit('multi-test', 'Hello from multiple demo!');
+            log(`Event emitted to ${count} handlers`, 'multiple-output');
+        }
+
+        // Demo 3: Slot-based deduplication
+        function slotDemo() {
+            clearOutput('slot-output');
+            
+            demoEmitter.on('slot-event', (msg) => {
+                log(`Slot handler v1: ${msg}`, 'slot-output');
+            }, 'demo-slot');
+            
+            log('Added handler with slot key "demo-slot"', 'slot-output');
+        }
+
+        function replaceSlotHandler() {
+            demoEmitter.on('slot-event', (msg) => {
+                log(`Slot handler v2 (replaced): ${msg}`, 'slot-output');
+            }, 'demo-slot');
+            
+            log('Replaced handler using same slot key', 'slot-output');
+        }
+
+        function emitSlotEvent() {
+            const count = demoEmitter.emit('slot-event', 'Testing slot replacement');
+            log(`Emitted to ${count} handler(s)`, 'slot-output');
+        }
+
+        // Demo 4: Auto-removal
+        let autoRemovalCount = 0;
+        function autoRemovalDemo() {
+            clearOutput('removal-output');
+            
+            demoEmitter.on('auto-remove', (msg) => {
+                autoRemovalCount++;
+                log(`Auto-removal handler called ${autoRemovalCount} time(s): ${msg}`, 'removal-output');
+                return 'remove_handler'; // This will remove the handler after this call
+            });
+            
+            log('Added self-removing handler', 'removal-output');
+        }
+
+        function triggerAutoRemoval() {
+            const count = demoEmitter.emit('auto-remove', 'This handler will remove itself');
+            log(`Handlers called: ${count}`, 'removal-output');
+            
+            // Try emitting again to show it was removed
+            setTimeout(() => {
+                const count2 = demoEmitter.emit('auto-remove', 'This should call 0 handlers');
+                log(`Second emit - handlers called: ${count2}`, 'removal-output');
+            }, 1000);
+        }
+
+        // Demo 5: Interactive event system
+        const interactiveEmitter = new EventEmitter();
+        let listenerCount = 0;
+
+        function addListener() {
+            const eventName = document.getElementById('event-name').value;
+            if (!eventName) return;
+            
+            listenerCount++;
+            const listenerId = listenerCount;
+            
+            interactiveEmitter.on(eventName, (data) => {
+                const log = document.getElementById('event-log');
+                log.innerHTML += `[Listener ${listenerId}] ${eventName}: ${data}\n`;
+                log.scrollTop = log.scrollHeight;
+            });
+            
+            const log = document.getElementById('event-log');
+            log.innerHTML += `Added listener ${listenerId} for "${eventName}"\n`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function emitCustomEvent() {
+            const eventName = document.getElementById('event-name').value;
+            const eventData = document.getElementById('event-data').value;
+            
+            if (!eventName) return;
+            
+            const count = interactiveEmitter.emit(eventName, eventData);
+            const log = document.getElementById('event-log');
+            log.innerHTML += `Emitted "${eventName}" to ${count} listener(s)\n`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function removeAllListeners() {
+            const eventName = document.getElementById('event-name').value;
+            if (!eventName) return;
+            
+            // Clear all listeners for this event by creating a new emitter
+            interactiveEmitter._topics.delete(eventName);
+            
+            const log = document.getElementById('event-log');
+            log.innerHTML += `Removed all listeners for "${eventName}"\n`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        // Demo 6: Handler counting
+        function handlerCountDemo() {
+            clearOutput('count-output');
+            
+            // Add multiple handlers
+            demoEmitter.on('count-test', () => log('Handler A executed', 'count-output'));
+            demoEmitter.on('count-test', () => log('Handler B executed', 'count-output'));
+            demoEmitter.on('count-test', () => log('Handler C executed', 'count-output'));
+            
+            const count = demoEmitter.emit('count-test');
+            log(`Total handlers executed: ${count}`, 'count-output');
+            
+            // Clean up
+            demoEmitter._topics.delete('count-test');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('event-log').innerHTML = 'Ready for interactive events...\n';
+        });
+    </script>
+</body>
+</html>

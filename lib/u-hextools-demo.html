@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>u-hextools.js Demo</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        canvas { border: 1px solid #ccc; margin: 10px 0; }
+        button { padding: 8px 12px; margin: 5px; cursor: pointer; }
+        .info { background: #f0f0f0; padding: 10px; margin: 10px 0; }
+        input { margin: 5px; padding: 5px; }
+    </style>
+</head>
+<body>
+    <h1>u-hextools.js Demo</h1>
+    <p>Hexagonal grid utilities and coordinate conversion</p>
+    
+    <h3>Hex Coordinate Conversion</h3>
+    <div>
+        Cube X: <input type="number" id="cube-x" value="0" onchange="updateConversion()">
+        Cube Y: <input type="number" id="cube-y" value="0" onchange="updateConversion()">
+        Cube Z: <input type="number" id="cube-z" value="0" onchange="updateConversion()">
+    </div>
+    <div class="info" id="conversion-info"></div>
+    
+    <h3>Hex Grid Visualization</h3>
+    <button onclick="drawHexGrid()">Draw Grid</button>
+    <button onclick="highlightNeighbors()">Show Neighbors</button>
+    <button onclick="showDistance()">Show Distance</button>
+    <canvas id="hex-canvas" width="500" height="400"></canvas>
+    <div class="info" id="hex-info">Click buttons to explore hex grid features</div>
+
+    <script src="u-hextools.js"></script>
+    <script>
+        let hexRadius = 25;
+        let gridWidth = 8;
+        let gridHeight = 6;
+        let centerHex = {q: 3, r: 2};
+
+        function updateConversion() {
+            const x = parseInt(document.getElementById('cube-x').value);
+            const y = parseInt(document.getElementById('cube-y').value);
+            const z = parseInt(document.getElementById('cube-z').value);
+            
+            if (x + y + z !== 0) {
+                document.getElementById('conversion-info').innerHTML = 'Invalid cube coordinates (x + y + z must equal 0)';
+                return;
+            }
+            
+            // Convert to axial (q, r)
+            const q = x;
+            const r = z;
+            
+            // Convert to offset coordinates
+            const col = q + (r - (r & 1)) / 2;
+            const row = r;
+            
+            document.getElementById('conversion-info').innerHTML = `
+                Cube: (${x}, ${y}, ${z})<br>
+                Axial: (q=${q}, r=${r})<br>
+                Offset: (col=${col}, row=${row})
+            `;
+        }
+
+        function hexToPixel(q, r, radius) {
+            const x = radius * (3/2 * q);
+            const y = radius * (Math.sqrt(3)/2 * q + Math.sqrt(3) * r);
+            return {x, y};
+        }
+
+        function drawHex(ctx, centerX, centerY, radius, fillColor = '#f0f0f0', strokeColor = '#333') {
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+                const angle = (i * Math.PI) / 3;
+                const x = centerX + Math.cos(angle) * radius;
+                const y = centerY + Math.sin(angle) * radius;
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            ctx.closePath();
+            ctx.fillStyle = fillColor;
+            ctx.fill();
+            ctx.strokeStyle = strokeColor;
+            ctx.stroke();
+        }
+
+        function drawHexGrid() {
+            const canvas = document.getElementById('hex-canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const offsetX = 100;
+            const offsetY = 100;
+            
+            for (let r = 0; r < gridHeight; r++) {
+                for (let q = 0; q < gridWidth; q++) {
+                    const pixel = hexToPixel(q, r, hexRadius);
+                    const x = pixel.x + offsetX;
+                    const y = pixel.y + offsetY;
+                    
+                    drawHex(ctx, x, y, hexRadius);
+                    
+                    // Draw coordinates
+                    ctx.fillStyle = '#666';
+                    ctx.font = '10px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`${q},${r}`, x, y + 3);
+                }
+            }
+            
+            document.getElementById('hex-info').innerHTML = 'Hexagonal grid drawn with axial coordinates (q, r)';
+        }
+
+        function getHexNeighbors(q, r) {
+            const directions = [
+                {q: 1, r: 0}, {q: 1, r: -1}, {q: 0, r: -1},
+                {q: -1, r: 0}, {q: -1, r: 1}, {q: 0, r: 1}
+            ];
+            
+            return directions.map(dir => ({
+                q: q + dir.q,
+                r: r + dir.r
+            }));
+        }
+
+        function highlightNeighbors() {
+            const canvas = document.getElementById('hex-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            drawHexGrid();
+            
+            const offsetX = 100;
+            const offsetY = 100;
+            const centerQ = centerHex.q;
+            const centerR = centerHex.r;
+            
+            // Highlight center hex
+            const centerPixel = hexToPixel(centerQ, centerR, hexRadius);
+            drawHex(ctx, centerPixel.x + offsetX, centerPixel.y + offsetY, hexRadius, '#ff4444');
+            
+            // Highlight neighbors
+            const neighbors = getHexNeighbors(centerQ, centerR);
+            neighbors.forEach(neighbor => {
+                if (neighbor.q >= 0 && neighbor.q < gridWidth && 
+                    neighbor.r >= 0 && neighbor.r < gridHeight) {
+                    const pixel = hexToPixel(neighbor.q, neighbor.r, hexRadius);
+                    drawHex(ctx, pixel.x + offsetX, pixel.y + offsetY, hexRadius, '#ffaa44');
+                }
+            });
+            
+            document.getElementById('hex-info').innerHTML = `Center hex (${centerQ}, ${centerR}) and its 6 neighbors highlighted`;
+        }
+
+        function hexDistance(q1, r1, q2, r2) {
+            return (Math.abs(q1 - q2) + Math.abs(q1 + r1 - q2 - r2) + Math.abs(r1 - r2)) / 2;
+        }
+
+        function showDistance() {
+            const canvas = document.getElementById('hex-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            drawHexGrid();
+            
+            const offsetX = 100;
+            const offsetY = 100;
+            const centerQ = centerHex.q;
+            const centerR = centerHex.r;
+            
+            // Color hexes by distance
+            for (let r = 0; r < gridHeight; r++) {
+                for (let q = 0; q < gridWidth; q++) {
+                    const distance = hexDistance(centerQ, centerR, q, r);
+                    const pixel = hexToPixel(q, r, hexRadius);
+                    const x = pixel.x + offsetX;
+                    const y = pixel.y + offsetY;
+                    
+                    let color = '#f0f0f0';
+                    if (distance === 0) color = '#ff4444';
+                    else if (distance === 1) color = '#ffaa44';
+                    else if (distance === 2) color = '#aaff44';
+                    else if (distance === 3) color = '#44aaff';
+                    
+                    drawHex(ctx, x, y, hexRadius, color);
+                    
+                    // Draw distance
+                    ctx.fillStyle = '#000';
+                    ctx.font = '12px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(distance.toString(), x, y + 3);
+                }
+            }
+            
+            document.getElementById('hex-info').innerHTML = `Distance from center hex (${centerQ}, ${centerR}) shown by color and number`;
+        }
+
+        // Initialize
+        updateConversion();
+        drawHexGrid();
+    </script>
+</body>
+</html>

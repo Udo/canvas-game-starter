@@ -44,6 +44,8 @@ function load_gltf(url, target_or_function) {
 }
 
 var enable_fxaa = function(Stage, EffectComposer) {
+	if (!Stage.pipeline) Stage.pipeline = {};
+	var pixelRatio = Stage.renderer.getPixelRatio();
 	var fxaaPass = Stage.pipeline.fxaaPass = new ShaderPass( Shaders.FXAAShader );
 	fxaaPass.material.uniforms[ 'resolution' ].value.x = 1 / ( window.innerWidth * pixelRatio );
 	fxaaPass.material.uniforms[ 'resolution' ].value.y = 1 / ( window.innerHeight * pixelRatio );
@@ -51,6 +53,7 @@ var enable_fxaa = function(Stage, EffectComposer) {
 }
 
 var enable_sao = function(Stage, EffectComposer) {
+	if (!Stage.pipeline) Stage.pipeline = {};
 	var saoPass = Stage.pipeline.saoPass = new SAOPass( Stage.root, Stage.camera, false, true );
 	saoPass.params.saoScale = 100.0;
 	saoPass.params.saoBias = 0.5;
@@ -60,6 +63,7 @@ var enable_sao = function(Stage, EffectComposer) {
 }
 
 var enable_ssao = function(Stage, EffectComposer) {
+	if (!Stage.pipeline) Stage.pipeline = {};
 	var ssaoPass = Stage.pipeline.ssaoPass = new SSAOPass( Stage.root, Stage.camera, window.innerWidth, window.innerHeight );
 	ssaoPass.kernelRadius = 10;
 	ssaoPass.minDistance = 0.01;
