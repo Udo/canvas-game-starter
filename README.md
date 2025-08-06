@@ -6,28 +6,28 @@ License: Public Domain (libraries have their own licenses)
 
 Author: udo@openfu.com
 
-## What is it?
+## Featured Examples
 
-You don't need a complicated framework for productive HTML5 game development, you can just use a few very simple libraries
-to make your life easier though. This is a collection of standard HTML5 gamedev stuff, all put together in a startable form. It
-contains the following libraries:
+### 2D Game Templates
+- **Basic 2D**: PIXI.js foundation with sprites and basic game loop
+- **Hex Grid**: Hexagonal grid system for strategy games
+- **Square Grid**: Traditional grid-based game template
 
-* Howler.js (2.2.1) MIT License | https://github.com/goldfire/howler.js#documentation
-* jQuery (3.6.0) MIT License | https://jquery.com/
-* lodash (1.8.3) CC0/Public Domain | https://lodash.com/
-* macrobars (latest) Public Domain | https://github.com/udo/macrobars
-* PIXI.js BSD 3-clause License | (5.3.9 http://pixijs.download/dev/docs/index.html
-* udolib (latest) Public Domain | https://github.com/udo/udolib
+### 3D Game Templates  
+- **Blank Project**: Clean THREE.js starting point
+- **Hex Grid 3D**: 3D hexagonal grid system
+- **Square Grid 3D**: 3D grid-based game template
+- **Asset Import**: 3D model loading and display
+- **Toon Shading**: Cartoon-style 3D rendering
 
-Optional, for 3D stuff, but not loaded by default:
+## Libraries Included
 
-* THREE.js MIT License | https://threejs.org/docs/
+* **Howler.js** (2.2.1) MIT License | https://github.com/goldfire/howler.js#documentation
+* **macrobars** (latest) Public Domain | https://github.com/udo/macrobars
+* **PIXI.js** BSD 3-clause License |  http://pixijs.download/dev/docs/index.html
+* **udolib** (latest) Public Domain | https://github.com/udo/udolib
+* **THREE.js** MIT License | https://threejs.org/docs/
 
-HTML5 based on:
+Built on **HTML5 Boilerplate** (5.3.0) MIT License | https://html5boilerplate.com/
 
-* HTML5 Boilerplate (5.3.0) MIT License | https://html5boilerplate.com/
-
-## Changelog
-
-* Updated to use JS modules for THREE.js (sort of)
 
