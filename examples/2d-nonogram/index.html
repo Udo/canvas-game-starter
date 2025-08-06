@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>2D Nonogram - Canvas Game Starter</title>
+		<meta name="description" content="A Nonogram puzzle game using PIXI.js">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<link rel="stylesheet" href="css/game.css">
+		<link rel="stylesheet" href="../../css/hint.css">
+		<link rel="stylesheet" href="../../css/font-awesome.min.css">
+
+		<script src="../../lib/pixi8.min.js"></script>
+		<script src="../../lib/u-events.js"></script>
+		<script src="../../lib/howler.min.js"></script>
+		<script src="../../lib/u-pathastar.js"></script>
+		<script src="../../lib/u-helper.js"></script>
+		<script src="../../lib/u-grid.js"></script>
+		<script src="../../lib/u-pixistage8.js"></script>
+
+		<script src="js/game.js"></script>
+	</head>
+	<body oncontextmenu="event.preventDefault();">
+
+		<nav>
+			<button onclick="newGame()">New Game</button>
+			<button onclick="resetGame()">Reset</button>
+			<button onclick="showSolution()">Show Solution</button>
+		</nav>
+
+		<div id="game-status">
+			<div>Loading...</div>
+		</div>
+
+		<footer>
+			<div id="frame-rate"></div>
+		</footer>
+
+		<script type="module">
+
+		async function initGame() {
+			try {
+				stage = await PixiStage.create();
+				stage.layers.add('game');
+				stage.layers.add('ui');
+
+				initNonogram();
+
+				function updateFrameRate() {
+					let fps = stage.app.ticker.FPS.toFixed(2);
+					document.getElementById('frame-rate').innerText = `FPS: ${fps}`;
+				}
+				stage.app.ticker.add(updateFrameRate);
+
+				createGrid(stage);
+
+				stage.event_handlers.wheel = (e) => {
+					if(e.deltaY > 0)
+						stage.app.stage.target_scale *= 0.9;
+					else
+						stage.app.stage.target_scale *= 1.1;
+					stage.app.stage.target_scale = clamp(stage.app.stage.target_scale, stage.params.zoom.min, stage.params.zoom.max);
+					stage.director.zoom(stage.app.stage, stage.app.stage.target_scale);
+				}
+
+				stage.app.view.addEventListener('contextmenu', (e) => {
+					e.preventDefault();
+				});
+
+				stage.director.focus_on(stage.layers.get('game'));
+
+				console.log('Nonogram game initialized successfully!');
+			} catch (error) {
+				console.error('Failed to initialize game:', error);
+			}
+		}
+
+		window.addEventListener('load', initGame);
+
+		</script>
+
+	</body>
+</html>
