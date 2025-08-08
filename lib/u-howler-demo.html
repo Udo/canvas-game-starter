@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>U-Howler.js Demo</title>
+    <style>
+        :root {
+            --space: 8px;
+            --radius: 5px;
+            
+            --gray: #6c757d;
+            --gray-bg: #f5f5f5;
+            --blue: #007acc;
+            --green: #28a745;
+            --white: white;
+            --dark: #333;
+            
+            --max-width: 1400px;
+            --sidebar: 400px;
+        }
+        
+        * { box-sizing: border-box; }
+        
+        body { 
+            font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: var(--space);
+            background: var(--gray-bg);
+        }
+        
+        .container { 
+            background: var(--white);
+            padding: calc(var(--space) * 1.5);
+            border-radius: var(--radius);
+        }
+        
+        .main-layout { 
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: calc(var(--space) * 1.5);
+        }
+        
+        .api-column { 
+            background: var(--gray-bg);
+            padding: var(--space);
+            border-radius: var(--radius);
+            border-left: 4px solid var(--green);
+        }
+        
+        h1 { 
+            color: var(--dark);
+            text-align: center;
+            margin-bottom: calc(var(--space) * 1.5);
+            grid-column: 1 / -1;
+        }
+        
+        h2 { 
+            color: var(--gray);
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: var(--space);
+            margin-top: calc(var(--space) * 1.5);
+        }
+        
+        .demo-section { 
+            margin: var(--space) 0;
+            padding: var(--space);
+            background: var(--gray-bg);
+            border-radius: var(--radius);
+            border-left: 4px solid var(--blue);
+        }
+        
+        .controls, .slider-group { 
+            display: flex;
+            gap: var(--space);
+            margin: 15px 0;
+        }
+        
+        .controls { flex-wrap: wrap; }
+        .slider-group { align-items: center; }
+        .feature-grid { display: grid; gap: var(--space); margin: var(--space) 0; }
+        
+        button { 
+            background: var(--blue);
+            color: var(--white);
+            border: none;
+            padding: var(--space) var(--space);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover { filter: brightness(0.9); }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        input[type="range"] { flex: 1; max-width: 200px; }
+        
+        .status, .code-example { 
+            font-family: monospace;
+            padding: var(--space);
+            border-radius: var(--radius);
+            margin: var(--space) 0;
+        }
+        
+        .status { 
+            background: var(--dark);
+            color: #0f0;
+            white-space: pre-wrap;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        .code-example { 
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            overflow-x: auto;
+            margin: var(--space) 0;
+        }
+        
+        .highlight { color: #68d391; }
+        .keyword { color: #fbb6ce; }
+        .string { color: #fbd38d; }
+        
+        .audio-visual { 
+            height: 100px;
+            background: linear-gradient(45deg, #1e3c72, #2a5298);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-weight: bold;
+            margin: 15px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .waveform { 
+            position: absolute;
+            inset: 0;
+            opacity: 0.3;
+            background: repeating-linear-gradient(90deg, transparent 0 10px, rgba(255,255,255,0.2) 10px 20px);
+            animation: wave 2s linear infinite;
+        }
+        
+        .eq-visualizer {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: end;
+            gap: 2px;
+            padding: 5px;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+        
+        .eq-bar {
+            flex: 1;
+            background: linear-gradient(to top, #68d391, #48bb78, #38a169);
+            border-radius: 2px 2px 0 0;
+            min-height: 2px;
+            transition: height 0.05s ease;
+            width: 100%;
+            transform-origin: bottom;
+        }
+        
+        @keyframes wave { to { transform: translateX(20px); } }
+        
+        .api-section { margin: 15px 0; }
+        .api-section h3 { 
+            color: var(--green);
+            margin: 0 0 var(--space) 0;
+        }
+        
+        .api-method { 
+            font-family: monospace;
+            margin: 3px 0;
+            color: var(--gray);
+        }
+        
+        .api-method .method-name { color: var(--blue); font-weight: bold; }
+        .api-method .return-type { color: #6f42c1; }
+        .api-method .param { color: #e83e8c; }
+        
+        .api-description {
+            margin: var(--space) 0;
+        }
+        
+        .api-options {
+            color: var(--gray);
+        }
+        
+        /* Spatial demo styles */
+        .spatial-container {
+            width: 100%;
+            height: 200px;
+            background: var(--dark);
+            border-radius: var(--radius);
+            position: relative;
+            cursor: crosshair;
+            margin: var(--space) 0;
+        }
+        
+        .spatial-dot {
+            position: absolute;
+            border-radius: 50%;
+            cursor: move;
+        }
+        
+        .spatial-listener {
+            width: 32px;
+            height: 32px;
+            background: var(--green);
+            transform: translate(-8px, -8px);
+            left: 50%;
+            top: 50%;
+        }
+        
+        .spatial-source {
+            width: 20px;
+            height: 20px;
+            transform: translate(-6px, -6px);
+        }
+        
+        .spatial-source1 {
+            background: #fbd38d;
+            left: 25%;
+            top: 30%;
+        }
+        
+        .spatial-source2 {
+            background: #fbb6ce;
+            left: 75%;
+            top: 70%;
+        }
+        
+        .spatial-flash {
+            animation: ping-flash 0.3s ease-out;
+        }
+        
+        @keyframes ping-flash {
+            0% { 
+                transform: translate(-6px, -6px) scale(1);
+                opacity: 1;
+            }
+            50% { 
+                transform: translate(-6px, -6px) scale(1.4);
+                opacity: 0.8;
+                box-shadow: 0 0 15px currentColor;
+            }
+            100% { 
+                transform: translate(-6px, -6px) scale(1);
+                opacity: 1;
+            }
+        }
+        
+        .help-text {
+            color: var(--gray);
+            margin: var(--space) 0;
+        }
+        
+        .code-comment {
+            color: #68d391;
+        }
+        
+        /* Sprite demo button styles */
+        .feature-grid button {
+            padding: calc(var(--space) * 1.5) var(--space);
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        
+        .feature-grid button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 122, 204, 0.3);
+        }
+        
+        .feature-grid button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        
+        @media (max-width: 1200px) {
+            .main-layout { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body onload="createBasicSound();">
+    <div class="container">
+        <h1>U-Howler.js Demo</h1>
+        
+        <div class="main-layout">
+            <div class="demo-column">
+                <h2>Basic Controls</h2>
+                <div class="demo-section">
+                    <div class="audio-visual">
+                        <div class="waveform"></div>
+                        <div class="eq-visualizer" id="eqVisualizer">
+                        </div>
+                    </div>
+                    <div class="controls">
+                        <button onclick="createBasicSound()">Create Sound</button>
+                        <button onclick="playBasic()" id="playBasic" disabled>Play</button>
+                        <button onclick="pauseBasic()" id="pauseBasic" disabled>Pause</button>
+                        <button onclick="stopBasic()" id="stopBasic" disabled>Stop</button>
+                    </div>
+                    
+                    <div class="slider-group">
+                        <label>Frequency:</label>
+                        <input type="range" min="200" max="2000" step="50" value="440" 
+                               onchange="updateFrequency(this.value)" id="frequencySlider">
+                        <span id="frequencyValue">440 Hz</span>
+                    </div>
+                    
+                    <div class="slider-group">
+                        <label>Volume:</label>
+                        <input type="range" min="0" max="1" step="0.1" value="1" 
+                               onchange="setBasicVolume(this.value)" id="volumeSlider" disabled>
+                        <span id="volumeValue">1.0</span>
+                    </div>
+                </div>
+
+                <div class="demo-section">
+                    <div class="controls">
+                        <button onclick="demonstratePromises()">Demo Async/Await</button>
+                        <button onclick="demonstrateTraditional()">Demo Traditional Callbacks</button>
+                    </div>
+                    
+                    <div class="status" id="promiseStatus"></div>
+                </div>
+
+                <div class="demo-section">
+                    <h3>Global Controls</h3>
+                    <div class="controls">
+                        <button onclick="globalMute()">Global Mute/Unmute</button>
+                        <button onclick="globalStop()">Stop All Sounds</button>
+                    </div>
+                    
+                    <div class="slider-group">
+                        <label>Master Volume:</label>
+                        <input type="range" min="0" max="1" step="0.1" value="1" 
+                               onchange="Howler.volume(this.value); updateMasterVol(this.value)">
+                        <span id="masterVolValue">1.0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="api-column">
+                <h2>API Overview</h2>
+                
+                <div class="api-section">
+                    <h3>Howler (Global)</h3>
+                    <div class="api-method"><span class="method-name">volume</span>(<span class="param">vol?</span>) → <span class="return-type">Howler|number</span></div>
+                    <div class="api-method"><span class="method-name">mute</span>(<span class="param">muted?</span>) → <span class="return-type">Howler</span></div>
+                    <div class="api-method"><span class="method-name">stop</span>() → <span class="return-type">Howler</span></div>
+                    <div class="api-method"><span class="method-name">unload</span>() → <span class="return-type">Howler</span></div>
+                    <div class="api-method"><span class="method-name">codecs</span>(<span class="param">ext</span>) → <span class="return-type">boolean</span></div>
+                    <div class="api-method"><span class="method-name">environment</span>(<span class="param">env</span>) → <span class="return-type">Howler</span></div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Howl Constructor</h3>
+                    <div class="api-method"><span class="keyword">new</span> <span class="method-name">Howl</span>(<span class="param">options</span>)</div>
+                    <div class="api-options">
+                        Options: src, volume, rate, loop, mute, preload, autoplay, sprite, format, html5, pool, xhr, spatial, on*
+                    </div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Core Methods</h3>
+                    <div class="api-method"><span class="method-name">load</span>() → <span class="return-type">Promise&lt;Howl&gt;</span></div>
+                    <div class="api-method"><span class="method-name">play</span>(<span class="param">sprite?</span>) → <span class="return-type">number|Promise</span></div>
+                    <div class="api-method"><span class="method-name">pause</span>(<span class="param">id?</span>) → <span class="return-type">Howl</span></div>
+                    <div class="api-method"><span class="method-name">stop</span>(<span class="param">id?</span>) → <span class="return-type">Howl</span></div>
+                    <div class="api-method"><span class="method-name">mute</span>(<span class="param">muted?, id?</span>) → <span class="return-type">Howl|boolean</span></div>
+                    <div class="api-method"><span class="method-name">volume</span>(<span class="param">vol?, id?</span>) → <span class="return-type">Howl|number</span></div>
+                    <div class="api-method"><span class="method-name">fade</span>(<span class="param">from, to, duration, id?</span>) → <span class="return-type">Howl</span></div>
+                    <div class="api-method"><span class="method-name">rate</span>(<span class="param">rate?, id?</span>) → <span class="return-type">Howl|number</span></div>
+                    <div class="api-method"><span class="method-name">seek</span>(<span class="param">seek?, id?</span>) → <span class="return-type">Howl|number</span></div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Examples</h3>
+                    <pre class="code-example">
+<span class="code-comment">// Promise support</span>
+<span class="keyword">const</span> howl = <span class="keyword">new</span> <span class="highlight">Howl</span>({src: <span class="string">'audio.mp3'</span>});
+<span class="keyword">await</span> howl.load();
+<span class="keyword">const</span> id = howl.play();
+
+<span class="code-comment">// Sprite usage</span>
+<span class="keyword">const</span> soundFx = <span class="keyword">new</span> <span class="highlight">Howl</span>({
+  src: <span class="string">'sounds.mp3'</span>,
+  sprite: {
+    jump: [<span class="highlight">0</span>, <span class="highlight">500</span>],
+    shoot: [<span class="highlight">600</span>, <span class="highlight">300</span>]
+  }
+});
+soundFx.play(<span class="string">'jump'</span>);
+</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <div class="demo-column">
+                <h2>Audio Sprites</h2>
+                <div class="demo-section">
+                    <h3>Audio Sprites Demo</h3>
+                    <div class="audio-visual" id="spriteVisual">
+                        <div class="waveform"></div>
+                        <div class="eq-visualizer" id="spriteEqVisualizer">
+                        </div>
+                    </div>
+                    
+                    <div class="controls">
+                        <button onclick="createSpriteSound()" id="createSpriteBtn">Create Sprite Collection</button>
+                        <button onclick="playFullSprite()" id="playFullBtn" disabled>Play Full Collection</button>
+                    </div>
+                    
+                    <div class="feature-grid" id="spriteButtons" style="grid-template-columns: repeat(4, 1fr);">
+                        <button onclick="playSpriteSound('jump')" disabled>🦘 Jump</button>
+                        <button onclick="playSpriteSound('coin')" disabled>🪙 Coin</button>
+                        <button onclick="playSpriteSound('laser')" disabled>⚡ Laser</button>
+                        <button onclick="playSpriteSound('explosion')" disabled>💥 Boom</button>
+                        <button onclick="playSpriteSound('click')" disabled>🖱️ Click</button>
+                        <button onclick="playSpriteSound('power_up')" disabled>⭐ Power</button>
+                        <button onclick="playSpriteSound('hurt')" disabled>😵 Hurt</button>
+                        <button onclick="playSpriteSound('victory')" disabled>🏆 Victory</button>
+                    </div>
+                    
+                </div>
+            </div>
+
+            <div class="api-column">
+                <h2>Audio Sprites API</h2>
+                
+                <div class="api-section">
+                    <h3>Sprite Methods</h3>
+                    <div class="api-method"><span class="method-name">play</span>(<span class="param">spriteName</span>) → <span class="return-type">number</span></div>
+                    <div class="api-description">
+                        Play a specific sprite by name from the sprite collection.
+                    </div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Sprite Configuration</h3>
+                    <div class="api-description">
+                        <strong>Sprite Format:</strong> { name: [start_ms, duration_ms] }<br>
+                        • start_ms: Starting position in milliseconds<br>
+                        • duration_ms: Length of the sprite in milliseconds<br>
+                        • Sprites can be tightly packed or have gaps between them<br>
+                    </div>
+                    <pre class="code-example">
+<span class="keyword">const</span> spriteMap = {
+  jump: [<span class="highlight">0</span>, <span class="highlight">500</span>],       <span class="code-comment">// 0ms - 500ms</span>
+  coin: [<span class="highlight">500</span>, <span class="highlight">300</span>],     <span class="code-comment">// 500ms - 800ms</span>
+  laser: [<span class="highlight">800</span>, <span class="highlight">400</span>],    <span class="code-comment">// 800ms - 1200ms</span>
+  explosion: [<span class="highlight">1200</span>, <span class="highlight">800</span>] <span class="code-comment">// 1200ms - 2000ms</span>
+};
+
+<span class="keyword">const</span> gameAudio = <span class="keyword">new</span> <span class="highlight">Howl</span>({
+  src: <span class="string">'game-sounds.wav'</span>,
+  sprite: spriteMap
+});
+
+gameAudio.play(<span class="string">'jump'</span>);
+</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <div class="demo-column">
+                <h2>Audio Effects</h2>
+                <div class="demo-section">
+                    <h3>Filters</h3>
+                    <div class="controls">
+                        <button onclick="addLowpass()" id="lowpassBtn" disabled>Add Lowpass</button>
+                        <button onclick="addHighpass()" id="highpassBtn" disabled>Add Highpass</button>
+                        <button onclick="addBandpass()" id="bandpassBtn" disabled>Add Bandpass</button>
+                        <button onclick="addDelay()" id="delayBtn" disabled>Add Delay</button>
+                        <button onclick="addReverb()" id="reverbBtn" disabled>Add Reverb</button>
+                        <button onclick="addDistortion()" id="distortionBtn" disabled>Add Distortion</button>
+                    </div>
+                    <div class="controls">
+                        <button onclick="clearEffects()" id="clearEffectsBtn" disabled>Clear All Effects</button>
+                        <button onclick="reverseEffects()" id="reverseEffectsBtn" disabled>Reverse Effect Order</button>
+                    </div>
+                </div>
+
+                <div class="feature-grid">
+                    <div class="demo-section">
+                        <h3>Rate Control</h3>
+                        <div class="slider-group">
+                            <label>Playback Rate:</label>
+                            <input type="range" min="0.25" max="4" step="0.1" value="1" 
+                                   onchange="setRate(this.value)" id="rateSlider" disabled>
+                            <span id="rateValue">1.0x</span>
+                        </div>
+                        <button onclick="demoRateChange()" id="rateDemo" disabled>Demo Rate Changes</button>
+                    </div>
+                    
+                    <div class="demo-section">
+                        <h3>Fade Effects</h3>
+                        <div class="controls">
+                            <button onclick="fadeIn()" id="fadeInBtn" disabled>Fade In</button>
+                            <button onclick="fadeOut()" id="fadeOutBtn" disabled>Fade Out</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="api-column">
+                <h2>Effects API</h2>
+                
+                <div class="api-section">
+                    <h3>Effect Methods</h3>
+                    <div class="api-method"><span class="method-name">addEffect</span>(<span class="param">type, options?</span>) → <span class="return-type">AudioNode</span></div>
+                    <div class="api-method"><span class="method-name">effects</span> → <span class="return-type">Array&lt;AudioNode&gt;</span></div>
+                    <div class="api-method"><span class="method-name">updateEffectsChain</span>() → <span class="return-type">Howl</span></div>
+                    <div class="api-method"><span class="method-name">enableEQ</span>(<span class="param">bands?, callback?, boost?</span>) → <span class="return-type">Howl</span></div>
+                    <div class="api-method"><span class="method-name">disableEQ</span>() → <span class="return-type">Howl</span></div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Audio Effects</h3>
+                    <div class="api-description">
+                        <strong>addEffect(type, options)</strong> - Add audio effect to the sound<br>
+                        • Returns the Web Audio node for direct manipulation<br>
+                        • Types: 'lowpass', 'highpass', 'bandpass', 'notch', 'delay', 'reverb', 'gain', 'distortion'<br>
+                        • Options vary by type (frequency, Q, delay, gain, etc.)<br><br>
+                        <strong>effects</strong> - Getter for effects array (for direct manipulation)<br>
+                        <strong>updateEffectsChain()</strong> - Rebuild audio chain after effects manipulation
+                    </div>
+                    <pre class="code-example">
+<span class="code-comment">// Add effects and manipulate them</span>
+<span class="keyword">const</span> filter = howl.addEffect(<span class="string">'lowpass'</span>, {
+  frequency: <span class="highlight">1000</span>, Q: <span class="highlight">1</span>
+});
+
+<span class="code-comment">// Direct effects array manipulation</span>
+howl.effects.splice(<span class="highlight">1</span>, <span class="highlight">1</span>); <span class="code-comment">// Remove delay effect</span>
+howl.effects.reverse(); <span class="code-comment">// Reorder effects</span>
+howl.updateEffectsChain(); <span class="code-comment">// Apply changes</span>
+</pre>
+                </div>
+
+                <div class="api-section">
+                    <h3>Frequency Analysis</h3>
+                    <div class="api-description">
+                        <strong>enableEQ(bands, callback, boost)</strong> - Enable real-time frequency analysis<br>
+                        • bands: Number of frequency bands (default: 16)<br>
+                        • callback: Function called with frequency data array<br>
+                        • boost: Gain multiplier for visualization (default: 4.0)<br><br>
+                        <strong>disableEQ()</strong> - Disable frequency analysis<br>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <div class="demo-column">
+                <h2>3D Spatial Audio</h2>
+                <div class="demo-section">
+                    <div id="spatialDemo" class="spatial-container">
+                        <div id="listener" class="spatial-dot spatial-listener"></div>
+                        <div id="source1" class="spatial-dot spatial-source spatial-source1"></div>
+                        <div id="source2" class="spatial-dot spatial-source spatial-source2"></div>
+                    </div>
+                    <div class="help-text">
+                        🟢 Green is you!
+                        Drag the dots to move them around the 3D space!
+                        🏛️ Cathedral environment provides realistic reverb.
+                    </div>
+                    <div class="controls">
+                        <button onclick="startSpatialDemo()" id="spatialStartBtn">Start Spatial Demo</button>
+                        <button onclick="stopSpatialDemo()" id="spatialStopBtn" disabled>Stop Demo</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="api-column">
+                <h2>Spatial API</h2>
+                
+                <div class="api-section">
+                    <h3>3D Spatial Audio</h3>
+                    <div class="api-description">
+                        <strong>spatial</strong> - Object containing 3D audio properties<br>
+                        • Properties: position{x,y,z}, orientation{x,y,z}, velocity{x,y,z}<br>
+                        • distance{ref, max, rolloff, model}, cone{inner, outer, outerGain}<br>
+                        • occlusion, obstruction, panningModel<br><br>
+                        <strong>Howler.listener</strong> - Global listener (camera/player) object<br>
+                        <strong>Howler.environment(env)</strong> - Set reverb environment<br>
+                        • Accepts preset strings: 'room', 'hall', 'cathedral'<br>
+                        • Or custom objects: { size, decay, dampening }<br>
+                        • Pass null to disable environment reverb
+                    </div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Environment Presets</h3>
+                    <div class="api-description">
+                        <strong>Built-in Reverb Environments:</strong> 'room', 'hall', 'cathedral', 'cave', 'underwater'<br><br>
+                        
+                        <strong>Custom Environment Parameters:</strong><br>
+                        • <strong>size</strong>: 'small' | 'medium' | 'large' - Room size<br>
+                        • <strong>decay</strong>: 0.1-20.0 - Reverb tail length in seconds<br>
+                        • <strong>dampening</strong>: 0.0-1.0 - High frequency absorption (0=bright, 1=muffled)
+                    </div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Spatial Examples</h3>
+                    <pre class="code-example">
+<span class="keyword">const</span> spatial = <span class="keyword">new</span> <span class="highlight">Howl</span>({
+  src: <span class="string">'footsteps.mp3'</span>,
+  spatial: {
+    position: [<span class="highlight">10</span>, <span class="highlight">0</span>, <span class="highlight">-5</span>],
+    distance: { ref: <span class="highlight">2</span>, max: <span class="highlight">100</span> },
+    cone: { inner: <span class="highlight">45</span>, outer: <span class="highlight">90</span>, outerGain: <span class="highlight">0.2</span> }
+  }
+});
+
+Howler.listener.position = { x: <span class="highlight">0</span>, y: <span class="highlight">1.8</span>, z: <span class="highlight">0</span> };
+Howler.listener.update();
+
+spatial.spatial.position = { x: enemy.x, y: enemy.y, z: enemy.z };
+spatial.spatial.update();
+
+<span class="code-comment">// Built-in presets</span>
+Howler.environment(<span class="string">'room'</span>);      <span class="code-comment">// Small room reverb</span>
+Howler.environment(<span class="string">'hall'</span>);      <span class="code-comment">// Medium hall reverb</span>
+Howler.environment(<span class="string">'cathedral'</span>); <span class="code-comment">// Large cathedral reverb</span>
+
+<span class="code-comment">// Custom environment</span>
+Howler.environment({
+  size: <span class="string">'medium'</span>,
+  decay: <span class="highlight">3.0</span>,
+  dampening: <span class="highlight">0.4</span>
+});
+
+Howler.environment(<span class="keyword">null</span>); <span class="code-comment">// Disable environment</span>
+</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <div class="demo-column">
+                <h2>Library Info</h2>
+                <div class="demo-section">
+                    <div class="status" id="libraryInfo">Loading library information...</div>
+                    
+                    <h3>Supported Codecs:</h3>
+                    <div id="codecSupport" class="status"></div>
+                </div>
+            </div>
+
+            <div class="api-column">
+                <h2>Events & Utilities</h2>
+                
+                <div class="api-section">
+                    <h3>Event Listeners</h3>
+                    <div class="api-method"><span class="method-name">on</span>(<span class="param">event, fn, id?</span>) → <span class="return-type">Howl</span></div>
+                    <div class="api-method"><span class="method-name">off</span>(<span class="param">event?, fn?, id?</span>) → <span class="return-type">Howl</span></div>
+                    <div class="api-method"><span class="method-name">once</span>(<span class="param">event, fn, id?</span>) → <span class="return-type">Howl</span></div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Utility Methods</h3>
+                    <div class="api-method"><span class="method-name">playing</span>(<span class="param">id?</span>) → <span class="return-type">boolean</span></div>
+                    <div class="api-method"><span class="method-name">duration</span>(<span class="param">id?</span>) → <span class="return-type">number</span></div>
+                    <div class="api-method"><span class="method-name">state</span>() → <span class="return-type">string</span></div>
+                    <div class="api-method"><span class="method-name">unload</span>() → <span class="return-type">null</span></div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Events</h3>
+                    <div class="api-method"><span class="method-name">load</span>() - Audio loaded successfully</div>
+                    <div class="api-method"><span class="method-name">loaderror</span>(<span class="param">id, error</span>) - Failed to load audio</div>
+                    <div class="api-method"><span class="method-name">play</span>(<span class="param">id</span>) - Sound started playing</div>
+                    <div class="api-method"><span class="method-name">pause</span>(<span class="param">id</span>) - Sound paused</div>
+                    <div class="api-method"><span class="method-name">stop</span>(<span class="param">id</span>) - Sound stopped</div>
+                    <div class="api-method"><span class="method-name">end</span>(<span class="param">id</span>) - Sound finished playing</div>
+                    <div class="api-method"><span class="method-name">fade</span>(<span class="param">id</span>) - Fade effect completed</div>
+                    <div class="api-method"><span class="method-name">volume</span>(<span class="param">id</span>) - Volume changed</div>
+                    <div class="api-method"><span class="method-name">rate</span>(<span class="param">id</span>) - Playback rate changed</div>
+                    <div class="api-method"><span class="method-name">seek</span>(<span class="param">id</span>) - Playback position changed</div>
+                    <div class="api-method"><span class="method-name">mute</span>(<span class="param">id</span>) - Mute state changed</div>
+                    <div class="api-method"><span class="method-name">unlock</span>() - Audio context unlocked (user interaction)</div>
+                    <div class="api-method"><span class="method-name">playerror</span>(<span class="param">id, error</span>) - Playback error occurred</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="u-howler.js"></script>
+    <script>
+        let basicSound = null;
+        let currentSoundId = null;
+        let currentFrequency = 440; 
+        let spriteSound = null;
+        let spriteData = null; 
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateLibraryInfo();
+            updateCodecSupport();
+        });
+
+        function updateLibraryInfo() {
+            const info = document.getElementById('libraryInfo');
+            info.textContent = `
+Web Audio Context: ${Howler.usingWebAudio ? 'Supported' : 'Not Available'}
+Audio Context State: ${Howler.ctx ? Howler.ctx.state : 'N/A'}
+Master Volume: ${Howler.volume()}
+Is Muted: ${Howler._muted}
+Active Howls: ${Howler._howls.length}
+            `.trim();
+        }
+
+        function updateCodecSupport() {
+            const codecs = ['mp3', 'ogg', 'wav', 'aac', 'webm', 'flac'];
+            const support = codecs.map(codec => 
+                `${codec.toUpperCase()}: ${Howler.codecs(codec) ? '✅' : '❌'}`
+            ).join('\n');
+            document.getElementById('codecSupport').textContent = support;
+        }
+
+        function log(message) {
+            const status = document.getElementById('promiseStatus');
+            status.textContent += new Date().toLocaleTimeString() + ': ' + message + '\n';
+            status.scrollTop = status.scrollHeight;
+        }
+
+        function createSoundBuffer(frequency, duration = 0.1, volume = 0.3, type = 'sine', spriteConfig = null) {
+            if (spriteConfig) {
+                return createMultiSpriteBuffer(spriteConfig);
+            }
+            
+            const sampleRate = 44100;
+            const frameCount = sampleRate * duration;
+            const arrayBuffer = new ArrayBuffer(44 + frameCount * 2);
+            const view = new DataView(arrayBuffer);
+            
+            const writeString = (offset, string) => {
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
+            };
+            
+            writeString(0, 'RIFF');
+            view.setUint32(4, 36 + frameCount * 2, true);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, 1, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true);
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
+            writeString(36, 'data');
+            view.setUint32(40, frameCount * 2, true);
+            
+            let offset = 44;
+            for (let i = 0; i < frameCount; i++) {
+                const t = i / sampleRate;
+                const envelope = duration > 1 ? 1 : Math.exp(-t * 8); 
+                
+                let sample = 0;
+                switch (type) {
+                    case 'sine':
+                        sample = Math.sin(2 * Math.PI * frequency * t);
+                        break;
+                    case 'sweep':
+                        const sweepFreq = frequency + (frequency * 2 * (t / duration));
+                        sample = Math.sin(2 * Math.PI * sweepFreq * t);
+                        break;
+                    case 'noise':
+                        sample = (Math.random() * 2 - 1) * Math.exp(-t * 5);
+                        break;
+                    case 'click':
+                        sample = Math.exp(-t * 50) * Math.sin(2 * Math.PI * frequency * t);
+                        break;
+                    case 'chord':
+                        sample = (Math.sin(2 * Math.PI * frequency * t) + 
+                                 Math.sin(2 * Math.PI * frequency * 1.25 * t) + 
+                                 Math.sin(2 * Math.PI * frequency * 1.5 * t)) / 3;
+                        break;
+                }
+                
+                sample = sample * envelope * volume;
+                view.setInt16(offset, Math.max(-32767, Math.min(32767, sample * 32767)), true);
+                offset += 2;
+            }
+            
+            return arrayBuffer;
+        }
+
+        function createMultiSpriteBuffer(sprites) {
+            const sampleRate = 44100;
+            const totalDuration = Math.max(...sprites.map(s => s.start + s.duration)) + 0.2;
+            const frameCount = Math.floor(sampleRate * totalDuration);
+            const arrayBuffer = new ArrayBuffer(44 + frameCount * 2);
+            const view = new DataView(arrayBuffer);
+            
+            const writeString = (offset, string) => {
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
+            };
+            
+            writeString(0, 'RIFF');
+            view.setUint32(4, 36 + frameCount * 2, true);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, 1, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true);
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
+            writeString(36, 'data');
+            view.setUint32(40, frameCount * 2, true);
+            
+            let offset = 44;
+            
+            for (let i = 0; i < frameCount; i++) {
+                const t = i / sampleRate;
+                let sample = 0;
+                
+                for (const sprite of sprites) {
+                    if (t >= sprite.start && t < sprite.start + sprite.duration) {
+                        const relativeTime = t - sprite.start;
+                        const progress = relativeTime / sprite.duration;
+                        const envelope = Math.exp(-relativeTime * 3);
+                        
+                        switch (sprite.type) {
+                            case 'sweep':
+                                const sweepFreq = sprite.freq * (1 + progress * 2);
+                                sample = Math.sin(2 * Math.PI * sweepFreq * relativeTime) * envelope;
+                                break;
+                            case 'chord':
+                                sample = (Math.sin(2 * Math.PI * sprite.freq * relativeTime) + 
+                                         Math.sin(2 * Math.PI * sprite.freq * 1.25 * relativeTime) + 
+                                         Math.sin(2 * Math.PI * sprite.freq * 1.5 * relativeTime)) / 3 * envelope;
+                                break;
+                            case 'noise':
+                                sample = (Math.random() * 2 - 1) * envelope * 0.5;
+                                break;
+                            case 'click':
+                                sample = Math.exp(-relativeTime * 50) * Math.sin(2 * Math.PI * sprite.freq * relativeTime);
+                                break;
+                        }
+                        break;
+                    }
+                }
+                
+                if (offset + 2 <= arrayBuffer.byteLength) {
+                    view.setInt16(offset, Math.max(-32767, Math.min(32767, sample * 16383)), true);
+                }
+                offset += 2;
+            }
+            
+            return { buffer: arrayBuffer, sprites };
+        }
+
+        function updateFrequency(value) {
+            currentFrequency = parseInt(value);
+            updateDisplayValue('frequencyValue', currentFrequency, ' Hz');
+            
+            if (basicSound) {
+                createBasicSound();
+            }
+        }
+
+        function createBasicSound() {
+            const wav = createSoundBuffer(currentFrequency, 8, 0.1);
+
+            if (basicSound) {
+                basicSound.unload();
+            }
+
+            basicSound = createHowlFromBuffer(wav, {
+                volume: 1,
+                onload: () => {
+                    const basicControlIds = [
+                        'playBasic', 'pauseBasic', 'stopBasic', 'volumeSlider', 'rateSlider', 
+                        'rateDemo', 'fadeInBtn', 'fadeOutBtn', 'lowpassBtn', 'highpassBtn', 
+                        'bandpassBtn', 'delayBtn', 'reverbBtn', 'distortionBtn', 
+                        'clearEffectsBtn', 'reverseEffectsBtn'
+                    ];
+                    setElementsDisabled(basicControlIds, false);
+                    
+                    basicSound.enableEQ(16, (data) => updateEQVisualizer('eqVisualizer', data));
+                },
+                onplay: (id) => {
+                    log(`Sound playing (ID: ${id})`);
+                    currentSoundId = id;
+                    updateVisualizer(true);
+                },
+                onpause: () => {
+                    log('Sound paused');
+                    updateVisualizer(false);
+                },
+                onstop: () => {
+                    log('Sound stopped');
+                    updateVisualizer(false);
+                },
+                onend: () => {
+                    log('Sound ended');
+                    updateVisualizer(false);
+                }
+            });
+        }
+
+        function updateVisualizer(playing) {
+            const visual = document.querySelector('.audio-visual');
+            const waveform = visual.querySelector('.waveform');
+            const text = visual.querySelector('span');
+            
+            if (playing) {
+                waveform.style.animationPlayState = 'running';
+                visual.style.background = 'linear-gradient(45deg, #000000, #112244)';
+            } else {
+                waveform.style.animationPlayState = 'paused';
+                visual.style.background = 'linear-gradient(45deg, #111, #124)';
+            }
+        }
+
+        function playBasic() {
+            if (basicSound) {
+                currentSoundId = basicSound.play();
+            }
+        }
+
+        function pauseBasic() {
+            if (basicSound && currentSoundId) {
+                basicSound.pause(currentSoundId);
+            }
+        }
+
+        function stopBasic() {
+            if (basicSound) {
+                basicSound.stop();
+            }
+        }
+
+        function setBasicVolume(value) {
+            if (basicSound) {
+                basicSound.volume(parseFloat(value));
+                updateDisplayValue('volumeValue', parseFloat(value).toFixed(1));
+            }
+        }
+
+        function setRate(value) {
+            if (basicSound) {
+                basicSound.rate(parseFloat(value));
+                updateDisplayValue('rateValue', parseFloat(value).toFixed(1), 'x');
+            }
+        }
+
+        function demoRateChange() {
+            if (!basicSound) return;
+            
+            const rates = [0.25, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0, 6.0];
+            let index = 0;
+            
+            const changeRate = () => {
+                if (index < rates.length) {
+                    basicSound.rate(rates[index]);
+                    document.getElementById('rateSlider').value = rates[index];
+                    updateDisplayValue('rateValue', rates[index].toFixed(1), 'x');
+                    log(`Rate changed to ${rates[index]}x`);
+                    index++;
+                    setTimeout(changeRate, 250);
+                }
+            };
+            
+            if (!basicSound.playing()) {
+                basicSound.play();
+            }
+            changeRate();
+        }
+
+        function fadeIn() {
+            if (basicSound) {
+                basicSound.volume(0);
+                if (!basicSound.playing()) {
+                    basicSound.play();
+                }
+                basicSound.fade(0, 1, 2000);
+            }
+        }
+
+        function fadeOut() {
+            if (basicSound && basicSound.playing()) {
+                basicSound.fade(1, 0, 2000);
+            }
+        }
+
+        async function demonstratePromises() {
+            try {
+                const wav = createSoundBuffer(880, 1, 0.1);
+                
+                const howl = createHowlFromBuffer(wav, {
+                    onload: () => {
+                        howl.enableEQ(16, (data) => updateEQVisualizer('eqVisualizer', data));
+                    }
+                });
+                
+                await howl.load();
+                const soundId = howl.play();
+                
+                setTimeout(() => {
+                    howl.stop();
+                }, 2000);
+                
+            } catch (error) {
+                log(`❌ Error: ${error.message}`);
+            }
+        }
+
+        function demonstrateTraditional() {
+            const wav = createSoundBuffer(660, 1, 0.1);
+
+            const howl = createHowlFromBuffer(wav, {
+                onload: () => {
+                    howl.enableEQ(16, (data) => updateEQVisualizer('eqVisualizer', data));
+                    const soundId = howl.play();
+                    setTimeout(() => {
+                        howl.stop();
+                    }, 2000);
+                },
+                onloaderror: (error) => {
+                    log(`❌ Traditional callback error: ${error}`);
+                }
+            });
+        }
+
+        function globalMute() {
+            const isMuted = Howler._muted;
+            Howler.mute(!isMuted);
+            log(`Global ${!isMuted ? 'muted' : 'unmuted'}`);
+            updateLibraryInfo();
+        }
+
+        function globalStop() {
+            Howler.stop();
+            updateVisualizer(false);
+        }
+
+        function updateMasterVol(value) {
+            updateDisplayValue('masterVolValue', parseFloat(value).toFixed(1));
+            updateLibraryInfo();
+        }
+
+        function createSpriteSound() {
+            const spriteConfig = [
+                { name: 'jump', start: 0, duration: 0.5, freq: 440, type: 'sweep' },
+                { name: 'coin', start: 0.5, duration: 0.3, freq: 800, type: 'chord' },
+                { name: 'laser', start: 0.8, duration: 0.4, freq: 1200, type: 'sweep' },
+                { name: 'explosion', start: 1.2, duration: 0.8, freq: 200, type: 'noise' },
+                { name: 'click', start: 2.0, duration: 0.1, freq: 2000, type: 'click' },
+                { name: 'power_up', start: 2.1, duration: 0.6, freq: 500, type: 'chord' },
+                { name: 'hurt', start: 2.7, duration: 0.3, freq: 150, type: 'noise' },
+                { name: 'victory', start: 3.0, duration: 0.8, freq: 660, type: 'chord' }
+            ];
+            
+            const { buffer, sprites } = createSoundBuffer(null, null, null, null, spriteConfig);
+            
+            if (spriteSound) {
+                spriteSound.unload();
+            }
+            
+            const spriteMap = {};
+            sprites.forEach(sprite => {
+                spriteMap[sprite.name] = [sprite.start * 1000, sprite.duration * 1000];
+            });
+            
+            spriteData = sprites;
+            
+            spriteSound = createHowlFromBuffer(buffer, {
+                sprite: spriteMap,
+                volume: 0.7,
+                onload: () => {
+                    setElementsDisabled(['playFullBtn'], false);
+                    document.getElementById('spriteButtons').querySelectorAll('button').forEach(btn => {
+                        btn.disabled = false;
+                    });
+                    
+                    spriteSound.enableEQ(16, (data) => updateEQVisualizer('spriteEqVisualizer', data));
+                    updateSpriteVisual('ready');
+                },
+                onplay: (id) => {
+                    updateSpriteVisual('playing');
+                },
+                onend: (id) => {
+                    updateSpriteVisual('ready');
+                },
+                onstop: (id) => {
+                },
+                onpause: (id) => {
+                },
+                onerror: (id, error) => {
+                }
+            });
+        }
+
+        function playFullSprite() {
+            if (!spriteSound) return;
+            
+            const sprites = ['jump', 'coin', 'laser', 'explosion', 'click', 'power_up', 'hurt', 'victory'];
+            let delay = 0;
+            
+            sprites.forEach((spriteName, index) => {
+                setTimeout(() => {
+                    if (spriteSound) {
+                        spriteSound.play(spriteName);
+                    }
+                }, delay);
+                
+                const spriteInfo = spriteData.find(s => s.name === spriteName);
+                delay += (spriteInfo ? spriteInfo.duration * 1000 : 500) + 200;
+            });
+        }
+
+        function playSpriteSound(spriteName) {
+            if (!spriteSound) return;
+            
+            const soundId = spriteSound.play(spriteName);
+            
+            const button = document.getElementById(spriteName === 'power_up' ? 'powerUpBtn' : spriteName + 'Btn');
+            if (button) {
+                button.style.transform = 'scale(0.95)';
+                button.style.filter = 'brightness(1.2)';
+                setTimeout(() => {
+                    button.style.transform = '';
+                    button.style.filter = '';
+                }, 200);
+            }
+        }
+
+        function updateSpriteVisual(state) {
+            const visual = document.getElementById('spriteVisual');
+            const waveform = visual.querySelector('.waveform');
+            
+            switch (state) {
+                case 'ready':
+                    visual.style.background = 'linear-gradient(45deg, #1e3c72, #2a5298)';
+                    waveform.style.animationPlayState = 'paused';
+                    break;
+                case 'playing':
+                    visual.style.background = 'linear-gradient(45deg, #2d1b69, #11998e)';
+                    waveform.style.animationPlayState = 'running';
+                    break;
+            }
+        }
+
+        function addLowpass() {
+            if (basicSound) {
+                const filter = basicSound.addEffect('lowpass', { frequency: 800, Q: 1 });
+                if (filter) {
+                    log('Added lowpass filter at 800Hz');
+                }
+            }
+        }
+
+        function addHighpass() {
+            if (basicSound) {
+                const filter = basicSound.addEffect('highpass', { frequency: 400, Q: 1 });
+                if (filter) {
+                    log('Added highpass filter at 400Hz');
+                }
+            }
+        }
+
+        function addBandpass() {
+            if (basicSound) {
+                const filter = basicSound.addEffect('bandpass', { frequency: 1000, Q: 2 });
+                if (filter) {
+                    log('Added bandpass filter at 1000Hz');
+                }
+            }
+        }
+
+        function addDelay() {
+            if (basicSound) {
+                const delay = basicSound.addEffect('delay', { delay: 0.3, maxDelay: 1 });
+                if (delay) {
+                    log('Added delay effect (300ms)');
+                }
+            }
+        }
+
+        function addReverb() {
+            if (basicSound) {
+                const reverb = basicSound.addEffect('reverb', { duration: 2, decay: 2 });
+                if (reverb) {
+                    log('Added reverb effect');
+                }
+            }
+        }
+
+        function addDistortion() {
+            if (basicSound) {
+                const distortion = basicSound.addEffect('distortion', { amount: 20 });
+                if (distortion) {
+                    log('Added distortion effect');
+                }
+            }
+        }
+
+        function clearEffects() {
+            if (basicSound) {
+                const count = basicSound.effects.length;
+                basicSound.effects.length = 0;
+                basicSound.updateEffectsChain();
+                log(`Cleared ${count} effects`);
+            }
+        }
+
+        function reverseEffects() {
+            if (basicSound) {
+                const count = basicSound.effects.length;
+                if (count > 1) {
+                    basicSound.effects.reverse();
+                    basicSound.updateEffectsChain();
+                    log(`Reversed order of ${count} effects`);
+                } else {
+                    log('Need at least 2 effects to reverse order');
+                }
+            }
+        }
+
+        function audioBufferToWav(buffer) {
+            const length = buffer.length;
+            const numberOfChannels = buffer.numberOfChannels;
+            const sampleRate = buffer.sampleRate;
+            const arrayBuffer = new ArrayBuffer(44 + length * 2);
+            const view = new DataView(arrayBuffer);
+            
+            const writeString = (offset, string) => {
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
+            };
+            
+            writeString(0, 'RIFF');
+            view.setUint32(4, 36 + length * 2, true);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, numberOfChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true);
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
+            writeString(36, 'data');
+            view.setUint32(40, length * 2, true);
+            
+            const channelData = buffer.getChannelData(0);
+            let offset = 44;
+            for (let i = 0; i < length; i++) {
+                const sample = Math.max(-1, Math.min(1, channelData[i]));
+                view.setInt16(offset, sample * 0x7FFF, true);
+                offset += 2;
+            }
+            
+            return arrayBuffer;
+        }
+
+        let eqVisualizers = new Map();
+
+        function setElementsDisabled(elementIds, disabled) {
+            elementIds.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) element.disabled = disabled;
+            });
+        }
+
+        function createHowlFromBuffer(buffer, options = {}) {
+            const blob = new Blob([buffer], { type: 'audio/wav' });
+            const url = URL.createObjectURL(blob);
+            
+            return new Howl({
+                src: [url],
+                format: ['wav'],
+                ...options
+            });
+        }
+
+        function updateDisplayValue(elementId, value, suffix = '') {
+            const element = document.getElementById(elementId);
+            if (element) element.textContent = value + suffix;
+        }
+
+        function createEQVisualizer(containerId, barCount = 16) {
+            const visualizer = document.getElementById(containerId);
+            if (!visualizer) return null;
+            
+            const bars = [];
+            
+            for (let i = 0; i < barCount; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'eq-bar';
+                bar.style.height = '2px';
+                visualizer.appendChild(bar);
+                bars.push(bar);
+            }
+            
+            eqVisualizers.set(containerId, bars);
+            return bars;
+        }
+
+        function updateEQVisualizer(containerId, frequencyData) {
+            const bars = eqVisualizers.get(containerId);
+            if (!bars || !bars.length) return;
+            
+            for (let i = 0; i < bars.length && i < frequencyData.length; i++) {
+                const normalizedValue = frequencyData[i]; 
+                const height = Math.max(5, normalizedValue * 85);
+                
+                bars[i].setAttribute('style', `height: ${height}px !important; min-height: ${height}px !important;`);
+                
+                bars[i].title = `Band ${i + 1}: ${(normalizedValue * 100).toFixed(1)}%`;
+            }
+        }
+
+        function initAllEQVisualizers() {
+            createEQVisualizer('eqVisualizer', 16);
+            createEQVisualizer('spriteEqVisualizer', 16);
+        }
+
+        document.addEventListener('DOMContentLoaded', initAllEQVisualizers);
+
+        setInterval(updateLibraryInfo, 2000);
+
+        let spatialSource1, spatialSource2;
+        let spatialIntervals = [];
+        let isDragging = null;
+
+        function startSpatialDemo() {
+            Howler.environment('cathedral');
+            
+            const ping1Wav = createSoundBuffer(800, 0.1); 
+            const ping2Wav = createSoundBuffer(400, 0.1); 
+            
+            spatialSource1 = createHowlFromBuffer(ping1Wav, {
+                spatial: {
+                    position: [-5, 0, -4],
+                    distance: { ref: 1, max: 20, rolloff: 2 }
+                }
+            });
+
+            spatialSource2 = createHowlFromBuffer(ping2Wav, {
+                spatial: {
+                    position: [5, 0, 4],
+                    distance: { ref: 1, max: 20, rolloff: 2 }
+                }
+            });
+
+            Howler.listener.position = { x: 0, y: 0, z: 0 };
+            Howler.listener.update();
+
+            spatialIntervals.push(setInterval(() => {
+                spatialSource1.play();
+                flashSpatialSource('source1');
+            }, 1500));
+            spatialIntervals.push(setInterval(() => {
+                spatialSource2.play();
+                flashSpatialSource('source2');
+            }, 1200));
+
+            setupSpatialDrag();
+
+            updateSpatialPositions();
+
+            setElementsDisabled(['spatialStartBtn'], true);
+            setElementsDisabled(['spatialStopBtn'], false);
+        }
+
+        function stopSpatialDemo() {
+            spatialIntervals.forEach(clearInterval);
+            spatialIntervals = [];
+            
+            if (spatialSource1) {
+                spatialSource1.stop();
+                spatialSource1.unload();
+                spatialSource1 = null;
+            }
+            if (spatialSource2) {
+                spatialSource2.stop();
+                spatialSource2.unload();
+                spatialSource2 = null;
+            }
+
+            setElementsDisabled(['spatialStartBtn'], false);
+            setElementsDisabled(['spatialStopBtn'], true);
+            log('Spatial demo stopped');
+        }
+
+        function setupSpatialDrag() {
+            const demo = document.getElementById('spatialDemo');
+            const listener = document.getElementById('listener');
+            const source1 = document.getElementById('source1');
+            const source2 = document.getElementById('source2');
+
+            [listener, source1, source2].forEach(element => {
+                element.addEventListener('mousedown', (e) => {
+                    isDragging = element;
+                    e.preventDefault();
+                });
+            });
+
+            demo.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                
+                const rect = demo.getBoundingClientRect();
+                const x = ((e.clientX - rect.left) / rect.width) * 100;
+                const y = ((e.clientY - rect.top) / rect.height) * 100;
+                
+                isDragging.style.left = Math.max(0, Math.min(100, x)) + '%';
+                isDragging.style.top = Math.max(0, Math.min(100, y)) + '%';
+                
+                updateSpatialPositions();
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = null;
+            });
+        }
+
+        function updateSpatialPositions() {
+            const demo = document.getElementById('spatialDemo');
+            const listener = document.getElementById('listener');
+            const source1 = document.getElementById('source1');
+            const source2 = document.getElementById('source2');
+
+            const safeParsePosition = (element, property, fallback) => {
+                const value = parseFloat(element.style[property]);
+                return isNaN(value) ? fallback : value;
+            };
+
+            const listenerLeft = safeParsePosition(listener, 'left', 50);
+            const listenerTop = safeParsePosition(listener, 'top', 50);
+            const listenerX = (listenerLeft - 50) / 5;
+            const listenerZ = (listenerTop - 50) / 5;
+            
+            const source1Left = safeParsePosition(source1, 'left', 25);
+            const source1Top = safeParsePosition(source1, 'top', 30);
+            const source1X = (source1Left - 50) / 5;
+            const source1Z = (source1Top - 50) / 5;
+            
+            const source2Left = safeParsePosition(source2, 'left', 75);
+            const source2Top = safeParsePosition(source2, 'top', 70);
+            const source2X = (source2Left - 50) / 5;
+            const source2Z = (source2Top - 50) / 5;
+
+            Howler.listener.position = { x: listenerX, y: 0, z: listenerZ };
+            Howler.listener.update();
+
+            if (spatialSource1) {
+                spatialSource1.spatial.position = { x: source1X, y: 0, z: source1Z };
+                spatialSource1.spatial.update();
+            }
+
+            if (spatialSource2) {
+                spatialSource2.spatial.position = { x: source2X, y: 0, z: source2Z };
+                spatialSource2.spatial.update();
+            }
+        }
+
+        function flashSpatialSource(sourceId) {
+            const element = document.getElementById(sourceId);
+            if (element) {
+                element.classList.add('spatial-flash');
+                setTimeout(() => {
+                    element.classList.remove('spatial-flash');
+                }, 300);
+            }
+        }
+
+    </script>
+</body>
+</html>
