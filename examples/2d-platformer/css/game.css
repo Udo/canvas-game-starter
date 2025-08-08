@@ -1,0 +1,39 @@
+@font-face {
+  font-family: console;
+  src: url('../../../fonts/morris_roman/MorrisRomanBlackAlt.otf');
+}
+
+* {
+	box-sizing: inherit;
+	text-shadow: inherit;
+	font-family: inherit;
+	font-size: inherit;
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	user-select: none;
+	image-rendering: pixelated;
+	color: inherit;
+}
+
+*:focus { outline: none; }
+
+body {
+	background: #0b0d12;
+	color: #eee;
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+	cursor: crosshair;
+	line-height: 150%;
+	font-family: console;
+	font-size: 24px;
+}
+
+nav {
+	position: absolute; top: 0; left: 0; right: 0; padding: 8px;
+	background: rgba(100,100,100,0.25);
+}
+
+footer { position: absolute; bottom: 0; left: 0; right: 0; }
+#frame-rate { padding: 8px; font-size: 80%; }
