@@ -198,7 +198,6 @@
             border-radius: var(--radius);
             background: var(--white);
             transition: all 0.3s ease;
-            font-size: 12px;
         }
         
         .function-btn:hover { 
@@ -413,6 +412,131 @@
 
     <script src="u-parametrics.js"></script>
     <script>
+        // Utility functions for common operations
+        function getElement(id) {
+            return document.getElementById(id);
+        }
+
+        function getFloatValue(id) {
+            return parseFloat(getElement(id).value);
+        }
+
+        function updateTextContent(id, value) {
+            getElement(id).textContent = value;
+        }
+
+        function getCanvasContext(canvasId) {
+            const canvas = getElement(canvasId);
+            const ctx = canvas.getContext('2d');
+            return { canvas, ctx };
+        }
+
+        function getCanvasDimensions(canvas, margin = 30) {
+            const width = canvas.width;
+            const height = canvas.height;
+            const plotWidth = width - 2 * margin;
+            const plotHeight = height - 2 * margin;
+            return { width, height, margin, plotWidth, plotHeight };
+        }
+
+        function clearCanvasWithDimensions(canvasId, margin = 30) {
+            const { canvas, ctx } = getCanvasContext(canvasId);
+            const dimensions = getCanvasDimensions(canvas, margin);
+            ctx.clearRect(0, 0, dimensions.width, dimensions.height);
+            return { canvas, ctx, ...dimensions };
+        }
+
+        function drawGrid(ctx, dimensions) {
+            const { width, height, margin, plotWidth, plotHeight } = dimensions;
+            
+            ctx.strokeStyle = '#f0f0f0';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 10; i++) {
+                const x = margin + (i / 10) * plotWidth;
+                const y = margin + (i / 10) * plotHeight;
+                
+                // Vertical grid lines
+                ctx.beginPath();
+                ctx.moveTo(x, margin);
+                ctx.lineTo(x, height - margin);
+                ctx.stroke();
+                
+                // Horizontal grid lines
+                ctx.beginPath();
+                ctx.moveTo(margin, y);
+                ctx.lineTo(width - margin, y);
+                ctx.stroke();
+            }
+        }
+
+        function drawAxes(ctx, dimensions) {
+            const { width, height, margin } = dimensions;
+            
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(margin, margin);
+            ctx.lineTo(margin, height - margin);
+            ctx.lineTo(width - margin, height - margin);
+            ctx.stroke();
+        }
+
+        function drawAxisLabels(ctx, dimensions) {
+            const { width, height, margin } = dimensions;
+            
+            ctx.fillStyle = '#333';
+            ctx.font = '12px Arial';
+            ctx.fillText('0', margin - 15, height - margin + 5);
+            ctx.fillText('1', margin - 15, margin + 5);
+            ctx.fillText('0', margin - 5, height - margin + 15);
+            ctx.fillText('1', width - margin - 5, height - margin + 15);
+        }
+
+        function drawFunctionCurve(ctx, dimensions, func, color = '#e74c3c', lineWidth = 3) {
+            const { margin, plotWidth, plotHeight, height } = dimensions;
+            
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineWidth;
+            ctx.beginPath();
+            
+            for (let i = 0; i <= plotWidth; i++) {
+                const t = i / plotWidth;
+                const value = clamp1(func(t));
+                const x = margin + i;
+                const y = height - margin - value * plotHeight;
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            ctx.stroke();
+        }
+
+        function setupPlotCanvas(canvasId, margin = 30) {
+            const { canvas, ctx, ...dimensions } = clearCanvasWithDimensions(canvasId, margin);
+            drawGrid(ctx, { ...dimensions, margin });
+            drawAxes(ctx, { ...dimensions, margin });
+            return { canvas, ctx, ...dimensions };
+        }
+
+        function createAnimationLoop(canvasId, animationFunction, duration = 1, step = 0.01) {
+            const { canvas, ctx } = getCanvasContext(canvasId);
+            let t = 0;
+
+            function frame() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                animationFunction(ctx, canvas, t);
+                
+                t += step;
+                if (t <= duration) {
+                    requestAnimationFrame(frame);
+                }
+            }
+            frame();
+        }
+
         const easingFunctions = {
             'lerp': { func: (t) => lerp(t), name: 'Linear', desc: 'Constant rate of change' },
             'sin1': { func: sin1, name: 'Sine', desc: 'Smooth start and end' },
@@ -435,18 +559,18 @@
         const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3', '#54a0ff'];
 
         function log(message, outputId = 'function-info') {
-            const output = document.getElementById(outputId);
+            const output = getElement(outputId);
             const timestamp = new Date().toLocaleTimeString();
             output.textContent += `[${timestamp}] ${message}\n`;
             output.scrollTop = output.scrollHeight;
         }
 
         function clearOutput(outputId) {
-            document.getElementById(outputId).textContent = '';
+            getElement(outputId).textContent = '';
         }
 
         function initializeFunctionButtons() {
-            const container = document.getElementById('function-buttons');
+            const container = getElement('function-buttons');
             Object.keys(easingFunctions).forEach(key => {
                 const btn = document.createElement('div');
                 btn.className = `function-btn ${key === currentFunction ? 'active' : ''}`;
@@ -459,7 +583,7 @@
 
         function selectFunction(funcName) {
             document.querySelectorAll('.function-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(`btn-${funcName}`).classList.add('active');
+            getElement(`btn-${funcName}`).classList.add('active');
             
             currentFunction = funcName;
             drawCurve();
@@ -473,82 +597,30 @@
         }
 
         function drawCurve() {
-            const canvas = document.getElementById('curve-canvas');
-            const ctx = canvas.getContext('2d');
-            const width = canvas.width;
-            const height = canvas.height;
-            const margin = 30;
-            const plotWidth = width - 2 * margin;
-            const plotHeight = height - 2 * margin;
-
-            ctx.clearRect(0, 0, width, height);
-
-            ctx.strokeStyle = '#f0f0f0';
-            ctx.lineWidth = 1;
-            for (let i = 0; i <= 10; i++) {
-                const x = margin + (i / 10) * plotWidth;
-                const y = margin + (i / 10) * plotHeight;
-                
-                ctx.beginPath();
-                ctx.moveTo(x, margin);
-                ctx.lineTo(x, height - margin);
-                ctx.stroke();
-                
-                ctx.beginPath();
-                ctx.moveTo(margin, y);
-                ctx.lineTo(width - margin, y);
-                ctx.stroke();
-            }
-
-            ctx.strokeStyle = '#333';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(margin, margin);
-            ctx.lineTo(margin, height - margin);
-            ctx.lineTo(width - margin, height - margin);
-            ctx.stroke();
-
-            ctx.strokeStyle = '#e74c3c';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            
+            const { canvas, ctx, ...dimensions } = setupPlotCanvas('curve-canvas');
             const func = easingFunctions[currentFunction].func;
-            for (let i = 0; i <= plotWidth; i++) {
-                const t = i / plotWidth;
-                const value = clamp1(func(t));
-                const x = margin + i;
-                const y = height - margin - value * plotHeight;
-                
-                if (i === 0) {
-                    ctx.moveTo(x, y);
-                } else {
-                    ctx.lineTo(x, y);
-                }
-            }
-            ctx.stroke();
-
+            
+            // Draw the main function curve
+            drawFunctionCurve(ctx, dimensions, func);
+            
+            // Draw animation point if running
             if (animationRunning) {
                 const t = (animationTime % 1);
                 const value = clamp1(func(t));
-                const x = margin + t * plotWidth;
-                const y = height - margin - value * plotHeight;
+                const x = dimensions.margin + t * dimensions.plotWidth;
+                const y = dimensions.height - dimensions.margin - value * dimensions.plotHeight;
                 
                 ctx.fillStyle = '#3498db';
                 ctx.beginPath();
                 ctx.arc(x, y, 6, 0, 2 * Math.PI);
                 ctx.fill();
             }
-
-            ctx.fillStyle = '#333';
-            ctx.font = '12px Arial';
-            ctx.fillText('0', margin - 15, height - margin + 5);
-            ctx.fillText('1', margin - 15, margin + 5);
-            ctx.fillText('0', margin - 5, height - margin + 15);
-            ctx.fillText('1', width - margin - 5, height - margin + 15);
+            
+            drawAxisLabels(ctx, dimensions);
         }
 
         function toggleAnimation() {
-            const btn = document.getElementById('anim-btn');
+            const btn = getElement('anim-btn');
             if (animationRunning) {
                 animationRunning = false;
                 btn.textContent = 'Start Animation';
@@ -567,15 +639,15 @@
         function animate() {
             if (!animationRunning) return;
             
-            const speed = parseFloat(document.getElementById('speed-slider').value);
+            const speed = getFloatValue('speed-slider');
             animationTime += 0.016 * speed;
             
             drawCurve();
             requestAnimationFrame(animate);
         }
 
-        document.getElementById('speed-slider').oninput = function() {
-            document.getElementById('speed-value').textContent = this.value;
+        getElement('speed-slider').oninput = function() {
+            updateTextContent('speed-value', this.value);
         };
 
         function addFunctionToComparison(funcName) {
@@ -593,60 +665,12 @@
         }
 
         function drawComparison() {
-            const canvas = document.getElementById('comparison-canvas');
-            const ctx = canvas.getContext('2d');
-            const width = canvas.width;
-            const height = canvas.height;
-            const margin = 30;
-            const plotWidth = width - 2 * margin;
-            const plotHeight = height - 2 * margin;
-
-            ctx.clearRect(0, 0, width, height);
-
-            ctx.strokeStyle = '#f0f0f0';
-            ctx.lineWidth = 1;
-            for (let i = 0; i <= 10; i++) {
-                const x = margin + (i / 10) * plotWidth;
-                const y = margin + (i / 10) * plotHeight;
-                
-                ctx.beginPath();
-                ctx.moveTo(x, margin);
-                ctx.lineTo(x, height - margin);
-                ctx.stroke();
-                
-                ctx.beginPath();
-                ctx.moveTo(margin, y);
-                ctx.lineTo(width - margin, y);
-                ctx.stroke();
-            }
-
-            ctx.strokeStyle = '#333';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(margin, margin);
-            ctx.lineTo(margin, height - margin);
-            ctx.lineTo(width - margin, height - margin);
-            ctx.stroke();
+            const { canvas, ctx, ...dimensions } = setupPlotCanvas('comparison-canvas');
 
             comparisonFunctions.forEach((funcName, index) => {
                 const func = easingFunctions[funcName].func;
-                ctx.strokeStyle = colors[index % colors.length];
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                
-                for (let i = 0; i <= plotWidth; i++) {
-                    const t = i / plotWidth;
-                    const value = clamp1(func(t));
-                    const x = margin + i;
-                    const y = height - margin - value * plotHeight;
-                    
-                    if (i === 0) {
-                        ctx.moveTo(x, y);
-                    } else {
-                        ctx.lineTo(x, y);
-                    }
-                }
-                ctx.stroke();
+                const color = colors[index % colors.length];
+                drawFunctionCurve(ctx, dimensions, func, color);
             });
         }
 
@@ -660,14 +684,9 @@
         }
 
         function animateBall(easingFunc) {
-            const canvas = document.getElementById('ball-canvas');
-            const ctx = canvas.getContext('2d');
             const func = easingFunctions[easingFunc].func;
-            let t = 0;
-
-            function frame() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                
+            
+            createAnimationLoop('ball-canvas', (ctx, canvas, t) => {
                 const value = func(t);
                 const x = 20 + (canvas.width - 40) * t;
                 const y = canvas.height - 20 - value * (canvas.height - 40);
@@ -676,48 +695,26 @@
                 ctx.beginPath();
                 ctx.arc(x, y, 10, 0, 2 * Math.PI);
                 ctx.fill();
-                
-                t += 0.01;
-                if (t <= 1) {
-                    requestAnimationFrame(frame);
-                }
-            }
-            frame();
+            });
         }
 
         function animateLoading(easingFunc) {
-            const canvas = document.getElementById('loading-canvas');
-            const ctx = canvas.getContext('2d');
             const func = easingFunctions[easingFunc].func;
-            let t = 0;
-
-            function frame() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                
+            
+            createAnimationLoop('loading-canvas', (ctx, canvas, t) => {
                 ctx.fillStyle = '#f0f0f0';
                 ctx.fillRect(10, 15, canvas.width - 20, 20);
                 
                 const progress = func(t);
                 ctx.fillStyle = '#4ecdc4';
                 ctx.fillRect(10, 15, progress * (canvas.width - 20), 20);
-                
-                t += 0.01;
-                if (t <= 1) {
-                    requestAnimationFrame(frame);
-                }
-            }
-            frame();
+            });
         }
 
         function animateFade(easingFunc) {
-            const canvas = document.getElementById('fade-canvas');
-            const ctx = canvas.getContext('2d');
             const func = easingFunctions[easingFunc].func;
-            let t = 0;
-
-            function frame() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                
+            
+            createAnimationLoop('fade-canvas', (ctx, canvas, t) => {
                 const alpha = func(t);
                 ctx.fillStyle = `rgba(52, 152, 219, ${alpha})`;
                 ctx.fillRect(50, 25, 100, 50);
@@ -725,103 +722,34 @@
                 ctx.fillStyle = '#333';
                 ctx.font = '12px Arial';
                 ctx.fillText(`Alpha: ${alpha.toFixed(2)}`, 10, 90);
-                
-                t += 0.01;
-                if (t <= 1) {
-                    requestAnimationFrame(frame);
-                }
-            }
-            frame();
+            });
         }
 
         function updateCustomFunction() {
-            const aValue = parseFloat(document.getElementById('logistic-a').value);
-            const stepPos = parseFloat(document.getElementById('step-pos').value);
+            const aValue = getFloatValue('logistic-a');
+            const stepPos = getFloatValue('step-pos');
             
-            document.getElementById('logistic-a-value').textContent = aValue;
-            document.getElementById('step-pos-value').textContent = stepPos;
+            updateTextContent('logistic-a-value', aValue);
+            updateTextContent('step-pos-value', stepPos);
             
             drawCustomFunctions(aValue, stepPos);
         }
 
         function drawCustomFunctions(aValue, stepPos) {
-            const canvas = document.getElementById('custom-canvas');
-            const ctx = canvas.getContext('2d');
-            const width = canvas.width;
-            const height = canvas.height;
-            const margin = 30;
-            const plotWidth = width - 2 * margin;
-            const plotHeight = height - 2 * margin;
-
-            ctx.clearRect(0, 0, width, height);
+            const { canvas, ctx, ...dimensions } = setupPlotCanvas('custom-canvas');
             
-            ctx.strokeStyle = '#f0f0f0';
-            ctx.lineWidth = 1;
-            for (let i = 0; i <= 10; i++) {
-                const x = margin + (i / 10) * plotWidth;
-                const y = margin + (i / 10) * plotHeight;
-                
-                ctx.beginPath();
-                ctx.moveTo(x, margin);
-                ctx.lineTo(x, height - margin);
-                ctx.stroke();
-                
-                ctx.beginPath();
-                ctx.moveTo(margin, y);
-                ctx.lineTo(width - margin, y);
-                ctx.stroke();
-            }
-
-            ctx.strokeStyle = '#333';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(margin, margin);
-            ctx.lineTo(margin, height - margin);
-            ctx.lineTo(width - margin, height - margin);
-            ctx.stroke();
-
-            ctx.strokeStyle = '#e74c3c';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
+            // Draw logistic function with custom parameter
+            drawFunctionCurve(ctx, dimensions, (t) => logistic1(t, aValue), '#e74c3c');
             
-            for (let i = 0; i <= plotWidth; i++) {
-                const t = i / plotWidth;
-                const value = clamp1(logistic1(t, aValue));
-                const x = margin + i;
-                const y = height - margin - value * plotHeight;
-                
-                if (i === 0) {
-                    ctx.moveTo(x, y);
-                } else {
-                    ctx.lineTo(x, y);
-                }
-            }
-            ctx.stroke();
+            // Draw step function with custom position
+            drawFunctionCurve(ctx, dimensions, (t) => step1(t, stepPos), '#3498db');
 
-            ctx.strokeStyle = '#3498db';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            
-            for (let i = 0; i <= plotWidth; i++) {
-                const t = i / plotWidth;
-                const value = clamp1(step1(t, stepPos));
-                const x = margin + i;
-                const y = height - margin - value * plotHeight;
-                
-                if (i === 0) {
-                    ctx.moveTo(x, y);
-                } else {
-                    ctx.lineTo(x, y);
-                }
-            }
-            ctx.stroke();
-
-            ctx.fillStyle = '#333';
-            ctx.font = '12px Arial';
+            // Draw legend
             ctx.fillStyle = '#e74c3c';
-            ctx.fillText(`Logistic (a=${aValue})`, margin, height - 10);
+            ctx.font = '12px Arial';
+            ctx.fillText(`Logistic (a=${aValue})`, dimensions.margin, dimensions.height - 10);
             ctx.fillStyle = '#3498db';
-            ctx.fillText(`Step (pos=${stepPos})`, margin + 150, height - 10);
+            ctx.fillText(`Step (pos=${stepPos})`, dimensions.margin + 150, dimensions.height - 10);
         }
 
         document.addEventListener('DOMContentLoaded', function() {

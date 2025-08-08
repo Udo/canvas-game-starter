@@ -213,7 +213,7 @@
             </div>
 
             <div class="api-column">
-                <h2>API Overview</h2>
+                <h2>Overview</h2>
                 
                 <div class="api-section">
                     <div class="api-method"><span class="method-name">make_hash</span>(<span class="param">string</span>) → <span class="return-type">number</span></div>
@@ -372,7 +372,7 @@ ctx.fillStyle = <span class="string">'#'</span> + red.toString(<span class="stri
 
         <div class="main-layout">
             <div class="demo-column">
-                <h2>Geometry & Visualization</h2>
+                <h2>Geometry</h2>
             
                 <div class="demo-section">
                     <h3>Bresenham Line Algorithm</h3>
@@ -434,7 +434,6 @@ line.forEach(([x, y]) => {
                 <h2>Vector Operations</h2>
                 
                 <div class="demo-section">
-                    <h3>Vector Calculator</h3>
                     <div class="input-group">
                         <label>Vector 1:</label>
                         <input type="number" id="v1x" value="3" step="0.1">
@@ -453,7 +452,6 @@ line.forEach(([x, y]) => {
                 </div>
 
                 <div class="demo-section">
-                    <h3>Vector Visualization</h3>
                     <canvas id="vector-canvas" width="400" height="300"></canvas>
                     <div class="input-group">
                         <label>Rotation:</label>
@@ -464,10 +462,9 @@ line.forEach(([x, y]) => {
             </div>
 
             <div class="api-column">
-                <h2>Vector API</h2>
+                <h2>Vectors</h2>
                 
                 <div class="api-section">
-                    <h3>Vector Operations</h3>
                     <div class="api-method"><span class="method-name">normalize</span>(<span class="param">x, y</span>) → <span class="return-type">Array[2]</span></div>
                     <div class="api-description">Returns unit vector with length 1</div>
                     
@@ -543,7 +540,7 @@ player.x += dx * speed;
             </div>
 
             <div class="api-column">
-                <h2>Collision API</h2>
+                <h2>Collision</h2>
                 
                 <div class="api-section">
                     <h3>Collision Functions</h3>
@@ -776,7 +773,324 @@ player.x += dx * speed;
             generateHash();
             demonstrateColors();
             updateLerpVisualization();
+            initializeCollisionCanvas();
         });
+
+        // Vector operations demo functions
+        function demonstrateVectors() {
+            clearOutput('vector-output');
+            const v1x = parseFloat(document.getElementById('v1x').value);
+            const v1y = parseFloat(document.getElementById('v1y').value);
+            const v2x = parseFloat(document.getElementById('v2x').value);
+            const v2y = parseFloat(document.getElementById('v2y').value);
+
+            // Calculate various vector operations
+            const mag1 = magnitude(v1x, v1y);
+            const mag2 = magnitude(v2x, v2y);
+            const [norm1x, norm1y] = normalize(v1x, v1y);
+            const [norm2x, norm2y] = normalize(v2x, v2y);
+            const dotProduct = dot(v1x, v1y, v2x, v2y);
+            const crossProduct = cross(v1x, v1y, v2x, v2y);
+            const angle = angle_between_vectors(v1x, v1y, v2x, v2y);
+
+            log(`Vector 1: (${v1x}, ${v1y})`, 'vector-output');
+            log(`Vector 2: (${v2x}, ${v2y})`, 'vector-output');
+            log(`Magnitude 1: ${mag1.toFixed(3)}`, 'vector-output');
+            log(`Magnitude 2: ${mag2.toFixed(3)}`, 'vector-output');
+            log(`Normalized 1: (${norm1x.toFixed(3)}, ${norm1y.toFixed(3)})`, 'vector-output');
+            log(`Normalized 2: (${norm2x.toFixed(3)}, ${norm2y.toFixed(3)})`, 'vector-output');
+            log(`Dot Product: ${dotProduct.toFixed(3)}`, 'vector-output');
+            log(`Cross Product: ${crossProduct.toFixed(3)}`, 'vector-output');
+            log(`Angle between: ${(angle * 180 / Math.PI).toFixed(1)}°`, 'vector-output');
+        }
+
+        function demonstrateVectorRotation() {
+            clearOutput('vector-output');
+            const v1x = parseFloat(document.getElementById('v1x').value);
+            const v1y = parseFloat(document.getElementById('v1y').value);
+            
+            const angles = [0, Math.PI/4, Math.PI/2, Math.PI, 3*Math.PI/2];
+            const angleNames = ['0°', '45°', '90°', '180°', '270°'];
+            
+            log(`Original vector: (${v1x}, ${v1y})`, 'vector-output');
+            
+            angles.forEach((angle, i) => {
+                const [rotX, rotY] = rotate_vector(v1x, v1y, angle);
+                log(`Rotated ${angleNames[i]}: (${rotX.toFixed(3)}, ${rotY.toFixed(3)})`, 'vector-output');
+            });
+        }
+
+        function updateVectorVisualization() {
+            const slider = document.getElementById('rotation-slider');
+            const angle = parseFloat(slider.value);
+            document.getElementById('angle-value').textContent = (angle * 180 / Math.PI).toFixed(0) + '°';
+            
+            const canvas = document.getElementById('vector-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const scale = 30;
+            
+            // Draw grid
+            ctx.strokeStyle = '#f0f0f0';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += 20) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += 20) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+            
+            // Draw axes
+            ctx.strokeStyle = '#ccc';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, centerY);
+            ctx.lineTo(canvas.width, centerY);
+            ctx.moveTo(centerX, 0);
+            ctx.lineTo(centerX, canvas.height);
+            ctx.stroke();
+            
+            // Original vector
+            const origX = 3, origY = 2;
+            drawVector(ctx, centerX, centerY, origX * scale, -origY * scale, 'blue', 'Original');
+            
+            // Rotated vector
+            const [rotX, rotY] = rotate_vector(origX, origY, angle);
+            drawVector(ctx, centerX, centerY, rotX * scale, -rotY * scale, 'red', 'Rotated');
+        }
+
+        function drawVector(ctx, startX, startY, dx, dy, color, label) {
+            const endX = startX + dx;
+            const endY = startY + dy;
+            
+            // Draw vector line
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+            
+            // Draw arrowhead
+            const angle = Math.atan2(dy, dx);
+            const arrowLength = 15;
+            const arrowAngle = Math.PI / 6;
+            
+            ctx.beginPath();
+            ctx.moveTo(endX, endY);
+            ctx.lineTo(endX - arrowLength * Math.cos(angle - arrowAngle), 
+                      endY - arrowLength * Math.sin(angle - arrowAngle));
+            ctx.moveTo(endX, endY);
+            ctx.lineTo(endX - arrowLength * Math.cos(angle + arrowAngle), 
+                      endY - arrowLength * Math.sin(angle + arrowAngle));
+            ctx.stroke();
+            
+            // Label
+            ctx.fillStyle = color;
+            ctx.font = '12px Arial';
+            ctx.fillText(label, endX + 5, endY - 5);
+        }
+
+        // Collision detection demo functions
+        let collisionMode = 'rect';
+        let collisionShapes = [];
+        let isDrawing = false;
+        let startPos = {x: 0, y: 0};
+
+        function initializeCollisionCanvas() {
+            const canvas = document.getElementById('collision-canvas');
+            
+            canvas.addEventListener('mousedown', startCollisionDraw);
+            canvas.addEventListener('mousemove', updateCollisionDraw);
+            canvas.addEventListener('mouseup', endCollisionDraw);
+            
+            updateCollisionVisualization();
+        }
+
+        function toggleCollisionMode(mode) {
+            collisionMode = mode;
+            clearOutput('collision-output');
+            log(`Switched to ${mode} mode`, 'collision-output');
+        }
+
+        function startCollisionDraw(e) {
+            const rect = e.target.getBoundingClientRect();
+            startPos.x = e.clientX - rect.left;
+            startPos.y = e.clientY - rect.top;
+            isDrawing = true;
+        }
+
+        function updateCollisionDraw(e) {
+            if (!isDrawing) return;
+            
+            const rect = e.target.getBoundingClientRect();
+            const currentX = e.clientX - rect.left;
+            const currentY = e.clientY - rect.top;
+            
+            updateCollisionVisualization(currentX, currentY);
+        }
+
+        function endCollisionDraw(e) {
+            if (!isDrawing) return;
+            
+            const rect = e.target.getBoundingClientRect();
+            const endX = e.clientX - rect.left;
+            const endY = e.clientY - rect.top;
+            
+            if (collisionMode === 'rect') {
+                const width = Math.abs(endX - startPos.x);
+                const height = Math.abs(endY - startPos.y);
+                const x = Math.min(startPos.x, endX);
+                const y = Math.min(startPos.y, endY);
+                
+                collisionShapes.push({
+                    type: 'rect',
+                    x: x, y: y, w: width, h: height
+                });
+            } else if (collisionMode === 'circle') {
+                const radius = dist(startPos.x, startPos.y, endX, endY);
+                collisionShapes.push({
+                    type: 'circle',
+                    x: startPos.x, y: startPos.y, r: radius
+                });
+            }
+            
+            isDrawing = false;
+            updateCollisionVisualization();
+            checkCollisions();
+        }
+
+        function updateCollisionVisualization(mouseX, mouseY) {
+            const canvas = document.getElementById('collision-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw existing shapes
+            collisionShapes.forEach((shape, index) => {
+                if (shape.type === 'rect') {
+                    ctx.strokeStyle = 'blue';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(shape.x, shape.y, shape.w, shape.h);
+                    ctx.fillStyle = 'rgba(0, 0, 255, 0.1)';
+                    ctx.fillRect(shape.x, shape.y, shape.w, shape.h);
+                } else if (shape.type === 'circle') {
+                    ctx.strokeStyle = 'red';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(shape.x, shape.y, shape.r, 0, 2 * Math.PI);
+                    ctx.stroke();
+                    ctx.fillStyle = 'rgba(255, 0, 0, 0.1)';
+                    ctx.fill();
+                }
+            });
+            
+            // Draw current drawing
+            if (isDrawing && mouseX !== undefined && mouseY !== undefined) {
+                ctx.strokeStyle = 'gray';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([5, 5]);
+                
+                if (collisionMode === 'rect') {
+                    const width = mouseX - startPos.x;
+                    const height = mouseY - startPos.y;
+                    ctx.strokeRect(startPos.x, startPos.y, width, height);
+                } else if (collisionMode === 'circle') {
+                    const radius = dist(startPos.x, startPos.y, mouseX, mouseY);
+                    ctx.beginPath();
+                    ctx.arc(startPos.x, startPos.y, radius, 0, 2 * Math.PI);
+                    ctx.stroke();
+                }
+                
+                ctx.setLineDash([]);
+            }
+        }
+
+        function checkCollisions() {
+            clearOutput('collision-output');
+            let collisionCount = 0;
+            
+            for (let i = 0; i < collisionShapes.length; i++) {
+                for (let j = i + 1; j < collisionShapes.length; j++) {
+                    const shape1 = collisionShapes[i];
+                    const shape2 = collisionShapes[j];
+                    
+                    let collision = false;
+                    let type = '';
+                    
+                    if (shape1.type === 'rect' && shape2.type === 'rect') {
+                        collision = rect_overlap(shape1.x, shape1.y, shape1.w, shape1.h,
+                                               shape2.x, shape2.y, shape2.w, shape2.h);
+                        type = 'Rect-Rect';
+                    } else if (shape1.type === 'circle' && shape2.type === 'circle') {
+                        collision = circle_overlap(shape1.x, shape1.y, shape1.r,
+                                                 shape2.x, shape2.y, shape2.r);
+                        type = 'Circle-Circle';
+                    } else if ((shape1.type === 'circle' && shape2.type === 'rect') ||
+                              (shape1.type === 'rect' && shape2.type === 'circle')) {
+                        const circle = shape1.type === 'circle' ? shape1 : shape2;
+                        const rect = shape1.type === 'rect' ? shape1 : shape2;
+                        collision = circle_rect_overlap(circle.x, circle.y, circle.r,
+                                                       rect.x, rect.y, rect.w, rect.h);
+                        type = 'Circle-Rect';
+                    }
+                    
+                    if (collision) {
+                        collisionCount++;
+                        log(`${type} collision detected between shape ${i+1} and ${j+1}`, 'collision-output');
+                    }
+                }
+            }
+            
+            if (collisionCount === 0 && collisionShapes.length > 1) {
+                log('No collisions detected', 'collision-output');
+            }
+            
+            log(`Total shapes: ${collisionShapes.length}`, 'collision-output');
+        }
+
+        function clearCollisionCanvas() {
+            collisionShapes = [];
+            updateCollisionVisualization();
+            clearOutput('collision-output');
+        }
+
+        function testCollisions() {
+            clearOutput('collision-output');
+            
+            const cx = parseFloat(document.getElementById('circle-x').value);
+            const cy = parseFloat(document.getElementById('circle-y').value);
+            const cr = parseFloat(document.getElementById('circle-r').value);
+            
+            const rx = parseFloat(document.getElementById('rect-x').value);
+            const ry = parseFloat(document.getElementById('rect-y').value);
+            const rw = parseFloat(document.getElementById('rect-w').value);
+            const rh = parseFloat(document.getElementById('rect-h').value);
+            
+            // Test all collision types
+            const circleRectOverlap = circle_rect_overlap(cx, cy, cr, rx, ry, rw, rh);
+            
+            // Test point in shapes
+            const testX = cx, testY = cy; // Use circle center as test point
+            const pointInCircle = point_in_circle(testX, testY, cx, cy, cr);
+            const pointInRect = point_in_rect(testX, testY, rx, ry, rw, rh);
+            
+            log(`Circle: (${cx}, ${cy}) r=${cr}`, 'collision-output');
+            log(`Rectangle: (${rx}, ${ry}) ${rw}x${rh}`, 'collision-output');
+            log(`Circle-Rect overlap: ${circleRectOverlap}`, 'collision-output');
+            log(`Point (${testX}, ${testY}) in circle: ${pointInCircle}`, 'collision-output');
+            log(`Point (${testX}, ${testY}) in rect: ${pointInRect}`, 'collision-output');
+        }
     </script>
 </body>
 </html>
