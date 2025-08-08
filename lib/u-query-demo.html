@@ -1,301 +1,977 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>u-query Demo</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>U-Query.js Demo</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
-        .demo-section { margin-bottom: 30px; padding: 20px; border: 1px solid #ccc; border-radius: 5px; }
-        .demo-section h3 { margin-top: 0; color: #333; }
-        .code-block { background: #f5f5f5; padding: 10px; border-radius: 3px; margin: 10px 0; font-family: monospace; }
-        .output { background: #e8f5e8; padding: 10px; border-radius: 3px; margin: 10px 0; min-height: 40px; }
-        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
-        input { padding: 5px; margin: 5px; }
-        .test-element { padding: 10px; margin: 5px; border: 2px solid #ccc; background: #f9f9f9; }
-        .highlighted { background: yellow !important; }
+        :root {
+            --space: 8px;
+            --radius: 5px;
+
+            --gray: #6c757d;
+            --gray-bg: #f5f5f5;
+            --blue: #007acc;
+            --green: #28a745;
+            --white: white;
+            --dark: #333;
+
+            --max-width: 1400px;
+            --sidebar: 400px;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: var(--space);
+            background: var(--gray-bg);
+        }
+
+        .container {
+            background: var(--white);
+            padding: calc(var(--space) * 1.5);
+            border-radius: var(--radius);
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: calc(var(--space) * 1.5);
+        }
+
+        .api-column {
+            background: var(--gray-bg);
+            padding: var(--space);
+            border-radius: var(--radius);
+            border-left: 4px solid var(--green);
+        }
+
+        h1 {
+            color: var(--dark);
+            text-align: center;
+            margin-bottom: calc(var(--space) * 1.5);
+            grid-column: 1 / -1;
+        }
+
+        h2 {
+            color: var(--gray);
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: var(--space);
+            margin-top: calc(var(--space) * 1.5);
+        }
+
+        .demo-section {
+            margin: var(--space) 0;
+            padding: var(--space);
+            background: var(--gray-bg);
+            border-radius: var(--radius);
+            border-left: 4px solid var(--blue);
+        }
+
+        .controls, .slider-group {
+            display: flex;
+            gap: var(--space);
+            margin: 15px 0;
+        }
+
+        .controls { flex-wrap: wrap; }
+        .slider-group { align-items: center; }
+        .feature-grid { display: grid; gap: var(--space); margin: var(--space) 0; }
+
+        button {
+            background: var(--blue);
+            color: var(--white);
+            border: none;
+            padding: var(--space) var(--space);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover { filter: brightness(0.9); }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        input[type="range"] { flex: 1; max-width: 200px; }
+        input[type="text"] {
+            padding: var(--space);
+            border: 1px solid #ddd;
+            border-radius: var(--radius);
+        }
+
+        .status, .code-example {
+            font-family: monospace;
+            padding: var(--space);
+            border-radius: var(--radius);
+            margin: var(--space) 0;
+        }
+
+        .status {
+            background: var(--dark);
+            color: #0f0;
+            white-space: pre-wrap;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .code-example {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            overflow-x: auto;
+            margin: var(--space) 0;
+        }
+
+        .highlight { color: #68d391; }
+        .keyword { color: #fbb6ce; }
+        .string { color: #fbd38d; }
+
+        .test-element {
+            padding: var(--space);
+            margin: 5px;
+            border: 2px solid #ddd;
+            background: var(--white);
+            border-radius: var(--radius);
+            transition: all 0.3s ease;
+        }
+
+        .highlighted {
+            background: #ffd700 !important;
+            border-color: #ffcc00 !important;
+        }
+
         .hidden { display: none; }
-        textarea { width: 100%; height: 100px; }
-        #ajax-result { border: 1px solid #ddd; padding: 10px; margin: 10px 0; }
+
+        .output {
+            background: var(--gray-bg);
+            padding: var(--space);
+            border-radius: var(--radius);
+            margin: var(--space) 0;
+            min-height: 40px;
+            border-left: 3px solid var(--green);
+        }
+
+        .ajax-visual {
+            height: 100px;
+            background: linear-gradient(45deg, #1e3c72, #2a5298);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-weight: bold;
+            margin: 15px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .loading-animation {
+            position: absolute;
+            inset: 0;
+            opacity: 0.3;
+            background: repeating-linear-gradient(90deg, transparent 0 10px, rgba(255,255,255,0.2) 10px 20px);
+            animation: wave 2s linear infinite;
+        }
+
+        @keyframes wave { to { transform: translateX(20px); } }
+
+        .api-section { margin: 15px 0; }
+        .api-section h3 {
+            color: var(--green);
+            margin: 0 0 var(--space) 0;
+        }
+
+        .api-method {
+            font-family: monospace;
+            margin: 3px 0;
+            color: var(--gray);
+        }
+
+        .api-method .method-name { color: var(--blue); font-weight: bold; }
+        .api-method .return-type { color: #6f42c1; }
+        .api-method .param { color: #e83e8c; }
+
+        .api-description {
+            margin: var(--space) 0;
+        }
+
+        .api-options {
+            color: var(--gray);
+        }
+
+        .code-comment {
+            color: #68d391;
+        }
+
+        .demo-visual {
+            background: var(--gray-bg);
+            padding: calc(var(--space) * 2);
+            border-radius: var(--radius);
+            margin: var(--space) 0;
+            border: 2px dashed #ddd;
+            text-align: center;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .demo-visual.active {
+            background: #e8f5e8;
+            border-color: var(--green);
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
-    <h1>u-query Demo</h1>
-    <p>A lightweight jQuery-like DOM manipulation library with modern JavaScript features.</p>
+    <div class="container">
+        <h1>U-Query.js Demo</h1>
 
-    <div class="demo-section">
-        <h3>1. Element Selection</h3>
-        <div class="code-block">
-            $('selector') // Returns NodeList/Array<br>
-            $('.class'), $('#id'), $('tag')
-        </div>
-        <div class="test-element" id="test-1">Test Element 1</div>
-        <div class="test-element" id="test-2">Test Element 2</div>
-        <div class="test-element special" id="test-3">Test Element 3 (special)</div>
-        <button onclick="selectionDemo()">Test Selection</button>
-        <div class="output" id="selection-output"></div>
-    </div>
+        <div class="main-layout">
+            <div class="demo-column">
+                <h2>Element Selection & DOM Manipulation</h2>
+                <div class="demo-section">
+                    <h3>DOM Queries</h3>
+                    <div class="demo-visual" id="selection-visual">
+                        <span>Select elements to see them highlighted</span>
+                    </div>
+                    <div class="test-element" id="test-1">Test Element 1</div>
+                    <div class="test-element" id="test-2">Test Element 2</div>
+                    <div class="test-element special" id="test-3">Test Element 3 (special)</div>
 
-    <div class="demo-section">
-        <h3>2. DOM Manipulation</h3>
-        <div class="code-block">
-            .html(content), .text(content), .append(content)
-        </div>
-        <div id="manipulation-target">Original content</div>
-        <button onclick="htmlDemo()">Change HTML</button>
-        <button onclick="textDemo()">Change Text</button>
-        <button onclick="appendDemo()">Append Content</button>
-        <button onclick="resetManipulation()">Reset</button>
-        <div class="output" id="manipulation-output"></div>
-    </div>
+                    <div class="controls">
+                        <button onclick="selectAllElements()">Select All .test-element</button>
+                        <button onclick="selectSpecial()">Select .special</button>
+                        <button onclick="selectById()">Select by ID</button>
+                        <button onclick="clearSelection()">Clear Selection</button>
+                    </div>
 
-    <div class="demo-section">
-        <h3>3. CSS and Classes</h3>
-        <div class="code-block">
-            .css(styles), .addClass(class), .removeClass(class)
-        </div>
-        <div class="test-element" id="css-target">CSS Target Element</div>
-        <button onclick="cssDemo()">Apply CSS</button>
-        <button onclick="addClassDemo()">Add Class</button>
-        <button onclick="removeClassDemo()">Remove Class</button>
-        <button onclick="resetCSS()">Reset CSS</button>
-        <div class="output" id="css-output"></div>
-    </div>
+                    <div class="status" id="selection-output"></div>
+                </div>
 
-    <div class="demo-section">
-        <h3>4. Event Handling</h3>
-        <div class="code-block">
-            .on(event, handler), .off(event, handler)
-        </div>
-        <button id="event-button">Click Me!</button>
-        <button onclick="addEventHandler()">Add Click Handler</button>
-        <button onclick="removeEventHandler()">Remove Handler</button>
-        <div class="output" id="event-output"></div>
-    </div>
+                <div class="demo-section">
+                    <h3>DOM Manipulation</h3>
+                    <div class="demo-visual" id="manipulation-target">Original content</div>
 
-    <div class="demo-section">
-        <h3>5. Show/Hide/Toggle</h3>
-        <div class="code-block">
-            .show(), .hide(), .toggle()
-        </div>
-        <div class="test-element" id="toggle-target">Toggle me!</div>
-        <button onclick="$('#toggle-target').hide()">Hide</button>
-        <button onclick="$('#toggle-target').show()">Show</button>
-        <button onclick="$('#toggle-target').toggle()">Toggle</button>
-        <div class="output" id="toggle-output">Element visibility controls above</div>
-    </div>
+                    <div class="controls">
+                        <button onclick="htmlDemo()">Change HTML</button>
+                        <button onclick="textDemo()">Change Text</button>
+                        <button onclick="appendDemo()">Append Content</button>
+                        <button onclick="resetManipulation()">Reset</button>
+                    </div>
 
-    <div class="demo-section">
-        <h3>6. AJAX Utilities</h3>
-        <div class="code-block">
-            $.get(url, callback), $.post(url, data, callback)
-        </div>
-        <button onclick="ajaxDemo()">Test AJAX (JSON Placeholder)</button>
-        <button onclick="postDemo()">Test POST</button>
-        <div id="ajax-result">AJAX results will appear here...</div>
-    </div>
+                    <div class="status" id="manipulation-output"></div>
+                </div>
 
-    <div class="demo-section">
-        <h3>7. Global Event System</h3>
-        <div class="code-block">
-            $.on(event, handler), $.emit(event, data), $.off(event, handler)
-        </div>
-        <input type="text" id="global-event-data" placeholder="Event data" value="Hello global events!">
-        <button onclick="addGlobalListener()">Add Global Listener</button>
-        <button onclick="emitGlobalEvent()">Emit Global Event</button>
-        <button onclick="removeGlobalListener()">Remove Listener</button>
-        <div class="output" id="global-output"></div>
-    </div>
+                <div class="demo-section">
+                    <h3>CSS & Classes</h3>
+                    <div class="test-element" id="css-target">CSS Target Element</div>
 
-    <div class="demo-section">
-        <h3>8. Utility Functions</h3>
-        <div class="code-block">
-            $.each(selector, callback), $.ready(callback)
-        </div>
-        <div class="test-element util-target">Utility Element 1</div>
-        <div class="test-element util-target">Utility Element 2</div>
-        <div class="test-element util-target">Utility Element 3</div>
-        <button onclick="eachDemo()">Test $.each</button>
-        <button onclick="readyDemo()">Test $.ready</button>
-        <div class="output" id="utility-output"></div>
-    </div>
+                    <div class="controls">
+                        <button onclick="cssDemo()">Apply CSS Styles</button>
+                        <button onclick="addClassDemo()">Add Highlight Class</button>
+                        <button onclick="removeClassDemo()">Remove Class</button>
+                        <button onclick="resetCSS()">Reset Styles</button>
+                    </div>
 
-    <div class="demo-section">
-        <h3>9. Method Chaining</h3>
-        <div class="code-block">
-            $('.test-element').addClass('highlighted').css({color: 'red'}).show()
+                    <div class="status" id="css-output"></div>
+                </div>
+            </div>
+
+            <div class="api-column">
+                <h2>Selection API</h2>
+
+                <div class="api-section">
+                    <h3>Core Selectors</h3>
+                    <div class="api-method"><span class="method-name">$</span>(<span class="param">selector</span>) → <span class="return-type">NodeList</span></div>
+                    <div class="api-method"><span class="method-name">$</span>(<span class="param">'.class'</span>) → <span class="return-type">NodeList</span></div>
+                    <div class="api-method"><span class="method-name">$</span>(<span class="param">'#id'</span>) → <span class="return-type">NodeList</span></div>
+                    <div class="api-method"><span class="method-name">$</span>(<span class="param">'tag'</span>) → <span class="return-type">NodeList</span></div>
+                </div>
+
+                <div class="api-section">
+                    <h3>DOM Manipulation</h3>
+                    <div class="api-method"><span class="method-name">html</span>(<span class="param">content?</span>) → <span class="return-type">NodeList|string</span></div>
+                    <div class="api-method"><span class="method-name">text</span>(<span class="param">content?</span>) → <span class="return-type">NodeList|string</span></div>
+                    <div class="api-method"><span class="method-name">append</span>(<span class="param">content</span>) → <span class="return-type">NodeList</span></div>
+                    <div class="api-method"><span class="method-name">prepend</span>(<span class="param">content</span>) → <span class="return-type">NodeList</span></div>
+                    <div class="api-method"><span class="method-name">remove</span>() → <span class="return-type">NodeList</span></div>
+                </div>
+
+                <div class="api-section">
+                    <h3>CSS & Classes</h3>
+                    <div class="api-method"><span class="method-name">css</span>(<span class="param">styles</span>) → <span class="return-type">NodeList</span></div>
+                    <div class="api-method"><span class="method-name">addClass</span>(<span class="param">className</span>) → <span class="return-type">NodeList</span></div>
+                    <div class="api-method"><span class="method-name">removeClass</span>(<span class="param">className</span>) → <span class="return-type">NodeList</span></div>
+                    <div class="api-method"><span class="method-name">toggleClass</span>(<span class="param">className</span>) → <span class="return-type">NodeList</span></div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Examples</h3>
+                    <pre class="code-example">
+<span class="code-comment">// Element selection</span>
+<span class="keyword">const</span> elements = <span class="highlight">$</span>(<span class="string">'.my-class'</span>);
+<span class="keyword">const</span> byId = <span class="highlight">$</span>(<span class="string">'#my-id'</span>);
+
+<span class="highlight">$</span>(<span class="string">'.target'</span>).html(<span class="string">'&lt;b&gt;New content&lt;/b&gt;'</span>);
+<span class="highlight">$</span>(<span class="string">'.target'</span>).text(<span class="string">'Plain text'</span>);
+<span class="highlight">$</span>(<span class="string">'.container'</span>).append(<span class="string">'&lt;p&gt;Added&lt;/p&gt;'</span>);
+
+<span class="highlight">$</span>(<span class="string">'.element'</span>).css({
+  <span class="string">'color'</span>: <span class="string">'red'</span>,
+  <span class="string">'background'</span>: <span class="string">'blue'</span>
+});
+<span class="highlight">$</span>(<span class="string">'.element'</span>).addClass(<span class="string">'active'</span>);
+</pre>
+                </div>
+            </div>
         </div>
-        <button onclick="chainingDemo()">Demo Method Chaining</button>
-        <button onclick="resetChaining()">Reset</button>
-        <div class="output" id="chaining-output"></div>
+
+        <div class="main-layout">
+            <div class="demo-column">
+                <h2>Event Handling & Visibility</h2>
+                <div class="demo-section">
+                    <h3>Event System</h3>
+                    <button id="event-button">Click Me!</button>
+
+                    <div class="controls">
+                        <button onclick="addEventHandler()">Add Click Handler</button>
+                        <button onclick="removeEventHandler()">Remove Handler</button>
+                        <button onclick="addMultipleEvents()">Add Multiple Events</button>
+                    </div>
+
+                    <div class="status" id="event-output"></div>
+                </div>
+
+                <div class="demo-section">
+                    <h3>Show/Hide/Toggle</h3>
+                    <div class="test-element" id="toggle-target">Toggle me!</div>
+
+                    <div class="controls">
+                        <button onclick="$('#toggle-target').hide()">Hide</button>
+                        <button onclick="$('#toggle-target').show()">Show</button>
+                        <button onclick="$('#toggle-target').toggle()">Toggle</button>
+                        <button onclick="animateVisibility()">Animate Toggle</button>
+                    </div>
+
+                    <div class="status" id="toggle-output"></div>
+                </div>
+
+                <div class="demo-section">
+                    <h3>Method Chaining</h3>
+                    <div class="demo-visual" id="chaining-demo">
+                        <div class="test-element chain-target">Chain Target 1</div>
+                        <div class="test-element chain-target">Chain Target 2</div>
+                        <div class="test-element chain-target">Chain Target 3</div>
+                    </div>
+
+                    <div class="controls">
+                        <button onclick="chainingDemo()">Demo Method Chaining</button>
+                        <button onclick="resetChaining()">Reset</button>
+                    </div>
+
+                    <div class="status" id="chaining-output"></div>
+                </div>
+            </div>
+
+            <div class="api-column">
+                <h2>Events & Visibility API</h2>
+
+                <div class="api-section">
+                    <h3>Event Methods</h3>
+                    <div class="api-method"><span class="method-name">on</span>(<span class="param">event, handler</span>) → <span class="return-type">NodeList</span></div>
+                    <div class="api-method"><span class="method-name">off</span>(<span class="param">event, handler?</span>) → <span class="return-type">NodeList</span></div>
+                    <div class="api-method"><span class="method-name">trigger</span>(<span class="param">event, data?</span>) → <span class="return-type">NodeList</span></div>
+                    <div class="api-method"><span class="method-name">once</span>(<span class="param">event, handler</span>) → <span class="return-type">NodeList</span></div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Visibility Control</h3>
+                    <div class="api-method"><span class="method-name">show</span>() → <span class="return-type">NodeList</span></div>
+                    <div class="api-method"><span class="method-name">hide</span>() → <span class="return-type">NodeList</span></div>
+                    <div class="api-method"><span class="method-name">toggle</span>() → <span class="return-type">NodeList</span></div>
+                    <div class="api-method"><span class="method-name">fadeIn</span>(<span class="param">duration?</span>) → <span class="return-type">NodeList</span></div>
+                    <div class="api-method"><span class="method-name">fadeOut</span>(<span class="param">duration?</span>) → <span class="return-type">NodeList</span></div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Method Chaining</h3>
+                    <div class="api-description">
+                        All u-query methods return the NodeList, enabling method chaining.
+                    </div>
+                    <pre class="code-example">
+<span class="highlight">$</span>(<span class="string">'.button'</span>).on(<span class="string">'click'</span>, <span class="keyword">function</span>() {
+  <span class="highlight">console</span>.log(<span class="string">'Clicked!'</span>);
+});
+
+<span class="highlight">$</span>(<span class="string">'.element'</span>)
+  .addClass(<span class="string">'active'</span>)
+  .css({<span class="string">'color'</span>: <span class="string">'red'</span>})
+  .show()
+  .on(<span class="string">'click'</span>, handler);
+
+<span class="highlight">$</span>(<span class="string">'.modal'</span>).fadeIn(<span class="highlight">300</span>);
+<span class="highlight">$</span>(<span class="string">'.tooltip'</span>).fadeOut(<span class="highlight">200</span>);
+</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <div class="demo-column">
+                <h2>AJAX & Global Events</h2>
+                <div class="demo-section">
+                    <h3>AJAX Utilities</h3>
+                    <div class="ajax-visual" id="ajax-visual">
+                        <div class="loading-animation" id="loading-animation" style="animation-play-state: paused;"></div>
+                        <span>AJAX Request Status</span>
+                    </div>
+
+                    <div class="controls">
+                        <button onclick="ajaxDemo()">GET Request</button>
+                        <button onclick="postDemo()">POST Request</button>
+                        <button onclick="asyncDemo()">Async/Await Demo</button>
+                    </div>
+
+                    <div class="status" id="ajax-output"></div>
+                </div>
+
+                <div class="demo-section">
+                    <h3>Global Event System</h3>
+                    <input type="text" id="global-event-data" placeholder="Event data" value="Hello global events!">
+
+                    <div class="controls">
+                        <button onclick="addGlobalListener()">Add Global Listener</button>
+                        <button onclick="emitGlobalEvent()">Emit Global Event</button>
+                        <button onclick="removeGlobalListener()">Remove Listener</button>
+                    </div>
+
+                    <div class="status" id="global-output"></div>
+                </div>
+
+                <div class="demo-section">
+                    <h3>Utility Functions</h3>
+                    <div class="test-element util-target">Utility Element 1</div>
+                    <div class="test-element util-target">Utility Element 2</div>
+                    <div class="test-element util-target">Utility Element 3</div>
+
+                    <div class="controls">
+                        <button onclick="eachDemo()">Test $.each</button>
+                        <button onclick="readyDemo()">Test $.ready</button>
+                        <button onclick="utilityChain()">Utility Chain Demo</button>
+                    </div>
+
+                    <div class="status" id="utility-output"></div>
+                </div>
+            </div>
+
+            <div class="api-column">
+                <h2>AJAX & Utilities API</h2>
+
+                <div class="api-section">
+                    <h3>AJAX Methods</h3>
+                    <div class="api-method"><span class="method-name">$.get</span>(<span class="param">url, callback</span>) → <span class="return-type">Promise</span></div>
+                    <div class="api-method"><span class="method-name">$.post</span>(<span class="param">url, data, callback</span>) → <span class="return-type">Promise</span></div>
+                    <div class="api-method"><span class="method-name">$.ajax</span>(<span class="param">options</span>) → <span class="return-type">Promise</span></div>
+                    <div class="api-method"><span class="method-name">$.json</span>(<span class="param">url</span>) → <span class="return-type">Promise</span></div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Global Event System</h3>
+                    <div class="api-method"><span class="method-name">$.on</span>(<span class="param">event, handler</span>) → <span class="return-type">$</span></div>
+                    <div class="api-method"><span class="method-name">$.off</span>(<span class="param">event, handler?</span>) → <span class="return-type">$</span></div>
+                    <div class="api-method"><span class="method-name">$.emit</span>(<span class="param">event, data?</span>) → <span class="return-type">number</span></div>
+                    <div class="api-method"><span class="method-name">$.trigger</span>(<span class="param">event, data?</span>) → <span class="return-type">number</span></div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Utility Functions</h3>
+                    <div class="api-method"><span class="method-name">$.each</span>(<span class="param">selector, callback</span>) → <span class="return-type">$</span></div>
+                    <div class="api-method"><span class="method-name">$.ready</span>(<span class="param">callback</span>) → <span class="return-type">$</span></div>
+                    <div class="api-method"><span class="method-name">$.extend</span>(<span class="param">target, ...sources</span>) → <span class="return-type">object</span></div>
+                    <div class="api-method"><span class="method-name">$.map</span>(<span class="param">selector, callback</span>) → <span class="return-type">Array</span></div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Examples</h3>
+                    <pre class="code-example">
+<span class="keyword">const</span> data = <span class="keyword">await</span> <span class="highlight">$.get</span>(<span class="string">'/api/users'</span>);
+<span class="highlight">$.post</span>(<span class="string">'/api/users'</span>, {name: <span class="string">'John'</span>})
+  .then(<span class="param">response</span> => <span class="highlight">console</span>.log(<span class="param">response</span>));
+
+<span class="highlight">$.on</span>(<span class="string">'user-login'</span>, <span class="param">user</span> => {
+  <span class="highlight">console</span>.log(<span class="string">'User logged in:'</span>, <span class="param">user</span>);
+});
+<span class="highlight">$.emit</span>(<span class="string">'user-login'</span>, {id: <span class="highlight">123</span>});
+
+<span class="highlight">$.each</span>(<span class="string">'.item'</span>, (<span class="param">el</span>, <span class="param">i</span>) => {
+  <span class="param">el</span>.textContent = <span class="string">`Item ${</span><span class="param">i</span><span class="string">}`</span>;
+});
+
+<span class="highlight">$.ready</span>(() => {
+  <span class="highlight">console</span>.log(<span class="string">'DOM ready!'</span>);
+});
+</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <div class="demo-column">
+                <h2>Browser Info</h2>
+                <div class="demo-section">
+                    <div class="status" id="library-info">Loading library information...</div>
+
+                    <h3>This browser supports</h3>
+                    <div id="feature-support" class="status"></div>
+
+                    <div class="controls">
+                        <button onclick="testCompatibility()">Test Browser Compatibility</button>
+                        <button onclick="performanceBenchmark()">Performance Benchmark</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="api-column">
+                <h2>Advanced Features</h2>
+
+                <div class="api-section">
+                    <h3>Advanced Selectors</h3>
+                    <div class="api-method"><span class="method-name">$</span>(<span class="param">':visible'</span>) → <span class="return-type">NodeList</span></div>
+                    <div class="api-method"><span class="method-name">$</span>(<span class="param">':hidden'</span>) → <span class="return-type">NodeList</span></div>
+                    <div class="api-method"><span class="method-name">$</span>(<span class="param">':checked'</span>) → <span class="return-type">NodeList</span></div>
+                    <div class="api-method"><span class="method-name">$</span>(<span class="param">':first'</span>) → <span class="return-type">NodeList</span></div>
+                    <div class="api-method"><span class="method-name">$</span>(<span class="param">':last'</span>) → <span class="return-type">NodeList</span></div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Data Attributes</h3>
+                    <div class="api-method"><span class="method-name">data</span>(<span class="param">key, value?</span>) → <span class="return-type">NodeList|any</span></div>
+                    <div class="api-method"><span class="method-name">attr</span>(<span class="param">name, value?</span>) → <span class="return-type">NodeList|string</span></div>
+                    <div class="api-method"><span class="method-name">prop</span>(<span class="param">name, value?</span>) → <span class="return-type">NodeList|any</span></div>
+                    <div class="api-method"><span class="method-name">val</span>(<span class="param">value?</span>) → <span class="return-type">NodeList|string</span></div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Traversal Methods</h3>
+                    <div class="api-method"><span class="method-name">parent</span>() → <span class="return-type">NodeList</span></div>
+                    <div class="api-method"><span class="method-name">children</span>() → <span class="return-type">NodeList</span></div>
+                    <div class="api-method"><span class="method-name">siblings</span>() → <span class="return-type">NodeList</span></div>
+                    <div class="api-method"><span class="method-name">find</span>(<span class="param">selector</span>) → <span class="return-type">NodeList</span></div>
+                    <div class="api-method"><span class="method-name">closest</span>(<span class="param">selector</span>) → <span class="return-type">NodeList</span></div>
+                </div>
+
+                <div class="api-section">
+                    <h3>DOM Diff Updates</h3>
+                    <div class="api-description">
+                        u-query can make use of morphdom.js for efficient DOM diff updates.
+                    </div>
+                    <div class="api-method"><span class="method-name">$.options.alwaysDoDifferentialUpdate</span> = <span class="param">true</span></div>
+                    <div class="api-description">
+                        Global flag for morphdom.
+                    </div>
+                </div>
+
+            </div>
+        </div>
     </div>
 
     <script src="u-query.js"></script>
     <script>
         let clickHandler, globalHandler;
 
-        // Demo 1: Selection
-        function selectionDemo() {
-            const output = document.getElementById('selection-output');
-            output.innerHTML = '';
-            
-            const allTestElements = $('.test-element');
-            const specialElement = $('.special');
-            const byId = $('#test-2');
-            
-            output.innerHTML += `Found ${allTestElements.length} .test-element elements<br>`;
-            output.innerHTML += `Found ${specialElement.length} .special elements<br>`;
-            output.innerHTML += `Found by ID: ${byId.length > 0 ? byId[0].textContent : 'none'}<br>`;
+        // Initialize library info on load
+        document.addEventListener('DOMContentLoaded', () => {
+            updateLibraryInfo();
+            updateFeatureSupport();
+        });
+
+        function updateLibraryInfo() {
+            const info = document.getElementById('library-info');
+            const version = typeof $ !== 'undefined' ? 'Loaded' : 'Not Available';
+            const selectors = document.querySelectorAll('*').length;
+
+            info.textContent = `
+Library Status: ${version}
+DOM Elements: ${selectors}
+Browser: ${navigator.userAgent.split(' ')[0]}
+Features: ES6+, Promises, DOM API
+Build: Development
+            `.trim();
         }
 
-        // Demo 2: DOM Manipulation
+        function updateFeatureSupport() {
+            const features = [
+                { name: 'Promises', supported: typeof Promise !== 'undefined' },
+                { name: 'Arrow Functions', supported: true },
+                { name: 'Template Literals', supported: true },
+                { name: 'Fetch API', supported: typeof fetch !== 'undefined' },
+                { name: 'querySelector', supported: typeof document.querySelector !== 'undefined' },
+                { name: 'addEventListener', supported: typeof document.addEventListener !== 'undefined' }
+            ];
+
+            const support = features.map(feature =>
+                `${feature.name}: ${feature.supported ? 'Supported' : 'Not Supported'}`
+            ).join('\n');
+
+            document.getElementById('feature-support').textContent = support;
+        }
+
+        function log(elementId, message) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent += new Date().toLocaleTimeString() + ': ' + message + '\n';
+                element.scrollTop = element.scrollHeight;
+            }
+        }
+
+        // Enhanced Selection Demos
+        function selectAllElements() {
+            clearSelection();
+            const elements = $('.test-element');
+            elements.forEach(el => el.classList.add('highlighted'));
+            updateSelectionVisual(`Selected ${elements.length} .test-element items`);
+            log('selection-output', `Found ${elements.length} elements with class 'test-element'`);
+        }
+
+        function selectSpecial() {
+            clearSelection();
+            const elements = $('.special');
+            elements.forEach(el => el.classList.add('highlighted'));
+            updateSelectionVisual(`Selected ${elements.length} .special items`);
+            log('selection-output', `Found ${elements.length} elements with class 'special'`);
+        }
+
+        function selectById() {
+            clearSelection();
+            const elements = $('#test-2');
+            elements.forEach(el => el.classList.add('highlighted'));
+            updateSelectionVisual(`Selected element by ID: #test-2`);
+            log('selection-output', `Found element by ID: ${elements.length > 0 ? elements[0].textContent : 'none'}`);
+        }
+
+        function clearSelection() {
+            $('.test-element').forEach(el => el.classList.remove('highlighted'));
+            updateSelectionVisual('Selection cleared');
+        }
+
+        function updateSelectionVisual(message) {
+            const visual = document.getElementById('selection-visual');
+            visual.textContent = message;
+            visual.classList.add('active');
+            setTimeout(() => visual.classList.remove('active'), 2000);
+        }
+
+        // DOM Manipulation
         function htmlDemo() {
-            $('#manipulation-target').html('<strong>HTML content changed!</strong>');
-            $('#manipulation-output').html('HTML content updated');
+            $('#manipulation-target').html('<strong>HTML content changed</strong>');
+            log('manipulation-output', 'HTML content updated with formatting');
         }
 
         function textDemo() {
-            $('#manipulation-target').text('Text content changed!');
-            $('#manipulation-output').html('Text content updated');
+            $('#manipulation-target').text('Text content changed');
+            log('manipulation-output', 'Text content updated (plain text)');
         }
 
         function appendDemo() {
-            $('#manipulation-target').append(' <em>Appended content!</em>');
-            $('#manipulation-output').html('Content appended');
+            $('#manipulation-target').append(' <em>Appended content</em>');
+            log('manipulation-output', 'Content appended to existing content');
         }
 
         function resetManipulation() {
             $('#manipulation-target').html('Original content');
-            $('#manipulation-output').html('Content reset');
+            log('manipulation-output', 'Content reset to original state');
         }
 
-        // Demo 3: CSS and Classes
+        // CSS and Classes
         function cssDemo() {
             $('#css-target').css({
-                'background-color': 'lightblue',
-                'color': 'darkblue',
-                'border-radius': '10px'
+                'background': 'linear-gradient(45deg, #ff6b6b, #4ecdc4)',
+                'color': 'white',
+                'border-radius': '10px',
+                'padding': '15px',
+                'transform': 'scale(1.05)',
+                'transition': 'all 0.3s ease'
             });
-            $('#css-output').html('CSS styles applied');
+            log('css-output', 'Applied gradient background and transformation');
         }
 
         function addClassDemo() {
             $('#css-target').addClass('highlighted');
-            $('#css-output').html('Class "highlighted" added');
+            log('css-output', 'Added "highlighted" class');
         }
 
         function removeClassDemo() {
             $('#css-target').removeClass('highlighted');
-            $('#css-output').html('Class "highlighted" removed');
+            log('css-output', 'Removed "highlighted" class');
         }
 
         function resetCSS() {
             $('#css-target').css({
-                'background-color': '',
+                'background': '',
                 'color': '',
-                'border-radius': ''
+                'border-radius': '',
+                'padding': '',
+                'transform': '',
+                'transition': ''
             }).removeClass('highlighted');
-            $('#css-output').html('CSS reset');
+            log('css-output', 'All styles and classes reset');
         }
 
-        // Demo 4: Event Handling
         function addEventHandler() {
-            clickHandler = function() {
-                $('#event-output').html('Button clicked! Handler is active.');
+            clickHandler = function(e) {
+                log('event-output', `Button clicked! Event type: ${e.type}`);
+                e.target.style.transform = 'scale(0.95)';
+                setTimeout(() => e.target.style.transform = '', 150);
             };
             $('#event-button').on('click', clickHandler);
-            $('#event-output').html('Click handler added');
+            log('event-output', 'Click handler added with visual feedback');
         }
 
         function removeEventHandler() {
             if (clickHandler) {
                 $('#event-button').off('click', clickHandler);
-                $('#event-output').html('Click handler removed');
+                log('event-output', 'Click handler removed');
             }
         }
 
-        // Demo 6: AJAX
+        function addMultipleEvents() {
+            const button = $('#event-button')[0];
+            if (button) {
+                const events = {
+                    mouseenter: () => log('event-output', 'Mouse entered button'),
+                    mouseleave: () => log('event-output', 'Mouse left button'),
+                    focus: () => log('event-output', 'Button focused'),
+                    blur: () => log('event-output', 'Button lost focus')
+                };
+
+                Object.entries(events).forEach(([event, handler]) => {
+                    button.addEventListener(event, handler);
+                });
+
+                log('event-output', 'Added multiple event listeners (hover, focus, blur)');
+            }
+        }
+
+        function animateVisibility() {
+            const target = $('#toggle-target')[0];
+            if (target) {
+                target.style.transition = 'all 0.5s ease';
+                target.style.transform = target.style.display === 'none' ? 'scale(1)' : 'scale(0)';
+                setTimeout(() => {
+                    $('#toggle-target').toggle();
+                    if (target.style.display !== 'none') {
+                        target.style.transform = 'scale(1)';
+                    }
+                }, 250);
+                log('toggle-output', 'Animated visibility toggle with scaling effect');
+        }
+
         function ajaxDemo() {
-            $('#ajax-result').html('Loading...');
+            }
+        }
+
+        // Enhanced AJAX with visual feedback
+        function ajaxDemo() {
+            updateAjaxVisual(true);
+            log('ajax-output', 'Initiating GET request...');
+
             $.get('https://jsonplaceholder.typicode.com/posts/1', function(data) {
-                $('#ajax-result').html(`
-                    <h4>GET Response:</h4>
-                    <strong>Title:</strong> ${data.title}<br>
-                    <strong>Body:</strong> ${data.body}
-                `);
+                updateAjaxVisual(false);
+                log('ajax-output', `GET Success: "${data.title.substring(0, 50)}..."`);
+                log('ajax-output', `Response body: ${data.body.substring(0, 100)}...`);
+            }).catch(error => {
+                updateAjaxVisual(false);
+                log('ajax-output', `GET Error: ${error.message}`);
             });
         }
 
         function postDemo() {
-            $('#ajax-result').html('Posting...');
+            updateAjaxVisual(true);
+            log('ajax-output', 'Initiating POST request...');
+
             $.post('https://jsonplaceholder.typicode.com/posts', {
-                title: 'u-query test',
-                body: 'This is a test post from u-query demo',
+                title: 'u-query demo post',
+                body: 'This is a test post from u-query demonstration',
                 userId: 1
             }, function(data) {
-                $('#ajax-result').html(`
-                    <h4>POST Response:</h4>
-                    <strong>Created ID:</strong> ${data.id}<br>
-                    <strong>Title:</strong> ${data.title}
-                `);
+                updateAjaxVisual(false);
+                log('ajax-output', `POST Success: Created post with ID ${data.id}`);
+                log('ajax-output', `Posted title: "${data.title}"`);
+            }).catch(error => {
+                updateAjaxVisual(false);
+                log('ajax-output', `POST Error: ${error.message}`);
             });
         }
 
-        // Demo 7: Global Events
+        async function asyncDemo() {
+            try {
+                updateAjaxVisual(true);
+                log('ajax-output', 'Using async/await pattern...');
+
+                const response = await fetch('https://jsonplaceholder.typicode.com/users/1');
+                const user = await response.json();
+
+                updateAjaxVisual(false);
+                log('ajax-output', `Async Success: User "${user.name}" from ${user.address.city}`);
+                log('ajax-output', `Email: ${user.email}, Phone: ${user.phone}`);
+            } catch (error) {
+                updateAjaxVisual(false);
+                log('ajax-output', `Async Error: ${error.message}`);
+            }
+        }
+
+        function updateAjaxVisual(loading) {
+            const visual = document.getElementById('ajax-visual');
+            const animation = document.getElementById('loading-animation');
+            const text = visual.querySelector('span');
+
+            if (loading) {
+                visual.style.background = 'linear-gradient(45deg, #ff6b6b, #4ecdc4)';
+                animation.style.animationPlayState = 'running';
+                text.textContent = 'Loading...';
+            } else {
+                visual.style.background = 'linear-gradient(45deg, #1e3c72, #2a5298)';
+                animation.style.animationPlayState = 'paused';
+                text.textContent = 'Request Complete';
+            }
+        }
+
         function addGlobalListener() {
             globalHandler = function(data) {
-                $('#global-output').append(`Global event received: ${data}<br>`);
+                log('global-output', `Global event received: "${data}"`);
             };
             $.on('demo-event', globalHandler);
-            $('#global-output').html('Global listener added<br>');
+            log('global-output', 'Global listener added for "demo-event"');
         }
 
         function emitGlobalEvent() {
             const data = $('#global-event-data')[0].value;
             const count = $.emit('demo-event', data);
-            $('#global-output').append(`Event emitted to ${count} listeners<br>`);
+            log('global-output', `Event emitted to ${count} listeners with data: "${data}"`);
         }
 
         function removeGlobalListener() {
             if (globalHandler) {
                 $.off('demo-event', globalHandler);
-                $('#global-output').append('Global listener removed<br>');
+                log('global-output', 'Global listener removed');
             }
         }
 
-        // Demo 8: Utilities
         function eachDemo() {
-            $('#utility-output').html('');
+            document.getElementById('utility-output').textContent = '';
             $.each('.util-target', function(element, index) {
-                $('#utility-output').append(`Element ${index + 1}: ${element.textContent}<br>`);
+                element.style.background = `hsl(${index * 60}, 70%, 90%)`;
+                element.style.transform = `translateX(${index * 10}px)`;
+                log('utility-output', `Element ${index + 1}: "${element.textContent}" - styled`);
             });
+
+            setTimeout(() => {
+                $('.util-target').forEach(el => {
+                    el.style.background = '';
+                    el.style.transform = '';
+                });
+            }, 3000);
         }
 
         function readyDemo() {
             $.ready(function() {
-                $('#utility-output').append('$.ready() callback executed<br>');
+                log('utility-output', '$.ready() callback executed - DOM fully loaded');
+                log('utility-output', `Current timestamp: ${new Date().toLocaleString()}`);
             });
         }
 
-        // Demo 9: Method Chaining
+        function utilityChain() {
+            $.each('.util-target', (el, i) => {
+                $(el).css({'color': 'blue'}).addClass('highlighted');
+            });
+            log('utility-output', 'Utility chain: each + css + addClass applied');
+
+            setTimeout(() => {
+                $('.util-target').css({'color': ''}).removeClass('highlighted');
+                log('utility-output', 'Utility chain effects reset');
+            }, 2000);
+        }
+
         function chainingDemo() {
-            $('.test-element')
+            $('.chain-target')
                 .addClass('highlighted')
-                .css({ 'color': 'red', 'font-weight': 'bold' })
+                .css({
+                    'color': 'white',
+                    'background': 'linear-gradient(45deg, #667eea, #764ba2)',
+                    'transform': 'translateY(-5px) rotate(2deg)',
+                    'transition': 'all 0.5s ease'
+                })
                 .show();
-            $('#chaining-output').html('Method chaining applied: highlighted + red + bold');
+
+            log('chaining-output', 'Method chain applied: addClass → css → show');
+            log('chaining-output', 'Added highlight, gradient, and transform');
         }
 
         function resetChaining() {
-            $('.test-element')
+            $('.chain-target')
                 .removeClass('highlighted')
-                .css({ 'color': '', 'font-weight': '' });
-            $('#chaining-output').html('Chaining effects reset');
+                .css({
+                    'color': '',
+                    'background': '',
+                    'transform': '',
+                    'transition': ''
+                });
+
+            log('chaining-output', 'Method chain reset: removeClass → css clear');
         }
 
-        // Initialize
+        // Performance and Compatibility
+        function testCompatibility() {
+            const tests = [
+                { name: 'CSS Selectors', test: () => !!document.querySelector },
+                { name: 'Event Listeners', test: () => !!document.addEventListener },
+                { name: 'Fetch API', test: () => !!window.fetch },
+                { name: 'Promises', test: () => !!window.Promise },
+                { name: 'Arrow Functions', test: () => { try { eval('() => {}'); return true; } catch { return false; } } },
+                { name: 'Template Literals', test: () => { try { eval('`test`'); return true; } catch { return false; } } }
+            ];
+
+            document.getElementById('library-info').textContent = 'Running compatibility tests...\n';
+
+            tests.forEach((test, i) => {
+                setTimeout(() => {
+                    const result = test.test();
+                    document.getElementById('library-info').textContent +=
+                        `${test.name}: ${result ? 'Supported' : 'Not Supported'}\n`;
+                }, i * 200);
+            });
+        }
+
+        function performanceBenchmark() {
+            const iterations = 1000;
+            const start = performance.now();
+
+            for (let i = 0; i < iterations; i++) {
+                $('.test-element').css({'color': 'red'}).addClass('test-class').removeClass('test-class');
+            }
+
+            const end = performance.now();
+            const duration = (end - start).toFixed(2);
+
+            document.getElementById('library-info').textContent =
+                `Performance Benchmark Complete\n` +
+                `Operations: ${iterations} selection + css + addClass + removeClass\n` +
+                `Duration: ${duration}ms\n` +
+                `Avg per operation: ${(duration / iterations).toFixed(4)}ms\n` +
+                `Operations per second: ${(iterations / (duration / 1000)).toFixed(0)}`;
+        }
+
         $.ready(function() {
-            console.log('u-query demo loaded and ready!');
+            console.log('u-query demo loaded and ready');
+            log('utility-output', 'Demo initialized successfully');
         });
+
+        setInterval(updateLibraryInfo, 5000);
     </script>
 </body>
 </html>

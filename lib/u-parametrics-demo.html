@@ -1,123 +1,418 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>u-parametrics.js Demo</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>U-Parametrics Demo</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
-        .demo-section { margin-bottom: 30px; padding: 20px; border: 1px solid #ccc; border-radius: 5px; }
-        .demo-section h3 { margin-top: 0; color: #333; }
-        canvas { border: 1px solid #ccc; margin: 10px 0; }
-        .controls { margin: 10px 0; }
-        .control-group { margin: 5px 0; }
-        input[type="range"] { width: 200px; }
-        .function-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
-        .function-btn { padding: 8px; cursor: pointer; border: 1px solid #ccc; text-align: center; border-radius: 3px; }
-        .function-btn:hover { background-color: #f0f0f0; }
-        .function-btn.active { background-color: #d4edda; border-color: #28a745; }
+        :root {
+            --space: 8px;
+            --radius: 5px;
+            
+            --gray: #6c757d;
+            --gray-bg: #f5f5f5;
+            --blue: #007acc;
+            --green: #28a745;
+            --white: white;
+            --dark: #333;
+            
+            --max-width: 1400px;
+            --sidebar: 400px;
+        }
+        
+        * { box-sizing: border-box; }
+        
+        body { 
+            font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: var(--space);
+            background: var(--gray-bg);
+        }
+        
+        .container { 
+            background: var(--white);
+            padding: calc(var(--space) * 1.5);
+            border-radius: var(--radius);
+        }
+        
+        .main-layout { 
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: calc(var(--space) * 1.5);
+        }
+        
+        .api-column { 
+            background: var(--gray-bg);
+            padding: var(--space);
+            border-radius: var(--radius);
+            border-left: 4px solid var(--green);
+        }
+        
+        h1 { 
+            color: var(--dark);
+            text-align: center;
+            margin-bottom: calc(var(--space) * 1.5);
+            grid-column: 1 / -1;
+        }
+        
+        h2 { 
+            color: var(--gray);
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: var(--space);
+            margin-top: calc(var(--space) * 1.5);
+        }
+        
+        .demo-section { 
+            margin: var(--space) 0;
+            padding: var(--space);
+            background: var(--gray-bg);
+            border-radius: var(--radius);
+            border-left: 4px solid var(--blue);
+        }
+        
+        .controls, .input-group { 
+            display: flex;
+            gap: var(--space);
+            margin: 15px 0;
+        }
+        
+        .controls { flex-wrap: wrap; }
+        .input-group { align-items: center; }
+        .feature-grid { display: grid; gap: var(--space); margin: var(--space) 0; }
+        
+        button { 
+            background: var(--blue);
+            color: var(--white);
+            border: none;
+            padding: var(--space) var(--space);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover { filter: brightness(0.9); }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        
+        input[type="text"], input[type="number"], input[type="range"] { 
+            padding: var(--space);
+            border: 1px solid #ddd;
+            border-radius: var(--radius);
+        }
+        
+        input[type="number"] {
+            width: 80px;
+        }
+        
+        input[type="range"] {
+            flex: 1;
+        }
+        
+        .status, .code-example { 
+            font-family: monospace;
+            padding: var(--space);
+            border-radius: var(--radius);
+            margin: var(--space) 0;
+        }
+        
+        .status { 
+            background: var(--dark);
+            color: #0f0;
+            white-space: pre-wrap;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        .code-example { 
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            overflow-x: auto;
+            margin: var(--space) 0;
+        }
+        
+        .highlight { color: #68d391; }
+        .keyword { color: #fbb6ce; }
+        .string { color: #fbd38d; }
+        
+        .api-section { margin: 15px 0; }
+        .api-section h3 { 
+            color: var(--green);
+            margin: 0 0 var(--space) 0;
+        }
+        
+        .api-method { 
+            font-family: monospace;
+            margin: 3px 0;
+            color: var(--gray);
+        }
+        
+        .api-method .method-name { color: var(--blue); font-weight: bold; }
+        .api-method .return-type { color: #6f42c1; }
+        .api-method .param { color: #e83e8c; }
+        
+        .api-description {
+            margin: var(--space) 0;
+        }
+        
+        .api-options {
+            color: var(--gray);
+        }
+        
+        .help-text {
+            color: var(--gray);
+            margin: var(--space) 0;
+        }
+        
+        .code-comment {
+            color: #68d391;
+        }
+        
+        .color-box { 
+            display: inline-block; 
+            width: 30px; 
+            height: 30px; 
+            margin: 5px; 
+            border: 1px solid #000; 
+            border-radius: var(--radius);
+        }
+        
+        canvas { 
+            border: 1px solid #ddd; 
+            border-radius: var(--radius);
+            margin: var(--space) 0;
+        }
+
+        .function-list { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); 
+            gap: var(--space); 
+            margin: var(--space) 0; 
+        }
+        
+        .function-btn { 
+            padding: var(--space); 
+            cursor: pointer; 
+            border: 1px solid #ddd; 
+            text-align: center; 
+            border-radius: var(--radius);
+            background: var(--white);
+            transition: all 0.3s ease;
+            font-size: 12px;
+        }
+        
+        .function-btn:hover { 
+            background-color: #f0f0f0; 
+        }
+        
+        .function-btn.active { 
+            background-color: var(--green); 
+            color: var(--white);
+            border-color: var(--green); 
+        }
+        
+        @media (max-width: 1200px) {
+            .main-layout { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
-    <h1>u-parametrics.js Easing Functions Demo</h1>
-    <p>A collection of parametric easing functions for smooth animations and transitions.</p>
-
-    <div class="demo-section">
-        <h3>1. Interactive Function Visualizer</h3>
-        <p>Select an easing function to see its curve:</p>
+    <div class="container">
+        <h1>U-Parametrics Demo</h1>
         
-        <div class="function-list" id="function-buttons">
-            <!-- Function buttons will be populated by JavaScript -->
-        </div>
-        
-        <canvas id="curve-canvas" width="600" height="300"></canvas>
-        
-        <div class="controls">
-            <div class="control-group">
-                <label>Animation Speed: </label>
-                <input type="range" id="speed-slider" min="0.5" max="5" step="0.1" value="2">
-                <span id="speed-value">2.0</span>s
-            </div>
-            <div class="control-group">
-                <button onclick="toggleAnimation()" id="anim-btn">Start Animation</button>
-                <button onclick="resetAnimation()">Reset</button>
-            </div>
-        </div>
-        
-        <div id="function-info"></div>
-    </div>
-
-    <div class="demo-section">
-        <h3>2. Function Comparison</h3>
-        <p>Compare multiple easing functions side by side:</p>
-        <canvas id="comparison-canvas" width="600" height="400"></canvas>
-        
-        <div class="controls">
-            <button onclick="addFunctionToComparison('smooth_start21')">Add Smooth Start²</button>
-            <button onclick="addFunctionToComparison('smooth_start31')">Add Smooth Start³</button>
-            <button onclick="addFunctionToComparison('parabola1')">Add Parabola</button>
-            <button onclick="addFunctionToComparison('sin1')">Add Sine</button>
-            <button onclick="addFunctionToComparison('logistic1')">Add Logistic</button>
-            <button onclick="clearComparison()">Clear All</button>
-        </div>
-        
-        <div id="comparison-legend"></div>
-    </div>
-
-    <div class="demo-section">
-        <h3>3. Real-world Animation Examples</h3>
-        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-            <div>
-                <h4>Bouncing Ball</h4>
-                <canvas id="ball-canvas" width="200" height="150"></canvas>
-                <div>
-                    <button onclick="animateBall('parabola1')">Parabola</button>
-                    <button onclick="animateBall('smooth_start31')">Cubic</button>
+        <div class="main-layout">
+            <div class="demo-column">
+                <h2>Function Visualizer</h2>
+                <div class="demo-section">
+                    <h3>Interactive Easing Functions</h3>
+                    <div class="function-list" id="function-buttons"></div>
+                    <canvas id="curve-canvas" width="400" height="250"></canvas>
+                    <div class="input-group">
+                        <label>Speed:</label>
+                        <input type="range" id="speed-slider" min="0.5" max="5" step="0.1" value="2">
+                        <span id="speed-value">2.0</span>s
+                    </div>
+                    <div class="controls">
+                        <button onclick="toggleAnimation()" id="anim-btn">Start Animation</button>
+                        <button onclick="resetAnimation()">Reset</button>
+                    </div>
+                    <div class="status" id="function-info"></div>
                 </div>
             </div>
-            
-            <div>
-                <h4>Loading Bar</h4>
-                <canvas id="loading-canvas" width="200" height="50"></canvas>
-                <div>
-                    <button onclick="animateLoading('lerp')">Linear</button>
-                    <button onclick="animateLoading('logistic1')">Logistic</button>
+
+            <div class="api-column">
+                <h2>Core Functions</h2>
+                
+                <div class="api-section">
+                    <h3>Basic Easing</h3>
+                    <div class="api-method"><span class="method-name">lerp</span>(<span class="param">t, a, b</span>) → <span class="return-type">number</span></div>
+                    <div class="api-description">
+                        Linear interpolation from a to b
+                    </div>
+                    <div class="api-method"><span class="method-name">sin1</span>(<span class="param">t</span>) → <span class="return-type">number</span></div>
+                    <div class="api-description">
+                        Sine wave easing (0 to 1)
+                    </div>
+                    <div class="api-method"><span class="method-name">flip1</span>(<span class="param">t</span>) → <span class="return-type">number</span></div>
+                    <div class="api-description">
+                        Inverts the value (1-t)
+                    </div>
                 </div>
-            </div>
-            
-            <div>
-                <h4>UI Element Fade</h4>
-                <canvas id="fade-canvas" width="200" height="100"></canvas>
-                <div>
-                    <button onclick="animateFade('sin1')">Sine</button>
-                    <button onclick="animateFade('tanh1')">Tanh</button>
+
+                <div class="api-section">
+                    <h3>Smooth Curves</h3>
+                    <div class="api-method"><span class="method-name">smooth_start21</span>(<span class="param">t</span>) → <span class="return-type">number</span></div>
+                    <div class="api-description">
+                        Quadratic acceleration
+                    </div>
+                    <div class="api-method"><span class="method-name">smooth_start31</span>(<span class="param">t</span>) → <span class="return-type">number</span></div>
+                    <div class="api-description">
+                        Cubic acceleration
+                    </div>
+                    <div class="api-method"><span class="method-name">parabola1</span>(<span class="param">t</span>) → <span class="return-type">number</span></div>
+                    <div class="api-description">
+                        Parabolic curve
+                    </div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Examples</h3>
+                    <pre class="code-example">
+<span class="keyword">const</span> position = <span class="highlight">lerp</span>(time, startPos, endPos);
+
+<span class="keyword">const</span> alpha = <span class="highlight">sin1</span>(time);
+
+<span class="keyword">const</span> ease = <span class="highlight">smooth_start21</span>(progress);
+</pre>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="demo-section">
-        <h3>4. Custom Function Builder</h3>
-        <p>Experiment with function parameters:</p>
-        
-        <div class="controls">
-            <div class="control-group">
-                <label>Logistic steepness (a): </label>
-                <input type="range" id="logistic-a" min="1" max="20" step="0.5" value="10" oninput="updateCustomFunction()">
-                <span id="logistic-a-value">10</span>
+        <div class="main-layout">
+            <div class="demo-column">
+                <h2>Function Comparison</h2>
+                <div class="demo-section">
+                    <h3>Compare Multiple Functions</h3>
+                    <canvas id="comparison-canvas" width="400" height="300"></canvas>
+                    <div class="controls">
+                        <button onclick="addFunctionToComparison('smooth_start21')">Smooth Start²</button>
+                        <button onclick="addFunctionToComparison('smooth_start31')">Smooth Start³</button>
+                        <button onclick="addFunctionToComparison('parabola1')">Parabola</button>
+                        <button onclick="addFunctionToComparison('sin1')">Sine</button>
+                        <button onclick="clearComparison()">Clear All</button>
+                    </div>
+                    <div class="status" id="comparison-legend"></div>
+                </div>
             </div>
-            <div class="control-group">
-                <label>Step position: </label>
-                <input type="range" id="step-pos" min="0" max="1" step="0.05" value="0.5" oninput="updateCustomFunction()">
-                <span id="step-pos-value">0.5</span>
+
+            <div class="api-column">
+                <h2>Advanced Functions</h2>
+                
+                <div class="api-section">
+                    <h3>Parametric Functions</h3>
+                    <div class="api-method"><span class="method-name">logistic1</span>(<span class="param">t, a</span>) → <span class="return-type">number</span></div>
+                    <div class="api-description">
+                        S-curve with steepness parameter
+                    </div>
+                    <div class="api-method"><span class="method-name">tanh1</span>(<span class="param">t, a</span>) → <span class="return-type">number</span></div>
+                    <div class="api-description">
+                        Hyperbolic tangent curve
+                    </div>
+                    <div class="api-method"><span class="method-name">step1</span>(<span class="param">t, a, b</span>) → <span class="return-type">number</span></div>
+                    <div class="api-description">
+                        Step function with transition range
+                    </div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Complex Functions</h3>
+                    <div class="api-method"><span class="method-name">bezier31</span>(<span class="param">t, b, c</span>) → <span class="return-type">number</span></div>
+                    <div class="api-description">
+                        Cubic Bezier curve
+                    </div>
+                    <div class="api-method"><span class="method-name">bounce_stop1</span>(<span class="param">t</span>) → <span class="return-type">number</span></div>
+                    <div class="api-description">
+                        Bouncing deceleration
+                    </div>
+                    <div class="api-method"><span class="method-name">chain1</span>(<span class="param">t, ...funcs</span>) → <span class="return-type">number</span></div>
+                    <div class="api-description">
+                        Chain multiple functions in sequence
+                    </div>
+                </div>
             </div>
         </div>
-        
-        <canvas id="custom-canvas" width="600" height="300"></canvas>
+
+        <div class="main-layout">
+            <div class="demo-column">
+                <h2>Animation Examples</h2>
+                <div class="demo-section">
+                    <h3>Bouncing Ball</h3>
+                    <canvas id="ball-canvas" width="400" height="150"></canvas>
+                    <div class="controls">
+                        <button onclick="animateBall('parabola1')">Parabola</button>
+                        <button onclick="animateBall('smooth_start31')">Cubic</button>
+                        <button onclick="animateBall('bounce_stop1')">Bounce</button>
+                    </div>
+                </div>
+
+                <div class="demo-section">
+                    <h3>Loading Progress</h3>
+                    <canvas id="loading-canvas" width="400" height="50"></canvas>
+                    <div class="controls">
+                        <button onclick="animateLoading('lerp')">Linear</button>
+                        <button onclick="animateLoading('logistic1')">Logistic</button>
+                        <button onclick="animateLoading('smooth_start21')">Acceleration</button>
+                    </div>
+                </div>
+
+                <div class="demo-section">
+                    <h3>Fade Transition</h3>
+                    <canvas id="fade-canvas" width="400" height="100"></canvas>
+                    <div class="controls">
+                        <button onclick="animateFade('sin1')">Sine</button>
+                        <button onclick="animateFade('tanh1')">Tanh</button>
+                        <button onclick="animateFade('smooth_step21')">Smooth Step</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="api-column">
+                <h2>Custom Parameters</h2>
+                
+                <div class="api-section">
+                    <h3>Parametric Control</h3>
+                    <canvas id="custom-canvas" width="400" height="250"></canvas>
+                    <div class="input-group">
+                        <label>Logistic A:</label>
+                        <input type="range" id="logistic-a" min="1" max="20" step="0.5" value="10" oninput="updateCustomFunction()">
+                        <span id="logistic-a-value">10</span>
+                    </div>
+                    <div class="input-group">
+                        <label>Step Position:</label>
+                        <input type="range" id="step-pos" min="0" max="1" step="0.05" value="0.5" oninput="updateCustomFunction()">
+                        <span id="step-pos-value">0.5</span>
+                    </div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Usage Examples</h3>
+                    <pre class="code-example">
+<span class="code-comment">// Custom logistic curve</span>
+<span class="keyword">const</span> curve = <span class="highlight">logistic1</span>(t, <span class="string">15</span>);
+
+<span class="code-comment">// Stepped animation</span>
+<span class="keyword">const</span> step = <span class="highlight">step1</span>(t, <span class="string">0.3</span>, <span class="string">0.7</span>);
+
+<span class="code-comment">// Bezier timing</span>
+<span class="keyword">const</span> ease = <span class="highlight">bezier31</span>(t, <span class="string">0.8</span>, <span class="string">0.2</span>);
+</pre>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="u-parametrics.js"></script>
     <script>
-        // Available functions with descriptions
         const easingFunctions = {
             'lerp': { func: (t) => lerp(t), name: 'Linear', desc: 'Constant rate of change' },
             'sin1': { func: sin1, name: 'Sine', desc: 'Smooth start and end' },
@@ -127,7 +422,10 @@
             'flip1': { func: flip1, name: 'Flip', desc: 'Inverts the value (1-t)' },
             'step1': { func: (t) => step1(t), name: 'Step', desc: 'Sharp transition at midpoint' },
             'logistic1': { func: (t) => logistic1(t), name: 'Logistic', desc: 'S-curve transition' },
-            'tanh1': { func: (t) => tanh1(t), name: 'Tanh', desc: 'Smooth S-curve' }
+            'tanh1': { func: (t) => tanh1(t), name: 'Tanh', desc: 'Smooth S-curve' },
+            'bounce_stop1': { func: bounce_stop1, name: 'Bounce', desc: 'Bouncing deceleration' },
+            'smooth_step21': { func: smooth_step21, name: 'Smooth Step²', desc: 'Smooth acceleration and deceleration' },
+            'bezier31': { func: (t) => bezier31(t), name: 'Bezier³', desc: 'Cubic Bezier curve' }
         };
 
         let currentFunction = 'sin1';
@@ -136,7 +434,17 @@
         let comparisonFunctions = [];
         const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3', '#54a0ff'];
 
-        // Initialize function buttons
+        function log(message, outputId = 'function-info') {
+            const output = document.getElementById(outputId);
+            const timestamp = new Date().toLocaleTimeString();
+            output.textContent += `[${timestamp}] ${message}\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function clearOutput(outputId) {
+            document.getElementById(outputId).textContent = '';
+        }
+
         function initializeFunctionButtons() {
             const container = document.getElementById('function-buttons');
             Object.keys(easingFunctions).forEach(key => {
@@ -150,7 +458,6 @@
         }
 
         function selectFunction(funcName) {
-            // Update active button
             document.querySelectorAll('.function-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(`btn-${funcName}`).classList.add('active');
             
@@ -159,19 +466,23 @@
             updateFunctionInfo();
         }
 
+        function updateFunctionInfo() {
+            clearOutput('function-info');
+            const info = easingFunctions[currentFunction];
+            log(`${info.name}: ${info.desc}`, 'function-info');
+        }
+
         function drawCurve() {
             const canvas = document.getElementById('curve-canvas');
             const ctx = canvas.getContext('2d');
             const width = canvas.width;
             const height = canvas.height;
-            const margin = 40;
+            const margin = 30;
             const plotWidth = width - 2 * margin;
             const plotHeight = height - 2 * margin;
 
-            // Clear canvas
             ctx.clearRect(0, 0, width, height);
 
-            // Draw grid
             ctx.strokeStyle = '#f0f0f0';
             ctx.lineWidth = 1;
             for (let i = 0; i <= 10; i++) {
@@ -189,7 +500,6 @@
                 ctx.stroke();
             }
 
-            // Draw axes
             ctx.strokeStyle = '#333';
             ctx.lineWidth = 2;
             ctx.beginPath();
@@ -198,7 +508,6 @@
             ctx.lineTo(width - margin, height - margin);
             ctx.stroke();
 
-            // Draw function curve
             ctx.strokeStyle = '#e74c3c';
             ctx.lineWidth = 3;
             ctx.beginPath();
@@ -218,7 +527,6 @@
             }
             ctx.stroke();
 
-            // Draw animated point if animation is running
             if (animationRunning) {
                 const t = (animationTime % 1);
                 const value = clamp1(func(t));
@@ -231,27 +539,12 @@
                 ctx.fill();
             }
 
-            // Add labels
             ctx.fillStyle = '#333';
             ctx.font = '12px Arial';
             ctx.fillText('0', margin - 15, height - margin + 5);
             ctx.fillText('1', margin - 15, margin + 5);
             ctx.fillText('0', margin - 5, height - margin + 15);
             ctx.fillText('1', width - margin - 5, height - margin + 15);
-            ctx.fillText('t →', width / 2 - 10, height - 10);
-            
-            ctx.save();
-            ctx.translate(15, height / 2);
-            ctx.rotate(-Math.PI / 2);
-            ctx.fillText('f(t) →', -20, 0);
-            ctx.restore();
-        }
-
-        function updateFunctionInfo() {
-            const info = easingFunctions[currentFunction];
-            document.getElementById('function-info').innerHTML = `
-                <strong>${info.name}</strong>: ${info.desc}
-            `;
         }
 
         function toggleAnimation() {
@@ -275,18 +568,16 @@
             if (!animationRunning) return;
             
             const speed = parseFloat(document.getElementById('speed-slider').value);
-            animationTime += 0.016 * speed; // ~60fps
+            animationTime += 0.016 * speed;
             
             drawCurve();
             requestAnimationFrame(animate);
         }
 
-        // Update speed display
         document.getElementById('speed-slider').oninput = function() {
             document.getElementById('speed-value').textContent = this.value;
         };
 
-        // Comparison functions
         function addFunctionToComparison(funcName) {
             if (!comparisonFunctions.includes(funcName)) {
                 comparisonFunctions.push(funcName);
@@ -297,8 +588,8 @@
 
         function clearComparison() {
             comparisonFunctions = [];
+            clearOutput('comparison-legend');
             drawComparison();
-            updateComparisonLegend();
         }
 
         function drawComparison() {
@@ -306,14 +597,12 @@
             const ctx = canvas.getContext('2d');
             const width = canvas.width;
             const height = canvas.height;
-            const margin = 40;
+            const margin = 30;
             const plotWidth = width - 2 * margin;
             const plotHeight = height - 2 * margin;
 
-            // Clear canvas
             ctx.clearRect(0, 0, width, height);
 
-            // Draw grid and axes (same as before)
             ctx.strokeStyle = '#f0f0f0';
             ctx.lineWidth = 1;
             for (let i = 0; i <= 10; i++) {
@@ -339,7 +628,6 @@
             ctx.lineTo(width - margin, height - margin);
             ctx.stroke();
 
-            // Draw each function
             comparisonFunctions.forEach((funcName, index) => {
                 const func = easingFunctions[funcName].func;
                 ctx.strokeStyle = colors[index % colors.length];
@@ -363,17 +651,14 @@
         }
 
         function updateComparisonLegend() {
-            const legend = document.getElementById('comparison-legend');
-            let html = '';
+            clearOutput('comparison-legend');
             comparisonFunctions.forEach((funcName, index) => {
                 const color = colors[index % colors.length];
                 const name = easingFunctions[funcName].name;
-                html += `<span style="color: ${color}; font-weight: bold;">■ ${name}</span> `;
+                log(`${name}`, 'comparison-legend');
             });
-            legend.innerHTML = html;
         }
 
-        // Animation examples
         function animateBall(easingFunc) {
             const canvas = document.getElementById('ball-canvas');
             const ctx = canvas.getContext('2d');
@@ -409,11 +694,9 @@
             function frame() {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
-                // Background
                 ctx.fillStyle = '#f0f0f0';
                 ctx.fillRect(10, 15, canvas.width - 20, 20);
                 
-                // Progress
                 const progress = func(t);
                 ctx.fillStyle = '#4ecdc4';
                 ctx.fillRect(10, 15, progress * (canvas.width - 20), 20);
@@ -451,7 +734,6 @@
             frame();
         }
 
-        // Custom function builder
         function updateCustomFunction() {
             const aValue = parseFloat(document.getElementById('logistic-a').value);
             const stepPos = parseFloat(document.getElementById('step-pos').value);
@@ -467,14 +749,12 @@
             const ctx = canvas.getContext('2d');
             const width = canvas.width;
             const height = canvas.height;
-            const margin = 40;
+            const margin = 30;
             const plotWidth = width - 2 * margin;
             const plotHeight = height - 2 * margin;
 
-            // Clear and draw grid/axes
             ctx.clearRect(0, 0, width, height);
             
-            // Grid
             ctx.strokeStyle = '#f0f0f0';
             ctx.lineWidth = 1;
             for (let i = 0; i <= 10; i++) {
@@ -492,7 +772,6 @@
                 ctx.stroke();
             }
 
-            // Axes
             ctx.strokeStyle = '#333';
             ctx.lineWidth = 2;
             ctx.beginPath();
@@ -501,7 +780,6 @@
             ctx.lineTo(width - margin, height - margin);
             ctx.stroke();
 
-            // Draw custom logistic function
             ctx.strokeStyle = '#e74c3c';
             ctx.lineWidth = 3;
             ctx.beginPath();
@@ -520,7 +798,6 @@
             }
             ctx.stroke();
 
-            // Draw custom step function
             ctx.strokeStyle = '#3498db';
             ctx.lineWidth = 3;
             ctx.beginPath();
@@ -539,16 +816,14 @@
             }
             ctx.stroke();
 
-            // Legend
             ctx.fillStyle = '#333';
             ctx.font = '12px Arial';
             ctx.fillStyle = '#e74c3c';
-            ctx.fillText(`■ Logistic (a=${aValue})`, margin, height - 10);
+            ctx.fillText(`Logistic (a=${aValue})`, margin, height - 10);
             ctx.fillStyle = '#3498db';
-            ctx.fillText(`■ Step (pos=${stepPos})`, margin + 150, height - 10);
+            ctx.fillText(`Step (pos=${stepPos})`, margin + 150, height - 10);
         }
 
-        // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             initializeFunctionButtons();
             drawCurve();
