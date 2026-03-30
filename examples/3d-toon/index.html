@@ -5,7 +5,7 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 
-		<script src="../../lib/howler.min.js"></script>
+		<script src="../../lib/u-howler.js"></script>
 		<script src="../../lib/u-macrobars.js"></script>
 		<script src="../../lib/u-pathastar.js"></script>
 		<script src="../../lib/u-threestage.js"></script>
@@ -24,12 +24,12 @@
 
 		<script type="module">
 
-			import * as THREE from '../../lib/three/build/three.module.js';
+			import * as THREE from '../../lib/three/build/three.module.js?v=183fix2';
 
-			import Stats from '../../lib/three/examples/jsm/libs/stats.module.js';
+			import Stats from '../../lib/three/examples/jsm/libs/stats.module.js?v=183fix2';
 
-			import { OrbitControls } from '../../lib/three/examples/jsm/controls/OrbitControls.js';
-			import { OutlineEffect } from '../../lib/three/examples/jsm/effects/OutlineEffect.js';
+			import { OrbitControls } from '../../lib/three/examples/jsm/controls/OrbitControls.js?v=183fix2';
+			import { OutlineEffect } from '../../lib/three/examples/jsm/effects/OutlineEffect.js?v=183fix2';
 
 			let container, stats;
 
@@ -65,8 +65,8 @@
 				const stepSize = 1.0 / numberOfSphersPerSide;
 
 				const geometries = [
-					new THREE.SphereBufferGeometry( sphereRadius, 32, 16 ),
-					new THREE.BoxBufferGeometry( sphereRadius*2, sphereRadius*2, sphereRadius*2 ),
+					new THREE.SphereGeometry( sphereRadius, 32, 16 ),
+					new THREE.BoxGeometry( sphereRadius*2, sphereRadius*2, sphereRadius*2 ),
 					new THREE.DodecahedronGeometry( sphereRadius ),
 					new THREE.IcosahedronGeometry( sphereRadius ),
 					new THREE.OctahedronGeometry( sphereRadius ),

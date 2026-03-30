@@ -22,12 +22,20 @@ Author: udo@openfu.com
 
 ## Libraries Included
 
-* **Howler.js** (2.2.1) MIT License | https://github.com/goldfire/howler.js#documentation
+* **u-howler** (local Howler-compatible implementation) Public Domain
 * **macrobars** (latest) Public Domain | https://github.com/udo/macrobars
-* **PIXI.js** BSD 3-clause License |  http://pixijs.download/dev/docs/index.html
+* **PIXI.js** BSD 3-clause License | https://pixijs.com
 * **udolib** (latest) Public Domain | https://github.com/udo/udolib
 * **THREE.js** MIT License | https://threejs.org/docs/
 
-Built on **HTML5 Boilerplate** (5.3.0) MIT License | https://html5boilerplate.com/
+## Dependency Policy
 
+This repository is intentionally vendored and does not rely on `package.json` / `package-lock.json`.
+
+When adding dependencies:
+1. Add only compiled runtime files that are required by this repo.
+2. Avoid vendoring full source trees when a minimal runtime subset is enough.
+3. Record the source/version in `THIRD_PARTY.md`.
+
+Built on **HTML5 Boilerplate** (5.3.0) MIT License | https://html5boilerplate.com/
 

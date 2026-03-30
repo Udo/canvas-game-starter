@@ -1,25 +1,24 @@
 
-import * as THREE from '../../../lib/three/build/three.module.js';
+import * as THREE from '../../../lib/three/build/three.module.js?v=183fix2';
 
-import { EffectComposer } from '../../../lib/three/examples/jsm/postprocessing/EffectComposer.js';
+import { EffectComposer } from '../../../lib/three/examples/jsm/postprocessing/EffectComposer.js?v=183fix2';
 
-import { RenderPass } from '../../../lib/three/examples/jsm/postprocessing/RenderPass.js';
-import { ShaderPass } from '../../../lib/three/examples/jsm/postprocessing/ShaderPass.js';
-//import { SSAOPass } from '../../../lib/three/examples/jsm/postprocessing/SSAOPass.js';
-import { SAOPass } from '../../../lib/three/examples/jsm/postprocessing/SAOPass.js';
-//import { AdaptiveToneMappingPass } from '../../../lib/three/examples/jsm/postprocessing/AdaptiveToneMappingPass.js';
-//import { TAARenderPass } from '../../../lib/three/examples/jsm/postprocessing/TAARenderPass.js';
-//import { SMAAPass } from '../../../lib/three/examples/jsm/postprocessing/SMAAPass.js';
-import { UnrealBloomPass } from '../../../lib/three/examples/jsm/postprocessing/UnrealBloomPass.js';
-//import { BokehPass } from '../../../lib/three/examples/jsm/postprocessing/BokehPass.js';
+import { RenderPass } from '../../../lib/three/examples/jsm/postprocessing/RenderPass.js?v=183fix2';
+import { ShaderPass } from '../../../lib/three/examples/jsm/postprocessing/ShaderPass.js?v=183fix2';
+//import { SSAOPass } from '../../../lib/three/examples/jsm/postprocessing/SSAOPass.js?v=183fix2';
+import { SAOPass } from '../../../lib/three/examples/jsm/postprocessing/SAOPass.js?v=183fix2';
+//import { AdaptiveToneMappingPass } from '../../../lib/three/examples/jsm/postprocessing/AdaptiveToneMappingPass.js?v=183fix2';
+//import { TAARenderPass } from '../../../lib/three/examples/jsm/postprocessing/TAARenderPass.js?v=183fix2';
+//import { SMAAPass } from '../../../lib/three/examples/jsm/postprocessing/SMAAPass.js?v=183fix2';
+import { UnrealBloomPass } from '../../../lib/three/examples/jsm/postprocessing/UnrealBloomPass.js?v=183fix2';
+//import { BokehPass } from '../../../lib/three/examples/jsm/postprocessing/BokehPass.js?v=183fix2';
 
-//import { RGBShiftShader } from '../../../lib/three/examples/jsm/shaders/RGBShiftShader.js';
-//import { FXAAShader } from '../../../lib/three/examples/jsm/shaders/FXAAShader.js';
-import { CopyShader } from '../../../lib/three/examples/jsm/shaders/CopyShader.js';
+//import { RGBShiftShader } from '../../../lib/three/examples/jsm/shaders/RGBShiftShader.js?v=183fix2';
+//import { FXAAShader } from '../../../lib/three/examples/jsm/shaders/FXAAShader.js?v=183fix2';
+import { CopyShader } from '../../../lib/three/examples/jsm/shaders/CopyShader.js?v=183fix2';
 
-import { GLTFLoader } from '../../../lib/three/examples/jsm/loaders/GLTFLoader.js';
-import { RGBELoader } from '../../../lib/three/examples/jsm/loaders/RGBELoader.js';
-import { RoughnessMipmapper } from '../../../lib/three/examples/jsm/utils/RoughnessMipmapper.js';
+import { GLTFLoader } from '../../../lib/three/examples/jsm/loaders/GLTFLoader.js?v=183fix2';
+import { RGBELoader } from '../../../lib/three/examples/jsm/loaders/RGBELoader.js?v=183fix2';
 
 function load_gltf(url, target_or_function) {
 	new GLTFLoader().load(
@@ -116,4 +115,4 @@ var Shaders = {
 	CopyShader,
 };
 
-export { THREE, EffectComposer, Shaders, GLTFLoader, RGBELoader, RoughnessMipmapper, load_gltf, setup_pipeline };
+export { THREE, EffectComposer, Shaders, GLTFLoader, RGBELoader, load_gltf, setup_pipeline };

@@ -11,7 +11,7 @@
 		<link rel="stylesheet" href="../../css/font-awesome.min.css">
 
 		<script src="../../lib/u-events.js"></script>
-		<script src="../../lib/howler.min.js"></script>
+		<script src="../../lib/u-howler.js"></script>
 		<script src="../../lib/u-macrobars.js"></script>
 		<script src="../../lib/u-pathastar.js"></script>
 		<script src="../../lib/u-threestage.js"></script>
@@ -44,19 +44,27 @@
 			
 			stage.start();
 
-			const light = new THREE.PointLight( 0xff0000, 1, 100 );
-			light.position.set( 0, 50, 50 );
-			stage.root.add( light );
+			const keyLight = new THREE.PointLight( 0xffffff, 4.0, 10.0 );
+			keyLight.position.set( 5, 5, 5 );
+			stage.root.add( keyLight );
 
-			const light2 = new THREE.PointLight( 0x00ff00, 1, 100 );
-			light2.position.set( 50, -50, -50 );
-			stage.root.add( light2 );
+			const fillLight = new THREE.PointLight( 0xff0000, 4.0, 10.0 );
+			fillLight.position.set( -5, 5, 5 );
+			stage.root.add( fillLight );
 
-			const ambient = new THREE.AmbientLight( 0x404040 );
+			const rimLight = new THREE.PointLight( 0x0000ff, 5.6, 10.0 );
+			rimLight.position.set( 5, 3, 7 );
+			stage.root.add( rimLight );
+
+			const ambient = new THREE.HemisphereLight( 0x88ff88, 0x880088, 0.08 );
 			stage.root.add( ambient );
 
-			const geometry = new THREE.BoxBufferGeometry( 10, 10, 10 );
-			const material = new THREE.MeshStandardMaterial( {color: 0xaaaaaa, metalness : 0.5, roughness : 0.5, } );
+			const geometry = new THREE.BoxGeometry( 10, 10, 10 );
+			const material = new THREE.MeshStandardMaterial( {
+				color: 0xcccccc,
+				metalness: 0.1,
+				roughness: 0.38
+			} );
 			const cube = new THREE.Mesh( geometry, material );
 			stage.root.add( cube );
 

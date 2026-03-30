@@ -11,7 +11,7 @@
 		<link rel="stylesheet" href="../../css/font-awesome.min.css">
 
 		<script src="../../lib/u-events.js"></script>
-		<script src="../../lib/howler.min.js"></script>
+		<script src="../../lib/u-howler.js"></script>
 		<script src="../../lib/u-macrobars.js"></script>
 		<script src="../../lib/u-pathastar.js"></script>
 		<script src="../../lib/u-threestage.js"></script>
@@ -55,15 +55,19 @@
 			const mobsLayer = stage.layers.add('mobs');
 			const uiLayer = stage.layers.add('ui');
 
-			const light = new THREE.DirectionalLight( 0xffffff, 0.40 );
+			const light = new THREE.DirectionalLight( 0xffffff, 5.40 );
 			light.position.set( 0.3, 1, 0.3 );
 			stage.root.add( light );
 
-			const ambient = new THREE.AmbientLight( 0x404040 );
+			const ambient = new THREE.HemisphereLight( 0x7799aa, 0x880088, 2.85 );
 			stage.root.add( ambient );
 
-			stage.shapes.tile = new THREE.BoxBufferGeometry( cellSize*0.98, cellSize*0.98, cellSize*0.98 );
-			stage.mat.tile = new THREE.MeshStandardMaterial({ color: 0xaaffaa, metalness : 0 });
+			stage.shapes.tile = new THREE.BoxGeometry( cellSize*0.98, cellSize*0.98, cellSize*0.98 );
+			stage.mat.tile = new THREE.MeshStandardMaterial( {
+				color: 0xcccccc,
+				metalness: 0.01,
+				roughness: 0.38
+			} );
 			stage.mat.highlight = new THREE.MeshStandardMaterial( {color: 0xaaffaa, emissive : 0x888888, metalness : 0 } );
 			stage.mat.cursor = new THREE.MeshStandardMaterial( {color: 0xff0000, emissive : 0x444444} );
 
