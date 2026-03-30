@@ -34,11 +34,12 @@
 
 		let stage = null;
 
-		async function initStage() {
-			stage = await ThreeStage.create({
-				THREE : THREE,
-				smoothScroll : 0.85,
-			});
+			async function initStage() {
+				stage = await ThreeStage.create({
+					THREE : THREE,
+					smoothScroll : 0.85,
+					pan_speed : 0.03,
+				});
 
 			Game.init(stage, document.getElementById('frame-rate'));
 			

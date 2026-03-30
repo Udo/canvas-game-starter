@@ -149,7 +149,7 @@
     </div>
 
     <script type="module">
-		import * as THREE from './three/build/three.module.js?v=183fix2';
+		import * as THREE from './three/build/three.module.js';
 		window.THREE = THREE;
 	</script>
     <script src="u-events.js"></script>
@@ -206,6 +206,7 @@
                 stage = await ThreeStage.create({
                     THREE: THREE,
                     draggable: true,
+                    pan_speed: 0.03,
                     frameSkipThreshold: 50,
                     minZoom: 0.1,
                     maxZoom: 10.0,

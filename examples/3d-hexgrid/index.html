@@ -43,12 +43,13 @@
 		const Mat = {};
 		const Obj = {};
 
-		async function initStage() {
-			stage = await ThreeStage.create({
-				THREE : THREE,
-				smoothScroll : 0.85,
-				draggable : true,
-			});
+			async function initStage() {
+				stage = await ThreeStage.create({
+					THREE : THREE,
+					smoothScroll : 0.85,
+					draggable : true,
+					pan_speed : 0.03,
+				});
 
 			setup_pipeline(stage, EffectComposer, Shaders);
 			Game.init(stage, document.getElementById('frame-rate'));
