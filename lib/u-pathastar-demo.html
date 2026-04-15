@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>U-PathAStar Demo</title>
+    <style>
+        :root {
+            --space: 8px;
+            --radius: 5px;
+            
+            --gray: #6c757d;
+            --gray-bg: #f5f5f5;
+            --blue: #007acc;
+            --green: #28a745;
+            --white: white;
+            --dark: #333;
+            
+            --max-width: 1400px;
+            --sidebar: 400px;
+        }
+        
+        * { box-sizing: border-box; }
+        
+        body { 
+            font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: var(--space);
+            background: var(--gray-bg);
+        }
+        
+        .container { 
+            background: var(--white);
+            padding: calc(var(--space) * 1.5);
+            border-radius: var(--radius);
+        }
+        
+        .main-layout { 
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: calc(var(--space) * 1.5);
+        }
+        
+        .api-column { 
+            background: var(--gray-bg);
+            padding: var(--space);
+            border-radius: var(--radius);
+            border-left: 4px solid var(--green);
+        }
+        
+        h1 { 
+            color: var(--dark);
+            text-align: center;
+            margin-bottom: calc(var(--space) * 1.5);
+            grid-column: 1 / -1;
+        }
+        
+        h2 { 
+            color: var(--gray);
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: var(--space);
+            margin-top: calc(var(--space) * 1.5);
+        }
+        
+        .demo-section { 
+            margin: var(--space) 0;
+            padding: var(--space);
+            background: var(--gray-bg);
+            border-radius: var(--radius);
+            border-left: 4px solid var(--blue);
+        }
+        
+        .controls, .input-group { 
+            display: flex;
+            gap: var(--space);
+            margin: 15px 0;
+        }
+        
+        .controls { flex-wrap: wrap; }
+        .input-group { align-items: center; }
+        .feature-grid { display: grid; gap: var(--space); margin: var(--space) 0; }
+        
+        button { 
+            background: var(--blue);
+            color: var(--white);
+            border: none;
+            padding: var(--space) var(--space);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover { filter: brightness(0.9); }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        
+        input[type="text"], input[type="number"], input[type="range"] { 
+            padding: var(--space);
+            border: 1px solid #ddd;
+            border-radius: var(--radius);
+        }
+        
+        input[type="number"] {
+            width: 80px;
+        }
+        
+        input[type="range"] {
+            flex: 1;
+        }
+        
+        .status, .code-example { 
+            font-family: monospace;
+            padding: var(--space);
+            border-radius: var(--radius);
+            margin: var(--space) 0;
+        }
+        
+        .status { 
+            background: var(--dark);
+            color: #0f0;
+            white-space: pre-wrap;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        .code-example { 
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            overflow-x: auto;
+            margin: var(--space) 0;
+        }
+        
+        .highlight { color: #68d391; }
+        .keyword { color: #fbb6ce; }
+        .string { color: #fbd38d; }
+        
+        .api-section { margin: 15px 0; }
+        .api-section h3 { 
+            color: var(--green);
+            margin: 0 0 var(--space) 0;
+        }
+        
+        .api-method { 
+            font-family: monospace;
+            margin: 3px 0;
+            color: var(--gray);
+        }
+        
+        .api-method .method-name { color: var(--blue); font-weight: bold; }
+        .api-method .return-type { color: #6f42c1; }
+        .api-method .param { color: #e83e8c; }
+        
+        .api-description {
+            margin: var(--space) 0;
+        }
+        
+        .api-options {
+            color: var(--gray);
+        }
+        
+        .help-text {
+            color: var(--gray);
+            margin: var(--space) 0;
+        }
+        
+        .code-comment {
+            color: #68d391;
+        }
+        
+        .color-box { 
+            display: inline-block; 
+            width: 30px; 
+            height: 30px; 
+            margin: 5px; 
+            border: 1px solid #000; 
+            border-radius: var(--radius);
+        }
+        
+        canvas { 
+            border: 1px solid #ddd; 
+            border-radius: var(--radius);
+            margin: var(--space) 0;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-layout { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>U-PathAStar Demo</h1>
+
+        <div class="main-layout">
+            <div class="demo-column">
+                <h2>Pathfinding</h2>
+                <div class="demo-section">
+                    <h3>Interactive Grid</h3>
+                    <canvas id="pathfinder-canvas" width="500" height="400"></canvas>
+                    <div class="controls">
+                        <button onclick="generateMaze()">Generate Maze</button>
+                        <button onclick="findPath()">Find Path</button>
+                        <button onclick="clearGrid()">Clear Grid</button>
+                    </div>
+                    <div class="status" id="pathfinder-info">Click Generate Maze, then Find Path to see A* in action</div>
+                </div>
+
+                <div class="demo-section">
+                    <h3>Grid Configuration</h3>
+                    <div class="input-group">
+                        <label>Start X:</label>
+                        <input type="number" id="start-x" value="1" min="0" max="24">
+                        <label>Y:</label>
+                        <input type="number" id="start-y" value="1" min="0" max="19">
+                    </div>
+                    <div class="input-group">
+                        <label>End X:</label>
+                        <input type="number" id="end-x" value="23" min="0" max="24">
+                        <label>Y:</label>
+                        <input type="number" id="end-y" value="18" min="0" max="19">
+                    </div>
+                    <div class="input-group">
+                        <label>Wall Density:</label>
+                        <input type="range" id="wall-density" min="0" max="0.5" step="0.05" value="0.3">
+                        <span id="density-value">0.3</span>
+                    </div>
+                    <div class="controls">
+                        <button onclick="updateSettings()">Update Settings</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="api-column">
+                <h2>API Overview</h2>
+                
+This is a GENERIC A* implementation, it doesn't assume a grid or anything.
+        It can traverse any graph structure as long as you provide an `eachNeighbor()` function that returns neighboring nodes.
+
+                <div class="api-section">
+                    <h3>Pathfinding Functions</h3>
+                    <div class="api-method"><span class="method-name">PathAStar.find</span>(<span class="param">startNode, endNode, eachNeighbor, getCost, getCostHeuristic</span>) → <span class="return-type">Object</span></div>
+                    <div class="api-description">
+                        Finds optimal path between two nodes using A* algorithm. Returns result object with path array and debug information.
+                    </div>
+                    <div class="api-method"><span class="method-name">PathAStar.extractPath</span>(<span class="param">history, endNode, idField</span>) → <span class="return-type">Array</span></div>
+                    <div class="api-description">
+                        Extracts complete path from pathfinding history
+                    </div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Configuration</h3>
+                    <div class="api-method"><span class="method-name">PathAStar.config.nodeIdField</span> → <span class="return-type">string</span></div>
+                    <div class="api-description">
+                        Field used for node identification (default: 'id')
+                    </div>
+                    <div class="api-method"><span class="method-name">PathAStar.config.defaultLinearDistance</span>(<span class="param">fromNode, toNode</span>) → <span class="return-type">number</span></div>
+                    <div class="api-description">
+                        Default Euclidean distance calculation between nodes
+                    </div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Usage Examples</h3>
+                    <pre class="code-example">
+<span class="code-comment">// Define neighbor function</span>
+<span class="keyword">function</span> <span class="highlight">getNeighbors</span>(node, callback) {
+  <span class="keyword">const</span> dirs = [[0,-1], [1,0], [0,1], [-1,0]];
+  dirs.forEach(([dx, dy]) => {
+    <span class="keyword">const</span> x = node.x + dx;
+    <span class="keyword">const</span> y = node.y + dy;
+    <span class="keyword">if</span> (isWalkable(x, y)) {
+      callback({x, y, id: <span class="string">`${x},${y}`</span>});
+    }
+  });
+}
+
+<span class="code-comment">// Find path</span>
+<span class="keyword">const</span> result = <span class="highlight">PathAStar.find</span>(
+  startNode, endNode, getNeighbors
+);
+
+<span class="keyword">if</span> (result.result === <span class="string">'path'</span>) {
+  console.log(<span class="string">'Path found:'</span>, result.path);
+}
+</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <div class="demo-column">
+                <h2>Algorithm Performance</h2>
+                <div class="demo-section">
+                    <h3>Performance Metrics</h3>
+                    <div class="status" id="performance-output">Run pathfinding to see performance metrics</div>
+                </div>
+            </div>
+
+            <div class="api-column">
+                <h2>Priority Queue</h2>
+                
+                <div class="api-section">
+                    <h3>Queue Operations</h3>
+                    <div class="api-method"><span class="method-name">PriorityQueue.create</span>() → <span class="return-type">Object</span></div>
+                    <div class="api-description">
+                        Creates new priority queue instance for A* algorithm
+                    </div>
+                    <div class="api-method"><span class="method-name">queue.push</span>(<span class="param">priority, payload</span>)</div>
+                    <div class="api-description">
+                        Adds item to queue with given priority
+                    </div>
+                    <div class="api-method"><span class="method-name">queue.pop</span>() → <span class="return-type">any</span></div>
+                    <div class="api-description">
+                        Removes and returns lowest priority item
+                    </div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Legend</h3>
+                    <div class="api-description">
+                        <div style="display: flex; align-items: center; margin: 5px 0;">
+                            <div style="width: 20px; height: 20px; background: #2196F3; margin-right: 10px; border-radius: 3px;"></div>
+                            Start Position
+                        </div>
+                        <div style="display: flex; align-items: center; margin: 5px 0;">
+                            <div style="width: 20px; height: 20px; background: #F44336; margin-right: 10px; border-radius: 3px;"></div>
+                            End Position
+                        </div>
+                        <div style="display: flex; align-items: center; margin: 5px 0;">
+                            <div style="width: 20px; height: 20px; background: #4CAF50; margin-right: 10px; border-radius: 3px;"></div>
+                            Optimal Path
+                        </div>
+                        <div style="display: flex; align-items: center; margin: 5px 0;">
+                            <div style="width: 20px; height: 20px; background: #333; margin-right: 10px; border-radius: 3px;"></div>
+                            Wall
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="u-pathastar.js"></script>
+    <script>
+        const gridWidth = 25;
+        const gridHeight = 20;
+        const cellSize = 20;
+        let grid = [];
+        let startX = 1, startY = 1;
+        let endX = 23, endY = 18;
+        let path = [];
+        let wallDensity = 0.3;
+
+        function log(message, outputId = 'pathfinder-info') {
+            const output = document.getElementById(outputId);
+            const timestamp = new Date().toLocaleTimeString();
+            output.textContent += `[${timestamp}] ${message}\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function clearOutput(outputId) {
+            document.getElementById(outputId).textContent = '';
+        }
+
+        function initGrid() {
+            grid = [];
+            for (let y = 0; y < gridHeight; y++) {
+                grid[y] = [];
+                for (let x = 0; x < gridWidth; x++) {
+                    grid[y][x] = 0;
+                }
+            }
+        }
+
+        function generateMaze() {
+            clearOutput('pathfinder-info');
+            initGrid();
+            
+            for (let y = 0; y < gridHeight; y++) {
+                for (let x = 0; x < gridWidth; x++) {
+                    if (Math.random() < wallDensity && 
+                        !(x === startX && y === startY) && 
+                        !(x === endX && y === endY)) {
+                        grid[y][x] = 1;
+                    }
+                }
+            }
+            
+            path = [];
+            drawGrid();
+            log('Maze generated. Click Find Path to run A* algorithm.');
+        }
+
+        function findPath() {
+            clearOutput('pathfinder-info');
+            clearOutput('performance-output');
+            
+            if (grid.length === 0) {
+                generateMaze();
+                return;
+            }
+
+            const startNode = { x: startX, y: startY, id: `${startX},${startY}` };
+            const endNode = { x: endX, y: endY, id: `${endX},${endY}` };
+            
+            const nodeCache = new Map();
+            
+            function getOrCreateNode(x, y) {
+                const id = `${x},${y}`;
+                if (!nodeCache.has(id)) {
+                    nodeCache.set(id, { x, y, id });
+                }
+                return nodeCache.get(id);
+            }
+            
+            nodeCache.set(startNode.id, startNode);
+            nodeCache.set(endNode.id, endNode);
+            
+            function getNeighbors(node, callback) {
+                const directions = [
+                    { x: 0, y: -1 },
+                    { x: 1, y: 0 },
+                    { x: 0, y: 1 },
+                    { x: -1, y: 0 }
+                ];
+                
+                for (const dir of directions) {
+                    const newX = node.x + dir.x;
+                    const newY = node.y + dir.y;
+                    
+                    if (newX >= 0 && newX < gridWidth && 
+                        newY >= 0 && newY < gridHeight && 
+                        grid[newY][newX] === 0) {
+                        
+                        const neighbor = getOrCreateNode(newX, newY);
+                        callback(neighbor);
+                    }
+                }
+            }
+            
+            const result = PathAStar.find(startNode, endNode, getNeighbors);
+            
+            if (result.result === 'path' && result.path.length > 0) {
+                path = result.path;
+                drawGrid();
+                log(`Path found! Length: ${result.path.length} steps`);
+                
+                const debug = result.debug;
+                log(`Time: ${(debug.time * 1000).toFixed(2)}ms`, 'performance-output');
+                log(`Nodes considered: ${debug.nodesConsidered}`, 'performance-output');
+                log(`High water mark: ${debug.highWaterMark}`, 'performance-output');
+                log(`Total cost: ${debug.totalCost}`, 'performance-output');
+            } else {
+                const debug = result.debug || {};
+                log(`No path found! Nodes considered: ${debug.nodesConsidered || 0}`);
+                log(`Time: ${((debug.time || 0) * 1000).toFixed(2)}ms`, 'performance-output');
+                log(`Nodes considered: ${debug.nodesConsidered || 0}`, 'performance-output');
+            }
+        }
+
+        function clearGrid() {
+            clearOutput('pathfinder-info');
+            clearOutput('performance-output');
+            initGrid();
+            path = [];
+            drawGrid();
+            log('Grid cleared.');
+        }
+
+        function updateSettings() {
+            startX = parseInt(document.getElementById('start-x').value);
+            startY = parseInt(document.getElementById('start-y').value);
+            endX = parseInt(document.getElementById('end-x').value);
+            endY = parseInt(document.getElementById('end-y').value);
+            wallDensity = parseFloat(document.getElementById('wall-density').value);
+            
+            clearOutput('pathfinder-info');
+            log(`Settings updated: Start(${startX},${startY}) End(${endX},${endY}) Density:${wallDensity}`);
+            
+            if (grid.length > 0) {
+                drawGrid();
+            }
+        }
+
+        function drawGrid() {
+            const canvas = document.getElementById('pathfinder-canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let y = 0; y < gridHeight; y++) {
+                for (let x = 0; x < gridWidth; x++) {
+                    const px = x * cellSize;
+                    const py = y * cellSize;
+
+                    if (grid[y] && grid[y][x] === 1) {
+                        ctx.fillStyle = '#333';
+                    } else {
+                        ctx.fillStyle = '#fff';
+                    }
+                    
+                    ctx.fillRect(px, py, cellSize, cellSize);
+                    ctx.strokeStyle = '#ccc';
+                    ctx.strokeRect(px, py, cellSize, cellSize);
+                }
+            }
+
+            ctx.fillStyle = '#4CAF50';
+            for (const point of path) {
+                const px = point.x * cellSize;
+                const py = point.y * cellSize;
+                ctx.fillRect(px + 2, py + 2, cellSize - 4, cellSize - 4);
+            }
+
+            ctx.fillStyle = '#2196F3';
+            ctx.fillRect(startX * cellSize + 2, startY * cellSize + 2, cellSize - 4, cellSize - 4);
+            
+            ctx.fillStyle = '#F44336';
+            ctx.fillRect(endX * cellSize + 2, endY * cellSize + 2, cellSize - 4, cellSize - 4);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const densitySlider = document.getElementById('wall-density');
+            const densityValue = document.getElementById('density-value');
+            
+            densitySlider.addEventListener('input', function() {
+                densityValue.textContent = this.value;
+            });
+            
+            initGrid();
+            drawGrid();
+        });
+    </script>
+</body>
+</html>

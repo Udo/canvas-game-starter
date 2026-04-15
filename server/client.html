@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Lobby Client</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .auth-section {
+            padding: 20px;
+            text-align: center;
+            background: #ecf0f1;
+        }
+        
+        .auth-section input {
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin: 5px;
+            width: 200px;
+        }
+        
+        .auth-section button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        .auth-section button:hover {
+            background: #2980b9;
+        }
+        
+        .main-content {
+            display: none;
+            display: flex;
+            height: 600px;
+        }
+        
+        .sidebar {
+            width: 300px;
+            background: #34495e;
+            color: white;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .room-header {
+            background: #3498db;
+            color: white;
+            padding: 15px 20px;
+            font-weight: bold;
+        }
+        
+        .messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+        
+        .message-input {
+            padding: 15px 20px;
+            background: #ecf0f1;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .message-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .message-input button {
+            padding: 10px 20px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .room-item {
+            padding: 10px;
+            margin: 5px 0;
+            background: #2c3e50;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .room-item:hover {
+            background: #3498db;
+        }
+        
+        .room-item.active {
+            background: #27ae60;
+        }
+        
+        .user-list {
+            margin-top: 20px;
+        }
+        
+        .user-item {
+            padding: 5px 0;
+            color: #ecf0f1;
+        }
+        
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            background: white;
+            border-left: 4px solid #3498db;
+        }
+        
+        .message.system {
+            background: #f39c12;
+            color: white;
+            border-left-color: #e67e22;
+        }
+        
+        .message.error {
+            background: #e74c3c;
+            color: white;
+            border-left-color: #c0392b;
+        }
+        
+        .message.announcement {
+            background: #9b59b6;
+            color: white;
+            border-left-color: #8e44ad;
+        }
+        
+        .message-user {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .message-time {
+            font-size: 12px;
+            color: #7f8c8d;
+            float: right;
+        }
+        
+        .status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .status.connected {
+            background: #27ae60;
+        }
+        
+        .status.disconnected {
+            background: #e74c3c;
+        }
+        
+        .status.connecting {
+            background: #f39c12;
+        }
+        
+        .game-controls {
+            padding: 10px 20px;
+            background: #e8f6f3;
+            border-top: 1px solid #ddd;
+        }
+        
+        .game-controls button {
+            margin: 5px;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .game-controls .ready-btn {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .game-controls .move-btn {
+            background: #3498db;
+            color: white;
+        }
+        
+        .game-controls .reset-btn {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎮 Game Lobby</h1>
+            <p>Chat and play games with other users</p>
+        </div>
+        
+        <div id="auth-section" class="auth-section">
+            <h2>Join the Lobby</h2>
+            <div>
+                <input type="text" id="username" placeholder="Enter your name" maxlength="20">
+                <select id="avatar">
+                    <option value="👤">👤 Default</option>
+                    <option value="😀">😀 Happy</option>
+                    <option value="😎">😎 Cool</option>
+                    <option value="🤖">🤖 Robot</option>
+                    <option value="👑">👑 King</option>
+                    <option value="🦄">🦄 Unicorn</option>
+                    <option value="🐸">🐸 Frog</option>
+                    <option value="🚀">🚀 Rocket</option>
+                </select>
+                <button onclick="connect()">Connect</button>
+            </div>
+            <div id="connection-status">Ready to connect</div>
+        </div>
+        
+        <div id="main-content" class="main-content hidden">
+            <div class="sidebar">
+                <h3>Rooms</h3>
+                <div id="rooms-list"></div>
+                
+                <h3>Users in Room</h3>
+                <div id="users-list" class="user-list"></div>
+                
+                <div style="margin-top: 20px;">
+                    <button onclick="createRoom()" style="width: 100%; padding: 10px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                        Create Room
+                    </button>
+                </div>
+            </div>
+            
+            <div class="content-area">
+                <div id="room-header" class="room-header">
+                    Select a room to start chatting
+                </div>
+                
+                <div id="messages" class="messages"></div>
+                
+                <div id="game-controls" class="game-controls hidden">
+                    <button class="ready-btn" onclick="gameAction('ready')">Ready</button>
+                    <button class="move-btn" onclick="gameAction('move', {action: 'test'})">Test Move</button>
+                    <button class="reset-btn" onclick="gameAction('reset')">Reset Game</button>
+                </div>
+                
+                <div class="message-input">
+                    <input type="text" id="message-input" placeholder="Type a message..." maxlength="200">
+                    <button onclick="sendMessage()">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="status" class="status disconnected">Disconnected</div>
+
+    <script>
+        class GameClient {
+            constructor() {
+                this.ws = null;
+                this.isConnected = false;
+                this.currentRoom = null;
+                this.user = null;
+                this.rooms = [];
+                this.roomUsers = [];
+            }
+
+            connect(username, avatar) {
+                this.updateStatus('connecting', 'Connecting...');
+                
+                try {
+                    this.ws = new WebSocket('ws://localhost:8080');
+                    
+                    this.ws.onopen = () => {
+                        this.isConnected = true;
+                        this.updateStatus('connected', 'Connected');
+                        
+                        // Authenticate
+                        this.send({
+                            type: 'auth',
+                            name: username,
+                            avatar: avatar
+                        });
+                    };
+                    
+                    this.ws.onmessage = (event) => {
+                        const message = JSON.parse(event.data);
+                        this.handleMessage(message);
+                    };
+                    
+                    this.ws.onclose = () => {
+                        this.isConnected = false;
+                        this.updateStatus('disconnected', 'Disconnected');
+                        this.showAuthSection();
+                    };
+                    
+                    this.ws.onerror = (error) => {
+                        console.error('WebSocket error:', error);
+                        this.updateStatus('disconnected', 'Connection Error');
+                    };
+                    
+                } catch (error) {
+                    console.error('Connection error:', error);
+                    this.updateStatus('disconnected', 'Failed to Connect');
+                }
+            }
+
+            send(message) {
+                if (this.ws && this.isConnected) {
+                    this.ws.send(JSON.stringify(message));
+                }
+            }
+
+            handleMessage(message) {
+                console.log('Received:', message);
+                
+                switch (message.type) {
+                    case 'welcome':
+                        this.rooms = message.rooms;
+                        this.updateRoomsList();
+                        break;
+                        
+                    case 'auth-success':
+                        this.user = message.user;
+                        this.rooms = message.rooms;
+                        this.showMainContent();
+                        this.updateRoomsList();
+                        this.addMessage('system', 'Successfully connected to the server!');
+                        break;
+                        
+                    case 'joined-room':
+                        this.currentRoom = message.room;
+                        this.roomUsers = message.users;
+                        this.updateRoomHeader();
+                        this.updateUsersList();
+                        this.updateGameControls();
+                        this.addMessage('system', `Joined room: ${message.room.name}`);
+                        break;
+                        
+                    case 'left-room':
+                        if (this.currentRoom && this.currentRoom.id === message.roomId) {
+                            this.currentRoom = null;
+                            this.roomUsers = [];
+                            this.updateRoomHeader();
+                            this.updateUsersList();
+                            this.updateGameControls();
+                        }
+                        break;
+                        
+                    case 'user-joined':
+                        if (this.currentRoom && this.currentRoom.id === message.roomId) {
+                            this.roomUsers.push(message.user);
+                            this.updateUsersList();
+                            this.addMessage('system', `${message.user.name} joined the room`);
+                        }
+                        break;
+                        
+                    case 'user-left':
+                        if (this.currentRoom && this.currentRoom.id === message.roomId) {
+                            this.roomUsers = this.roomUsers.filter(u => u.id !== message.user.id);
+                            this.updateUsersList();
+                            this.addMessage('system', `${message.user.name} left the room`);
+                        }
+                        break;
+                        
+                    case 'chat-message':
+                        if (this.currentRoom && this.currentRoom.id === message.roomId) {
+                            this.addMessage('chat', message.text, message.user, message.timestamp);
+                        }
+                        break;
+                        
+                    case 'game-state':
+                        this.handleGameState(message);
+                        break;
+                        
+                    case 'game-started':
+                        if (this.currentRoom && this.currentRoom.id === message.roomId) {
+                            this.addMessage('system', 'Game started!');
+                        }
+                        break;
+                        
+                    case 'room-created':
+                        this.rooms.push(message.room);
+                        this.updateRoomsList();
+                        break;
+                        
+                    case 'announcement':
+                        this.addMessage('announcement', message.message);
+                        break;
+                        
+                    case 'error':
+                        this.addMessage('error', message.message);
+                        break;
+                        
+                    case 'kicked':
+                        this.addMessage('error', `You were kicked: ${message.reason}`);
+                        setTimeout(() => this.ws.close(), 2000);
+                        break;
+                }
+            }
+
+            joinRoom(roomId) {
+                this.send({
+                    type: 'join-room',
+                    roomId: roomId
+                });
+            }
+
+            leaveRoom() {
+                if (this.currentRoom) {
+                    this.send({
+                        type: 'leave-room',
+                        roomId: this.currentRoom.id
+                    });
+                }
+            }
+
+            sendChat(text) {
+                if (this.currentRoom && text.trim()) {
+                    this.send({
+                        type: 'chat',
+                        roomId: this.currentRoom.id,
+                        text: text.trim()
+                    });
+                }
+            }
+
+            gameAction(action, data) {
+                if (this.currentRoom) {
+                    this.send({
+                        type: 'game-action',
+                        roomId: this.currentRoom.id,
+                        action: action,
+                        data: data
+                    });
+                }
+            }
+
+            handleGameState(message) {
+                if (this.currentRoom && this.currentRoom.id === message.roomId) {
+                    const gameState = message.gameState;
+                    let statusText = `Game Status: ${gameState.status}`;
+                    
+                    if (gameState.turn) {
+                        const turnUser = gameState.players.find(p => p.userId === gameState.turn);
+                        if (turnUser) {
+                            statusText += ` - ${turnUser.user.name}'s turn`;
+                        }
+                    }
+                    
+                    this.addMessage('system', statusText);
+                }
+            }
+
+            updateStatus(status, text) {
+                const statusElement = document.getElementById('status');
+                statusElement.className = `status ${status}`;
+                statusElement.textContent = text;
+            }
+
+            showAuthSection() {
+                document.getElementById('auth-section').classList.remove('hidden');
+                document.getElementById('main-content').classList.add('hidden');
+            }
+
+            showMainContent() {
+                document.getElementById('auth-section').classList.add('hidden');
+                document.getElementById('main-content').classList.remove('hidden');
+            }
+
+            updateRoomsList() {
+                const roomsList = document.getElementById('rooms-list');
+                roomsList.innerHTML = '';
+                
+                this.rooms.forEach(room => {
+                    const div = document.createElement('div');
+                    div.className = 'room-item';
+                    if (this.currentRoom && this.currentRoom.id === room.id) {
+                        div.classList.add('active');
+                    }
+                    
+                    div.innerHTML = `
+                        <div><strong>${room.name}</strong></div>
+                        <div style="font-size: 12px; opacity: 0.8;">
+                            ${room.type} • ${room.userCount}/${room.maxUsers}
+                            ${room.hasGame ? ` • ${room.gameStatus}` : ''}
+                        </div>
+                    `;
+                    
+                    div.onclick = () => this.joinRoom(room.id);
+                    roomsList.appendChild(div);
+                });
+            }
+
+            updateUsersList() {
+                const usersList = document.getElementById('users-list');
+                usersList.innerHTML = '';
+                
+                this.roomUsers.forEach(user => {
+                    const div = document.createElement('div');
+                    div.className = 'user-item';
+                    div.textContent = `${user.avatar} ${user.name}`;
+                    usersList.appendChild(div);
+                });
+            }
+
+            updateRoomHeader() {
+                const header = document.getElementById('room-header');
+                if (this.currentRoom) {
+                    header.textContent = `${this.currentRoom.name} (${this.currentRoom.type})`;
+                } else {
+                    header.textContent = 'Select a room to start chatting';
+                }
+            }
+
+            updateGameControls() {
+                const gameControls = document.getElementById('game-controls');
+                if (this.currentRoom && this.currentRoom.hasGame) {
+                    gameControls.classList.remove('hidden');
+                } else {
+                    gameControls.classList.add('hidden');
+                }
+            }
+
+            addMessage(type, text, user = null, timestamp = null) {
+                const messages = document.getElementById('messages');
+                const div = document.createElement('div');
+                div.className = `message ${type}`;
+                
+                const time = timestamp ? new Date(timestamp) : new Date();
+                const timeStr = time.toLocaleTimeString();
+                
+                if (user) {
+                    div.innerHTML = `
+                        <div class="message-time">${timeStr}</div>
+                        <div class="message-user">${user.avatar} ${user.name}:</div>
+                        <div>${this.escapeHtml(text)}</div>
+                    `;
+                } else {
+                    div.innerHTML = `
+                        <div class="message-time">${timeStr}</div>
+                        <div>${this.escapeHtml(text)}</div>
+                    `;
+                }
+                
+                messages.appendChild(div);
+                messages.scrollTop = messages.scrollHeight;
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        }
+
+        const client = new GameClient();
+
+        function connect() {
+            const username = document.getElementById('username').value.trim();
+            const avatar = document.getElementById('avatar').value;
+            
+            if (!username) {
+                alert('Please enter a username');
+                return;
+            }
+            
+            client.connect(username, avatar);
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('message-input');
+            const text = input.value.trim();
+            
+            if (text) {
+                client.sendChat(text);
+                input.value = '';
+            }
+        }
+
+        function gameAction(action, data) {
+            client.gameAction(action, data);
+        }
+
+        function createRoom() {
+            const name = prompt('Room name:');
+            const type = confirm('Create game room? (Cancel for chat room)') ? 'game' : 'chat';
+            
+            if (name && name.trim()) {
+                client.send({
+                    type: 'create-room',
+                    name: name.trim(),
+                    type: type,
+                    maxUsers: type === 'game' ? 4 : 20
+                });
+            }
+        }
+
+        // Enter key support
+        document.getElementById('username').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') connect();
+        });
+
+        document.getElementById('message-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    </script>
+</body>
+</html>

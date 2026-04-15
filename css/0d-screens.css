@@ -1,0 +1,135 @@
+@font-face {
+  font-family: console;
+  src: url('../fonts/flexi_ibm_vga_true/Flexi_IBM_VGA_True.ttf');
+}
+
+@font-face {
+  font-family: uidefault;
+  src: url('../fonts/b612/B612-Regular.ttf');
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: uidefault;
+  src: url('../fonts/b612/B612-Bold.ttf');
+  font-weight: bold;
+  font-style: normal;
+}
+@font-face {
+  font-family: uidefault;
+  src: url('../fonts/b612/B612-Italic');
+  font-weight: normal;
+  font-style: italic;
+}
+* {
+	box-sizing: inherit;
+	text-shadow: inherit;
+	font-family: inherit;
+	font-size: inherit;
+	transition: all 0.5s ease;
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	user-select: none;
+	image-rendering: pixelated;
+	color: inherit;
+}
+
+*:focus {
+  outline: none;
+}
+
+body {
+	background: #000;
+	color: #eeeeee;
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+	cursor: crosshair;
+	line-height: 150%;
+	font-family: uidefault;
+	font-size: 26px;
+}
+
+a {
+	color: rgba(255, 255, 180, 0.8);
+	cursor: pointer !important;
+}
+
+a:hover {
+	color: rgba(255, 255, 230, 1.0);
+	text-shadow: 0 0 12px rgba(255, 255, 230, 1.0);
+}
+
+nav {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	padding: 16px;
+	background: rgba(100,100,100,0.3);
+}
+
+footer {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+}
+
+footer > button {
+	padding: 8px;
+	text-align: center;
+	min-width: 160px;
+}
+
+#frame-rate {
+	padding: 8px;
+	font-size: 80%;
+}
+
+button {
+	display: inline-block;
+	color: black;
+	cursor: pointer;
+	vertical-align: top;
+	border: 2px solid rgba(120,120,120,0.5);
+	background: rgba(120,120,120,0.5);
+	color: white;
+}
+
+button:hover {
+	border-color: yellow;
+}
+
+input[type=text] {
+	background: rgba(0,0,0,0.3);
+	border: 2px solid rgba(100,100,100,0.3);
+	color: yellow;
+	padding: 12px;
+	width: 100%;
+	margin: -6px;
+}
+
+#dscreen {
+	position: absolute;
+	left: 0px;
+	right: 0px;
+	top: 64px;
+	bottom: 64px;
+	border: 8px solid rgba(100,100,100,0.3);
+	overflow: hidden;
+}
+
+#dscreen > h1 {
+	margin: 0;
+	background: rgba(100,100,100,0.5);
+}
+
+#dscreen > * {
+	padding: 16px;
+}
+
+.sbtn.active {
+	color: yellow;
+}

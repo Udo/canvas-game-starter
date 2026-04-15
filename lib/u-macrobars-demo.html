@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>U-Macrobars.js Demo</title>
+    <style>
+        :root {
+            --space: 8px;
+            --radius: 5px;
+            
+            --gray: #6c757d;
+            --gray-bg: #f5f5f5;
+            --blue: #007acc;
+            --green: #28a745;
+            --white: white;
+            --dark: #333;
+            
+            --max-width: 1400px;
+            --sidebar: 400px;
+        }
+        
+        * { box-sizing: border-box; }
+        
+        body { 
+            font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: var(--space);
+            background: var(--gray-bg);
+        }
+        
+        .container { 
+            background: var(--white);
+            padding: calc(var(--space) * 1.5);
+            border-radius: var(--radius);
+        }
+        
+        .main-layout { 
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: calc(var(--space) * 1.5);
+        }
+        
+        .api-column { 
+            background: var(--gray-bg);
+            padding: var(--space);
+            border-radius: var(--radius);
+            border-left: 4px solid var(--green);
+        }
+        
+        h1 { 
+            color: var(--dark);
+            text-align: center;
+            margin-bottom: calc(var(--space) * 1.5);
+            grid-column: 1 / -1;
+        }
+        
+        h2 { 
+            color: var(--gray);
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: var(--space);
+            margin-top: calc(var(--space) * 1.5);
+        }
+        
+        .demo-section { 
+            margin: var(--space) 0;
+            padding: var(--space);
+            background: var(--gray-bg);
+            border-radius: var(--radius);
+            border-left: 4px solid var(--blue);
+        }
+        
+        .controls, .slider-group { 
+            display: flex;
+            gap: var(--space);
+            margin: 15px 0;
+        }
+        
+        .controls { flex-wrap: wrap; }
+        .slider-group { align-items: center; }
+        .feature-grid { display: grid; gap: var(--space); margin: var(--space) 0; }
+        
+        button { 
+            background: var(--blue);
+            color: var(--white);
+            border: none;
+            padding: var(--space) var(--space);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover { filter: brightness(0.9); }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        input[type="range"] { flex: 1; max-width: 200px; }
+        
+        .status, .code-example { 
+            font-family: monospace;
+            padding: var(--space);
+            border-radius: var(--radius);
+            margin: var(--space) 0;
+        }
+        
+        .status { 
+            background: var(--dark);
+            color: #0f0;
+            white-space: pre-wrap;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        .code-example { 
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            overflow-x: auto;
+            margin: var(--space) 0;
+        }
+        
+        .highlight { color: #68d391; }
+        .keyword { color: #fbb6ce; }
+        .string { color: #fbd38d; }
+        
+        .template-visual { 
+            height: 100px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-weight: bold;
+            margin: 15px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .template-animation { 
+            position: absolute;
+            inset: 0;
+            opacity: 0.3;
+            background: repeating-linear-gradient(90deg, transparent 0 10px, rgba(255,255,255,0.2) 10px 20px);
+            animation: slide 3s linear infinite;
+        }
+        
+        @keyframes slide { to { transform: translateX(20px); } }
+        
+        .api-section { margin: 15px 0; }
+        .api-section h3 { 
+            color: var(--green);
+            margin: 0 0 var(--space) 0;
+        }
+        
+        .api-method { 
+            font-family: monospace;
+            margin: 3px 0;
+            color: var(--gray);
+        }
+        
+        .api-method .method-name { color: var(--blue); font-weight: bold; }
+        .api-method .return-type { color: #6f42c1; }
+        .api-method .param { color: #e83e8c; }
+        
+        .api-description {
+            margin: var(--space) 0;
+        }
+        
+        .api-options {
+            color: var(--gray);
+        }
+        
+        .template-code { 
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: var(--radius);
+            margin: var(--space) 0;
+            overflow-x: auto;
+        }
+        
+        .output { 
+            background: var(--white);
+            border: 2px solid var(--green);
+            padding: var(--space);
+            border-radius: var(--radius);
+            margin: var(--space) 0;
+            min-height: 40px;
+        }
+        
+        .code-comment {
+            color: #68d391;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: var(--space);
+            border: 1px solid #ccc;
+            border-radius: var(--radius);
+            font-family: monospace;
+            margin: var(--space) 0;
+            resize: vertical;
+        }
+        
+        .interactive-editor {
+            background: var(--white);
+            padding: calc(var(--space) * 1.5);
+            border-radius: var(--radius);
+            border: 2px solid var(--blue);
+        }
+        
+        .help-text {
+            color: var(--gray);
+            margin: var(--space) 0;
+            font-style: italic;
+        }
+        
+        .feature-grid button {
+            padding: calc(var(--space) * 1.5) var(--space);
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        
+        .feature-grid button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 122, 204, 0.3);
+        }
+        
+        .feature-grid button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        
+        @media (max-width: 1200px) {
+            .main-layout { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body onload="initializeDemos();">
+    <div class="container">
+        <h1>U-Macrobars.js Demo</h1>
+        
+        <div class="main-layout">
+            <div class="demo-column">
+                <h2>Basic Field Output</h2>
+                <div class="demo-section">
+                    <div class="template-code">{{name}} is {{age}} years old and works as {{job or "unemployed"}}</div>
+                    <div class="output" id="basic-output"></div>
+                    <div class="controls">
+                        <button onclick="runBasicDemo()">Run Basic Demo</button>
+                        <button onclick="runBasicDemoVariant()">Try Different Data</button>
+                    </div>
+                </div>
+
+                <div class="demo-section">
+                    <h3>Number Formatting</h3>
+                    <div class="template-code">Price: ${{%price}} | Large Number: {{~bigNumber}}</div>
+                    <div class="output" id="number-output"></div>
+                    <div class="controls">
+                        <button onclick="runNumberDemo()">Format Numbers</button>
+                        <button onclick="runNumberVariants()">Try Different Numbers</button>
+                    </div>
+                </div>
+
+                <div class="demo-section">
+                    <h3>Default Values & Safety</h3>
+                    <div class="template-code">{{username or "Guest"}} | {{profile.bio or "No bio available"}}</div>
+                    <div class="output" id="default-output"></div>
+                    <div class="controls">
+                        <button onclick="runDefaultDemo()">Test Defaults</button>
+                        <button onclick="runSafetyDemo()">HTML Safety Demo</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="api-column">
+                <h2>Field Output API</h2>
+                
+                <div class="api-section">
+                    <h3>Basic Syntax</h3>
+                    <div class="api-method"><span class="method-name">{{field}}</span> → <span class="return-type">Safe HTML output</span></div>
+                    <div class="api-method"><span class="method-name">{{{field}}}</span> → <span class="return-type">Raw HTML output</span></div>
+                    <div class="api-method"><span class="method-name">{{:variable}}</span> → <span class="return-type">Direct variable</span></div>
+                    <div class="api-method"><span class="method-name">{{field or "default"}}</span> → <span class="return-type">With fallback</span></div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Number Formatting</h3>
+                    <div class="api-method"><span class="method-name">{{%number}}</span> → <span class="return-type">2 decimal places</span></div>
+                    <div class="api-method"><span class="method-name">{{~number}}</span> → <span class="return-type">Rounded (1k, 1M)</span></div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Examples</h3>
+                    <pre class="code-example">
+<span class="code-comment">// Basic field output</span>
+<span class="keyword">const</span> template = Macrobars.compile(<span class="string">'{{name}}'</span>);
+<span class="keyword">const</span> result = template({name: <span class="string">'John'</span>});
+
+<span class="code-comment">// With defaults</span>
+<span class="keyword">const</span> withDefault = <span class="string">'{{title or "Untitled"}}'</span>;
+
+<span class="code-comment">// Number formatting</span>
+<span class="keyword">const</span> price = <span class="string">'${{%cost}}'</span>; <span class="code-comment">// $12.34</span>
+<span class="keyword">const</span> count = <span class="string">'{{~views}}'</span>;  <span class="code-comment">// 1.2k</span>
+</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <div class="demo-column">
+                <h2>Control Structures</h2>
+                <div class="demo-section">
+                    <h3>Conditionals</h3>
+                    <div class="template-code">{{#if isLoggedIn}}
+Welcome back, {{username}}!
+{{#else}}
+Please log in to continue.
+{{/if}}</div>
+                    <div class="output" id="conditional-output"></div>
+                    <div class="controls">
+                        <button onclick="runConditionalDemo(true)">👤 Logged In</button>
+                        <button onclick="runConditionalDemo(false)">🚪 Not Logged In</button>
+                    </div>
+                </div>
+
+                <div class="demo-section">
+                    <h3>Loops & Iteration</h3>
+                    <div class="template-code">{{#each items}}
+• {{number}}. {{name}} - ${{price}}
+{{/each}}</div>
+                    <div class="output" id="loop-output"></div>
+                    <div class="controls">
+                        <button onclick="runLoopDemo()">🔄 Process List</button>
+                        <button onclick="runNamedLoopDemo()">📝 Named Iteration</button>
+                    </div>
+                </div>
+
+                <div class="demo-section">
+                    <h3>Equality & Lookup</h3>
+                    <div class="template-code">{{#eq status "active"}}User is active{{/eq}}
+{{lookup user "permissions"}}</div>
+                    <div class="output" id="equality-output"></div>
+                    <div class="controls">
+                        <button onclick="runEqualityDemo()">⚖️ Test Equality</button>
+                        <button onclick="runLookupDemo()">🔍 Dynamic Lookup</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="api-column">
+                <h2>Control Flow API</h2>
+                
+                <div class="api-section">
+                    <h3>Conditionals</h3>
+                    <div class="api-method"><span class="method-name">{{#if condition}}</span>...{{/if}}</div>
+                    <div class="api-method"><span class="method-name">{{#else}}</span> → <span class="return-type">Alternative branch</span></div>
+                    <div class="api-description">
+                        Conditional rendering based on truthy values. Supports nested conditions.
+                    </div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Loops</h3>
+                    <div class="api-method"><span class="method-name">{{#each items}}</span>...{{/each}}</div>
+                    <div class="api-method"><span class="method-name">{{#each items as item}}</span>...{{/each}}</div>
+                    <div class="api-description">
+                        • Standard: <strong>data</strong> becomes current item<br>
+                        • Named: <strong>item</strong> becomes current item, data preserved
+                    </div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Comparison & Lookup</h3>
+                    <div class="api-method"><span class="method-name">{{#eq val1 val2}}</span>...{{/eq}}</div>
+                    <div class="api-method"><span class="method-name">{{eq val1 val2}}</span> → <span class="return-type">"true" or ""</span></div>
+                    <div class="api-method"><span class="method-name">{{#lookup obj key}}</span>...{{/lookup}}</div>
+                    <div class="api-method"><span class="method-name">{{lookup obj key}}</span> → <span class="return-type">value or ""</span></div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Examples</h3>
+                    <pre class="code-example">
+<span class="code-comment">// Conditionals</span>
+<span class="string">'{{#if user.isAdmin}}Admin Panel{{/if}}'</span>
+
+<span class="code-comment">// Named loops</span>
+<span class="string">'{{#each products as product}}'</span>
+  <span class="string">'{{product.name}} - {{data.storeName}}'</span>
+<span class="string">'{{/each}}'</span>
+
+<span class="code-comment">// Equality & lookup</span>
+<span class="string">'{{#eq user.role "admin"}}Secret{{/eq}}'</span>
+<span class="string">'{{lookup config "theme"}}'</span>
+</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <div class="demo-column">
+                <h2>Advanced Features</h2>
+                <div class="demo-section">
+                    <h3>Event Binding</h3>
+                    <div class="template-code">&lt;button {{@click="handleClick"}}&gt;Click Count: {{clickCount}}&lt;/button&gt;</div>
+                    <div class="output" id="event-output"></div>
+                    <div class="controls">
+                        <button onclick="runEventDemo()">🎯 Setup Interactive Button</button>
+                        <button onclick="runMultiEventDemo()">⚡ Multiple Events</button>
+                    </div>
+                </div>
+
+                <div class="demo-section">
+                    <h3>Code Blocks</h3>
+                    <div class="template-code">&lt;script&gt;var computed = data.value * 2;&lt;/script&gt;
+Result: {{:computed}}</div>
+                    <div class="output" id="code-output"></div>
+                    <div class="controls">
+                        <button onclick="runCodeDemo()">💻 Execute Code</button>
+                        <button onclick="runDeferDemo()">⏰ Deferred Execution</button>
+                    </div>
+                </div>
+
+                <div class="demo-section">
+                    <h3>Components</h3>
+                    <div class="template-code">{{#component userCard}}</div>
+                    <div class="output" id="component-output"></div>
+                    <div class="controls">
+                        <button onclick="runComponentDemo()">🧩 Load Component</button>
+                        <button onclick="createCustomComponent()">✨ Create Custom</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="api-column">
+                <h2>Advanced API</h2>
+                
+                <div class="api-section">
+                    <h3>Event Binding</h3>
+                    <div class="api-method"><span class="method-name">{{@event="handler"}}</span> → <span class="return-type">DOM attribute</span></div>
+                    <div class="api-method"><span class="method-name">template.renderTo</span>(<span class="param">container, data</span>)</div>
+                    <div class="api-description">
+                        Events are automatically bound when using renderTo(). Handler can reference data properties or global functions.
+                    </div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Code Execution</h3>
+                    <div class="api-method"><span class="method-name">&lt;script&gt;</span>...&lt;/script&gt;</div>
+                    <div class="api-method"><span class="method-name">&lt;defer&gt;</span>...&lt;/defer&gt;</div>
+                    <div class="api-method"><span class="method-name">&lt;?</span> code <span class="method-name">?&gt;</span></div>
+                    <div class="api-method"><span class="method-name">&lt;?=</span> expression <span class="method-name">?&gt;</span></div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Components & Compilation</h3>
+                    <div class="api-method"><span class="method-name">Macrobars.compile</span>(<span class="param">template, options</span>)</div>
+                    <div class="api-method"><span class="method-name">Macrobars.createComponents</span>(<span class="param">definitions</span>)</div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Examples</h3>
+                    <pre class="code-example">
+<span class="code-comment">// Event binding with renderTo</span>
+<span class="keyword">const</span> template = Macrobars.compile(
+  <span class="string">'&lt;button {{@click="increment"}}&gt;{{count}}&lt;/button&gt;'</span>
+);
+template.renderTo(<span class="string">'#container'</span>, {
+  count: <span class="highlight">0</span>,
+  increment: <span class="keyword">function</span>() { <span class="keyword">this</span>.count++; }
+});
+
+<span class="code-comment">// Components</span>
+<span class="keyword">const</span> components = Macrobars.createComponents({
+  userCard: <span class="string">'&lt;div&gt;{{name}} - {{email}}&lt;/div&gt;'</span>
+});
+</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <div class="demo-column">
+                <h2>Template Editor</h2>
+                <div class="interactive-editor">
+                    
+                    <label for="template-input"><strong>Template:</strong></label>
+                    <textarea id="template-input" rows="6" placeholder="Enter your template here">Hello {{name}}! 
+{{#if age}}You are {{age}} years old.{{/if}}
+{{#each hobbies as hobby}}
+• {{:hobby}}
+{{/each}}
+Total score: {{~score}}</textarea>
+                    
+                    <label for="data-input"><strong>Data (JSON):</strong></label>
+                    <textarea id="data-input" rows="6" placeholder="Enter JSON data here">{
+  "name": "Alice",
+  "age": 25,
+  "score": 98750,
+  "hobbies": ["reading", "coding", "gaming"]
+}</textarea>
+                    
+                    <div class="controls">
+                        <button onclick="runCustomTemplate()">Render Template</button>
+                        <button onclick="loadExampleTemplate('basic')">Load Basic Example</button>
+                        <button onclick="loadExampleTemplate('advanced')">Load Advanced Example</button>
+                        <button onclick="clearEditor()">Clear All</button>
+                    </div>
+                    
+                    <div class="output" id="dynamic-content" style="white-space: pre;">Click "Render Template"</div>
+
+                    <div class="api-section">
+                        <h3>Template Information</h3>
+                        <div class="status" id="template-info">Ready.</div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="api-column">
+                <h2>Compilation & Debugging</h2>
+                
+                <div class="api-section">
+                    <h3>Compilation Options</h3>
+                    <div class="api-method"><span class="method-name">decimals</span>: <span class="param">number</span> → <span class="return-type">Number precision</span></div>
+                    <div class="api-method"><span class="method-name">strict</span>: <span class="param">boolean</span> → <span class="return-type">Strict mode</span></div>
+                    <div class="api-method"><span class="method-name">components</span>: <span class="param">object</span> → <span class="return-type">Reusable templates</span></div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Debugging Properties</h3>
+                    <div class="api-method"><span class="method-name">template.tokens</span> → <span class="return-type">Parsed tokens</span></div>
+                    <div class="api-method"><span class="method-name">template.gensource</span> → <span class="return-type">Generated JS</span></div>
+                    <div class="api-method"><span class="method-name">template.event_bindings</span> → <span class="return-type">Event data</span></div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Utility Functions</h3>
+                    <div class="api-method"><span class="method-name">Macrobars.safe_out</span>(<span class="param">text, default</span>)</div>
+                    <div class="api-method"><span class="method-name">Macrobars.num_out</span>(<span class="param">number, decimals</span>)</div>
+                    <div class="api-method"><span class="method-name">Macrobars.num_out_round</span>(<span class="param">number</span>)</div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Example Templates</h3>
+                    <pre class="code-example">
+<span class="code-comment">// Complete example</span>
+<span class="keyword">const</span> template = Macrobars.compile(<span class="string">`
+&lt;div class="user-card"&gt;
+  &lt;h3&gt;{{name or "Unknown User"}}&lt;/h3&gt;
+  {{#if profile.verified}}✅ Verified{{/if}}
+  &lt;p&gt;Balance: ${{%balance}}&lt;/p&gt;
+  {{#each achievements}}
+    &lt;span class="badge"&gt;{{data}}&lt;/span&gt;
+  {{/each}}
+&lt;/div&gt;
+`</span>, { decimals: <span class="highlight">2</span> });
+
+<span class="keyword">const</span> result = template(userData);
+</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="u-macrobars.js"></script>
+    <script>
+        let currentTemplate = null;
+        let clickCount = 0;
+        let components = {};
+
+        // Initialize demos on page load
+        function initializeDemos() {
+            runBasicDemo();
+            runNumberDemo();
+            updateTemplateInfo('Ready.');
+        }
+
+        // Utility functions
+        function log(message) {
+            //console.log(`Macrobars Demo: ${message}`);
+        }
+
+        function updateTemplateInfo(info) {
+            const element = document.getElementById('template-info');
+            if (element) {
+                element.textContent = info;
+            }
+        }
+
+        function updateVisualAnimation(playing) {
+            const animations = document.querySelectorAll('.template-animation');
+            animations.forEach(anim => {
+                anim.style.animationPlayState = playing ? 'running' : 'paused';
+            });
+        }
+
+        // Demo 1: Basic field output
+        function runBasicDemo() {
+            try {
+                const template = Macrobars.compile('{{name}} is {{age}} years old and works as {{job or "unemployed"}}');
+                const data = { name: "John Doe", age: 30 };
+                const result = template(data);
+                document.getElementById('basic-output').innerHTML = result;
+                updateVisualAnimation(true);
+                setTimeout(() => updateVisualAnimation(false), 1000);
+            } catch (error) {
+                document.getElementById('basic-output').innerHTML = '<span style="color: red;">Error: ' + error.message + '</span>';
+            }
+        }
+
+        function runBasicDemoVariant() {
+            try {
+                const template = Macrobars.compile('{{name}} is {{age}} years old and works as {{job or "unemployed"}}');
+                const data = { name: "Jane Smith", age: 28, job: "Software Engineer" };
+                const result = template(data);
+                document.getElementById('basic-output').innerHTML = result;
+                updateVisualAnimation(true);
+                setTimeout(() => updateVisualAnimation(false), 1000);
+            } catch (error) {
+                document.getElementById('basic-output').innerHTML = '<span style="color: red;">Error: ' + error.message + '</span>';
+            }
+        }
+
+        // Demo 2: Number formatting
+        function runNumberDemo() {
+            try {
+                const template = Macrobars.compile('Price: ${{%price}} | Large Number: {{~bigNumber}}');
+                const data = { price: 123.456, bigNumber: 1234567 };
+                const result = template(data);
+                document.getElementById('number-output').innerHTML = result;
+            } catch (error) {
+                document.getElementById('number-output').innerHTML = '<span style="color: red;">Error: ' + error.message + '</span>';
+            }
+        }
+
+        function runNumberVariants() {
+            try {
+                const template = Macrobars.compile('Price: ${{%price}} | Large Number: {{~bigNumber}} | Small: {{%small}}');
+                const data = { price: 999.99, bigNumber: 42850000, small: 1.2345 };
+                const result = template(data);
+                document.getElementById('number-output').innerHTML = result;
+            } catch (error) {
+                document.getElementById('number-output').innerHTML = '<span style="color: red;">Error: ' + error.message + '</span>';
+            }
+        }
+
+        // Demo 3: Default values & safety
+        function runDefaultDemo() {
+            try {
+                const template = Macrobars.compile('{{username or "Guest"}} | {{profile.bio or "No bio available"}}');
+                const data = { username: "", profile: {} }; // Empty data to test defaults
+                const result = template(data);
+                document.getElementById('default-output').innerHTML = result;
+            } catch (error) {
+                document.getElementById('default-output').innerHTML = '<span style="color: red;">Error: ' + error.message + '</span>';
+            }
+        }
+
+        function runSafetyDemo() {
+            try {
+                const template = Macrobars.compile('Safe: {{userInput}} | Unsafe: {{{userInput}}}');
+                const data = { userInput: '<script>alert("XSS")</' + 'script><b>Bold Text</b>' };
+                const result = template(data);
+                document.getElementById('default-output').innerHTML = result;
+            } catch (error) {
+                document.getElementById('default-output').innerHTML = '<span style="color: red;">Error: ' + error.message + '</span>';
+            }
+        }
+
+        // Demo 4: Conditionals
+        function runConditionalDemo(isLoggedIn) {
+            try {
+                const template = Macrobars.compile('{{#if isLoggedIn}}Welcome back, {{username}}! 🎉{{#else}}Please log in to continue. 🔐{{/if}}');
+                const data = { 
+                    isLoggedIn: isLoggedIn, 
+                    username: "Alice" 
+                };
+                const result = template(data);
+                document.getElementById('conditional-output').innerHTML = result;
+            } catch (error) {
+                document.getElementById('conditional-output').innerHTML = '<span style="color: red;">Error: ' + error.message + '</span>';
+            }
+        }
+
+        // Demo 5: Loops
+        function runLoopDemo() {
+            try {
+                const template = Macrobars.compile(
+                    '{{#each items}}' +
+                        '• {{number}}. {{name}} - ${{price}}<br>' +
+                    '{{/each}}'
+                );
+                const data = {
+                    items: [
+                        { number: 1, name: "Magic Widget", price: 19.99 },
+                        { number: 2, name: "Super Gadget", price: 29.50 },
+                        { number: 3, name: "Ultra Tool", price: 15.75 }
+                    ]
+                };
+                const result = template(data);
+                document.getElementById('loop-output').innerHTML = result;
+            } catch (error) {
+                document.getElementById('loop-output').innerHTML = '<span style="color: red;">Error: ' + error.message + '</span>';
+            }
+        }
+
+        function runNamedLoopDemo() {
+            try {
+                const template = Macrobars.compile('Store: {{storeName}}<br>{{#each products as product}}→ {{product.name}} ({{product.category}}) - Available at {{storeName}}<br>{{/each}}');
+                const data = {
+                    storeName: "TechMart",
+                    products: [
+                        { name: "Laptop", category: "Electronics" },
+                        { name: "Mouse", category: "Accessories" },
+                        { name: "Keyboard", category: "Accessories" }
+                    ]
+                };
+                const result = template(data);
+                document.getElementById('loop-output').innerHTML = result;
+            } catch (error) {
+                document.getElementById('loop-output').innerHTML = '<span style="color: red;">Error: ' + error.message + '</span>';
+            }
+        }
+
+        // Demo 6: Equality & Lookup
+        function runEqualityDemo() {
+            try {
+                const template = Macrobars.compile('{{#eq status "active"}}✅ User is active{{/eq}}{{#eq status "inactive"}}❌ User is inactive{{/eq}}{{#eq status "pending"}}⏳ User is pending{{/eq}}<br>Inline check: {{eq role "admin"}}');
+                const data = { status: "active", role: "admin" };
+                const result = template(data);
+                document.getElementById('equality-output').innerHTML = result;
+            } catch (error) {
+                document.getElementById('equality-output').innerHTML = '<span style="color: red;">Error: ' + error.message + '</span>';
+            }
+        }
+
+        function runLookupDemo() {
+            try {
+                const template = Macrobars.compile('Theme: {{lookup user "theme"}}<br>{{#lookup user "permissions"}}🔑 Has permissions{{/lookup}}{{#lookup user "missing"}}This won\'t show{{/lookup}}');
+                const data = { 
+                    user: { 
+                        theme: "dark", 
+                        permissions: ["read", "write"] 
+                    } 
+                };
+                const result = template(data);
+                document.getElementById('equality-output').innerHTML = result;
+            } catch (error) {
+                document.getElementById('equality-output').innerHTML = '<span style="color: red;">Error: ' + error.message + '</span>';
+            }
+        }
+
+        // Demo 7: Event binding
+        function runEventDemo() {
+            try {
+                clickCount = 0;
+                const template = Macrobars.compile('<button {{@click="handleClick"}} style="padding: 10px;">🖱️ Click Count: {{clickCount}}</button>');
+                
+                const data = { 
+                    clickCount: clickCount,
+                    handleClick: function() {
+                        clickCount++;
+                        runEventDemo(); // Re-render with new count
+                    }
+                };
+                
+                const container = document.getElementById('event-output');
+                template.renderTo(container, data);
+            } catch (error) {
+                document.getElementById('event-output').innerHTML = '<span style="color: red;">Error: ' + error.message + '</span>';
+            }
+        }
+
+        function runMultiEventDemo() {
+            try {
+                var templateStr = '<div style="padding: 10px; border: 1px solid #ccc; border-radius: 5px;">';
+                templateStr += '<button {{@click="increment"}} style="margin: 5px; padding: 8px;">➕ Add</button>';
+                templateStr += '<button {{@click="decrement"}} style="margin: 5px; padding: 8px;">➖ Subtract</button>';
+                templateStr += '<button {{@click="reset"}} style="margin: 5px; padding: 8px;">🔄 Reset</button>';
+                templateStr += '<br><br>';
+                templateStr += '<strong>Counter: {{counter}}</strong>';
+                templateStr += '</div>';
+                
+                const template = Macrobars.compile(templateStr);
+                
+                let counter = 0;
+                const data = { 
+                    counter: counter,
+                    increment: function() {
+                        counter++;
+                        data.counter = counter;
+                        template.renderTo(document.getElementById('event-output'), data);
+                    },
+                    decrement: function() {
+                        counter--;
+                        data.counter = counter;
+                        template.renderTo(document.getElementById('event-output'), data);
+                    },
+                    reset: function() {
+                        counter = 0;
+                        data.counter = counter;
+                        template.renderTo(document.getElementById('event-output'), data);
+                    }
+                };
+                
+                template.renderTo(document.getElementById('event-output'), data);
+            } catch (error) {
+                document.getElementById('event-output').innerHTML = '<span style="color: red;">Error: ' + error.message + '</span>';
+            }
+        }
+
+        // Demo 8: Code blocks
+        function runCodeDemo() {
+            try {
+                var templateStr = '';
+                templateStr += '<' + 'script>';
+                templateStr += 'var computed = data.value * 2;';
+                templateStr += 'var message = "Computed: " + computed;';
+                templateStr += '<' + '/script>';
+                templateStr += 'Input: {{value}}<br>';
+                templateStr += 'Result: {{:computed}}<br>';
+                templateStr += 'Message: {{:message}}';
+                
+                const template = Macrobars.compile(templateStr);
+                const data = { value: 21 };
+                const result = template(data);
+                document.getElementById('code-output').innerHTML = result;
+            } catch (error) {
+                document.getElementById('code-output').innerHTML = '<span style="color: red;">Error: ' + error.message + '</span>';
+            }
+        }
+
+        function runDeferDemo() {
+            try {
+                var templateStr = 'Value: {{value}}<br>' +
+                    '<' + 'defer>' +
+                    'alert("Value was: " + data.value);' +
+                    '<' + '/defer>' +
+                    '<em>Check browser console and alert!</em>';
+                
+                const template = Macrobars.compile(templateStr);
+                const data = { value: 42 };
+                const result = template(data);
+                document.getElementById('code-output').innerHTML = result;
+            } catch (error) {
+                document.getElementById('code-output').innerHTML = '<span style="color: red;">Error: ' + error.message + '</span>';
+            }
+        }
+
+        // Demo 9: Components
+        function runComponentDemo() {
+            try {
+                var userCardTemplate = '<div style="border: 1px solid #ddd; padding: 15px; border-radius: 5px; margin: 5px 0;">';
+                userCardTemplate += '<h4 style="margin: 0 0 10px 0;">👤 {{name}}</h4>';
+                userCardTemplate += '<p style="margin: 5px 0;"><strong>Email:</strong> {{email}}</p>';
+                userCardTemplate += '<p style="margin: 5px 0;"><strong>Role:</strong> {{role}}</p>';
+                userCardTemplate += '{{#if isActive}}<span style="color: green;">✅ Active</span>{{#else}}<span style="color: red;">❌ Inactive</span>{{/if}}';
+                userCardTemplate += '</div>';
+                
+                components = Macrobars.createComponents({
+                    userCard: userCardTemplate
+                });
+                
+                const template = Macrobars.compile('{{#component userCard}}', { components });
+                const data = { name: "John Doe", email: "john@example.com", role: "Developer", isActive: true };
+                const result = template(data);
+                document.getElementById('component-output').innerHTML = result;
+            } catch (error) {
+                document.getElementById('component-output').innerHTML = '<span style="color: red;">Error: ' + error.message + '</span>';
+            }
+        }
+
+        function createCustomComponent() {
+            try {
+                var productCardTemplate = '<div style="border: 2px solid #007acc; padding: 15px; border-radius: 8px; margin: 5px 0; background: #f8f9fa;">';
+                productCardTemplate += '<h4 style="color: #007acc; margin: 0 0 10px 0;">🛍️ {{productName}}</h4>';
+                productCardTemplate += '<p><strong>Price:</strong> ${{%price}}</p>';
+                productCardTemplate += '<p><strong>Stock:</strong> {{stock}} units</p>';
+                productCardTemplate += '{{#if onSale}}<div style="background: #28a745; color: white; padding: 5px; border-radius: 3px; text-align: center;">🏷️ ON SALE!</div>{{/if}}';
+                productCardTemplate += '</div>';
+                
+                components = Macrobars.createComponents({
+                    productCard: productCardTemplate
+                });
+                
+                const template = Macrobars.compile('{{#component productCard}}', { components });
+                const data = { productName: "Magic Widget Pro", price: 299.99, stock: 15, onSale: true };
+                const result = template(data);
+                document.getElementById('component-output').innerHTML = result;
+            } catch (error) {
+                document.getElementById('component-output').innerHTML = '<span style="color: red;">Error: ' + error.message + '</span>';
+            }
+        }
+
+        // Demo 10: Custom template editor
+        function runCustomTemplate() {
+            try {
+                const templateStr = document.getElementById('template-input').value;
+                const dataStr = document.getElementById('data-input').value;
+                const data = JSON.parse(dataStr);
+                
+                currentTemplate = Macrobars.compile(templateStr);
+                const result = currentTemplate(data);
+                
+                document.getElementById('dynamic-content').innerHTML = result;
+                
+                // Update template info
+                var infoText = 'Compiled successfully!\n';
+                infoText += 'Tokens: ' + (currentTemplate.tokens ? currentTemplate.tokens.length : 0) + '\n';
+                infoText += 'Event bindings: ' + (currentTemplate.event_bindings ? currentTemplate.event_bindings.length : 0) + '\n';
+                infoText += 'Template size: ' + templateStr.length + ' characters';
+                updateTemplateInfo(infoText);
+                
+            } catch (error) {
+                document.getElementById('dynamic-content').innerHTML = '<div style="color: red; padding: 10px; background: #ffe6e6; border-radius: 5px;"><strong>❌ Error:</strong> ' + error.message + '</div>';
+                updateTemplateInfo('Compilation failed: ' + error.message);
+            }
+        }
+
+        function loadExampleTemplate(type) {
+            const templates = {
+                basic: {
+                    template: '<h3>Welcome {{name}}!</h3>\n<p>{{#if isVip}}🌟 VIP Member{{#else}}Regular Member{{/if}}</p>\n<p>Account Balance: ${{%balance}}</p>\n{{#each notifications}}\n• {{data}}\n{{/each}}',
+                    data: '{\n  "name": "Sarah Connor",\n  "isVip": true,\n  "balance": 1247.50,\n  "notifications": ["New message", "System update", "Payment received"]\n}'
+                },
+                advanced: {
+                    template: '&lt;div class="dashboard"&gt;\n' +
+                      '  &lt;h2&gt;{{company}} Dashboard&lt;/h2&gt;\n' +
+                      '  \n' +
+                      '  &lt;script&gt;\n' +
+                      '    var totalRevenue = 0;\n' +
+                      '    data.quarters.forEach(q =&gt; totalRevenue += q.revenue);\n' +
+                      '  &lt;/script&gt;\n' +
+                      '  \n' +
+                      '  &lt;p&gt;&lt;strong&gt;Total Revenue:&lt;/strong&gt; ${{:totalRevenue}}&lt;/p&gt;\n' +
+                      '  \n' +
+                      '  {{#each quarters as quarter}}\n' +
+                      '    &lt;div style="margin: 10px 0; padding: 10px; border-left: 4px solid #007acc;"&gt;\n' +
+                      '      &lt;h4&gt;{{quarter.name}}&lt;/h4&gt;\n' +
+                      '      &lt;p&gt;Revenue: ${{%quarter.revenue}} {{#eq quarter.trend "up"}}📈{{/eq}}{{#eq quarter.trend "down"}}📉{{/eq}}&lt;/p&gt;\n' +
+                      '      {{#lookup quarter "bonus"}}\n' +
+                      '        &lt;span style="color: green;"&gt;🎯 Bonus: ${{quarter.bonus}}&lt;/span&gt;\n' +
+                      '      {{/lookup}}\n' +
+                      '    &lt;/div&gt;\n' +
+                      '  {{/each}}\n' +
+                      '  \n' +
+                      '  &lt;button {{@click="generateReport"}} style="padding: 10px; background: #28a745; color: white; border: none; border-radius: 5px;"&gt;\n' +
+                      '    📊 Generate Report\n' +
+                      '  &lt;/button&gt;\n' +
+                      '&lt;/div&gt;',
+                    data: '{\n  "company": "TechCorp Industries",\n  "quarters": [\n    {"name": "Q1 2024", "revenue": 125000, "trend": "up", "bonus": 5000},\n    {"name": "Q2 2024", "revenue": 138000, "trend": "up"},\n    {"name": "Q3 2024", "revenue": 142000, "trend": "up", "bonus": 7500},\n    {"name": "Q4 2024", "revenue": 128000, "trend": "down"}\n  ],\n  "generateReport": "function() { alert(\'Report generated for \' + this.company); }"\n}'
+                }
+            };
+            
+            const example = templates[type];
+            if (example) {
+                document.getElementById('template-input').value = example.template;
+                document.getElementById('data-input').value = example.data;
+                runCustomTemplate();
+            }
+        }
+
+        function clearEditor() {
+            document.getElementById('template-input').value = '';
+            document.getElementById('data-input').value = '{}';
+            document.getElementById('dynamic-content').innerHTML = 'Editor cleared. Enter a template and click "Render Template".';
+            updateTemplateInfo('Ready.');
+        }
+
+        // Initialize demos on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDemos();
+        });
+    </script>
+</body>
+</html>

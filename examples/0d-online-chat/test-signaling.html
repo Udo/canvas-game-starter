@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signaling Server Test</title>
+</head>
+<body>
+    <h1>Signaling Server Test</h1>
+    <div id="output"></div>
+    
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(message) {
+            output.innerHTML += '<p>' + message + '</p>';
+            console.log(message);
+        }
+        
+        async function testSignaling() {
+            const testRoom = 'test123';
+            
+            try {
+                // Test 1: Check server availability with GET request
+                log('Testing GET request...');
+                const getResponse = await fetch(`signaling.php?room=${testRoom}`);
+                log(`GET Response status: ${getResponse.status}`);
+                
+                if (getResponse.ok) {
+                    const getData = await getResponse.json();
+                    log(`GET Response data: ${JSON.stringify(getData)}`);
+                } else {
+                    const errorText = await getResponse.text();
+                    log(`GET Error: ${errorText}`);
+                }
+                
+                // Test 2: Send a test message with POST
+                log('Testing POST request...');
+                const testMessage = {
+                    type: 'test',
+                    message: 'Hello from test script',
+                    timestamp: Date.now()
+                };
+                
+                const postResponse = await fetch(`signaling.php?room=${testRoom}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testMessage)
+                });
+                
+                log(`POST Response status: ${postResponse.status}`);
+                
+                if (postResponse.ok) {
+                    const postData = await postResponse.json();
+                    log(`POST Response data: ${JSON.stringify(postData)}`);
+                } else {
+                    const errorText = await postResponse.text();
+                    log(`POST Error: ${errorText}`);
+                }
+                
+                // Test 3: Retrieve the message we just sent
+                log('Testing message retrieval...');
+                const getResponse2 = await fetch(`signaling.php?room=${testRoom}&since=0`);
+                log(`GET2 Response status: ${getResponse2.status}`);
+                
+                if (getResponse2.ok) {
+                    const getData2 = await getResponse2.json();
+                    log(`GET2 Response data: ${JSON.stringify(getData2)}`);
+                } else {
+                    const errorText = await getResponse2.text();
+                    log(`GET2 Error: ${errorText}`);
+                }
+                
+            } catch (error) {
+                log(`Test error: ${error.message}`);
+            }
+        }
+        
+        // Run the test
+        testSignaling();
+    </script>
+</body>
+</html>

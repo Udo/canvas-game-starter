@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>u-2dvis Demo</title>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 0; 
+            font-family: Arial, sans-serif; 
+            background: #222;
+            overflow: hidden;
+        }
+        .ui-panel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            max-width: 300px;
+            z-index: 1000;
+        }
+        .ui-panel h3 {
+            margin-top: 0;
+            color: #4CAF50;
+        }
+        .ui-section {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #555;
+        }
+        .ui-section:last-child {
+            border-bottom: none;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            margin: 3px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .info-text {
+            font-size: 12px;
+            color: #ccc;
+            margin: 5px 0;
+        }
+        .stats {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        input[type="range"] {
+            width: 100%;
+        }
+        .slider-group {
+            margin: 10px 0;
+        }
+        .slider-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="ui-panel">
+        <h3>u-2dvis Demo</h3>
+        
+        <div class="ui-section">
+            <strong>Light Sources:</strong><br>
+            <div class="info-text">Drag light sources to move them around</div>
+            <button onclick="addRandomLight()">Add Random Light</button>
+            <button onclick="clearLights()">Clear All Lights</button>
+            <div class="slider-group">
+                <label>Ray Count: <span id="ray-count-value">72</span></label>
+                <input type="range" id="ray-count" min="8" max="360" step="8" value="72">
+            </div>
+            <div class="slider-group">
+                <label>Max Distance: <span id="max-dist-value">400</span></label>
+                <input type="range" id="max-dist" min="100" max="800" step="50" value="400">
+            </div>
+        </div>
+
+        <div class="ui-section">
+            <strong>Visualization:</strong><br>
+            <button onclick="toggleRays()" id="rays-btn">Hide Rays</button>
+            <button onclick="toggleShadows()" id="shadows-btn">Hide Shadows</button>
+            <div class="info-text">Toggle different visual elements</div>
+        </div>
+
+        <div class="ui-section">
+            <strong>Adaptive Sampling:</strong><br>
+            <button onclick="toggleAdaptive()" id="adaptive-btn">Enable Adaptive</button>
+            <button onclick="switchAdaptiveType()" id="adaptive-type-btn">Edge Detection</button>
+            <div class="info-text">Improves accuracy at blocker boundaries</div>
+        </div>
+
+        <div class="ui-section">
+            <strong>Blockers:</strong><br>
+            <button onclick="addRandomBlocker('rect')">Add Random Rectangle</button>
+            <button onclick="addRandomBlocker('circle')">Add Random Circle</button>
+            <button onclick="clearBlockers()">Clear All Blockers</button>
+            <button onclick="addWalls()">Add Boundary Walls</button>
+            <div class="info-text">Drag blockers to move them, right-click to remove</div>
+        </div>
+
+        <div class="ui-section">
+            <strong>Presets:</strong><br>
+            <button onclick="loadPreset('maze')">Maze</button>
+            <button onclick="loadPreset('room')">Room</button>
+            <button onclick="loadPreset('pillars')">Pillars</button>
+        </div>
+    </div>
+
+    <div class="stats" id="stats">
+        Light: (0, 0)<br>
+        Rays: 72<br>
+        Blockers: 0<br>
+        Visible Area: 0%
+    </div>
+
+    <script src="pixi.min.js"></script>
+    <script src="u-2dvis.js"></script>
+
+    <script>
+        let app, lights = [], blockers = [], rayCount = 72, maxDist = 400, showRays = true, showShadows = true, useAdaptive = false, adaptiveType = 'edge';
+        let isDragging = false, dragTarget = null, dragOffset = { x: 0, y: 0 };
+        let backgroundContainer, shadowContainer, lightContainer, rayContainer, blockerContainer, lightSources = [];
+
+        const colors = [0xFFFFAA,0xFFAAAA,0xAAFFAA,0xAAAAFF,0xFFAAFF,0xAAFFFF,0xFFCCAA,0xCCAAFF,0xAAFFCC,0xFFAACC];
+        const randomColor = () => colors[Math.floor(Math.random() * colors.length)];
+        const distance = (x1, y1, x2, y2) => Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2);
+        const hitTest = (x, y, obj) => {
+            if(obj.type === 'rect') return x >= obj.x && x <= obj.x + obj.w && y >= obj.y && y <= obj.y + obj.h;
+            if(obj.type === 'circle') return distance(x, y, obj.x, obj.y) <= obj.r;
+            return distance(x, y, obj.x, obj.y) < 15;
+        };
+
+        async function init() {
+            app = new PIXI.Application();
+            await app.init({ width: window.innerWidth, height: window.innerHeight, backgroundColor: 0x000000 });
+            document.body.appendChild(app.canvas);
+
+            [backgroundContainer, shadowContainer, lightContainer, rayContainer, blockerContainer] = 
+                Array(5).fill().map(() => new PIXI.Container());
+            app.stage.addChild(backgroundContainer, shadowContainer, lightContainer, rayContainer, blockerContainer);
+
+            addLight(app.screen.width / 2, app.screen.height / 2);
+            loadPreset('room');
+
+            ['mousedown', 'mousemove', 'mouseup', 'contextmenu'].forEach((event, i) => {
+                app.canvas.addEventListener(event, [onCanvasMouseDown, onCanvasMouseMove, onCanvasMouseUp, onCanvasRightClick][i]);
+            });
+            
+            document.getElementById('ray-count').oninput = updateRayCount;
+            document.getElementById('max-dist').oninput = updateMaxDist;
+
+            render();
+            console.log('u-2dvis demo initialized');
+        }
+
+        function addLight(x, y, color = randomColor()) {
+            const light = { x, y, color };
+            lights.push(light);
+            
+            const lightGraphic = new PIXI.Graphics();
+            lightGraphic.interactive = true;
+            lightGraphic.cursor = 'pointer';
+            lightGraphic.lightIndex = lights.length - 1;
+            app.stage.addChild(lightGraphic);
+            lightSources.push(lightGraphic);
+            
+            updateLightGraphic(lightGraphic, light, false);
+            render();
+        }
+
+        function addRandomLight() {
+            addLight(100 + Math.random() * (app.screen.width - 200), 100 + Math.random() * (app.screen.height - 200));
+        }
+
+        function clearLights() {
+            lights = [];
+            lightSources.forEach(graphic => {
+                graphic.destroy();
+                app.stage.removeChild(graphic);
+            });
+            lightSources = [];
+            render();
+        }
+
+        function updateLightGraphic(graphic, light, isDragging) {
+            graphic.clear();
+            const size = isDragging ? 16 : 12;
+            const innerSize = isDragging ? 8 : 6;
+            
+            graphic.circle(0, 0, size);
+            graphic.fill({ color: light.color, alpha: 0.7 });
+            graphic.stroke({ color: 0xFFFFFF, width: isDragging ? 3 : 2, alpha: 0.8 });
+            
+            graphic.circle(0, 0, innerSize);
+            graphic.fill({ color: 0xFFFFFF, alpha: isDragging ? 0.9 : 0.8 });
+            
+            if(!isDragging) {
+                graphic.circle(0, 0, 2);
+                graphic.fill({ color: light.color, alpha: 1 });
+            }
+            
+            graphic.x = light.x;
+            graphic.y = light.y;
+        }
+
+        function onCanvasMouseDown(event) {
+            const x = event.offsetX, y = event.offsetY;
+            
+            for(let i = lightSources.length - 1; i >= 0; i--) {
+                if(hitTest(x, y, lights[i])) {
+                    isDragging = true;
+                    dragTarget = { type: 'light', index: i };
+                    dragOffset = { x: x - lights[i].x, y: y - lights[i].y };
+                    return;
+                }
+            }
+            
+            for(let i = blockers.length - 1; i >= 0; i--) {
+                if(hitTest(x, y, blockers[i])) {
+                    isDragging = true;
+                    dragTarget = { type: 'blocker', index: i };
+                    dragOffset = { x: x - blockers[i].x, y: y - blockers[i].y };
+                    return;
+                }
+            }
+        }
+
+        const onCanvasMouseMove = (event) => {
+            if(!isDragging) return;
+            const x = event.offsetX - dragOffset.x, y = event.offsetY - dragOffset.y;
+            const target = dragTarget.type === 'light' ? lights[dragTarget.index] : blockers[dragTarget.index];
+            target.x = x;
+            target.y = y;
+            
+            if(dragTarget.type === 'light') {
+                updateLightGraphic(lightSources[dragTarget.index], target, true);
+            }
+            render();
+        };
+
+        const onCanvasMouseUp = () => {
+            if(isDragging && dragTarget?.type === 'light') {
+                updateLightGraphic(lightSources[dragTarget.index], lights[dragTarget.index], false);
+            }
+            isDragging = false;
+            dragTarget = null;
+        };
+
+        function onCanvasRightClick(event) {
+            event.preventDefault();
+            const x = event.offsetX, y = event.offsetY;
+            
+            for(let i = lights.length - 1; i >= 0; i--) {
+                if(hitTest(x, y, lights[i])) {
+                    lights.splice(i, 1);
+                    lightSources[i].destroy();
+                    app.stage.removeChild(lightSources[i]);
+                    lightSources.splice(i, 1);
+                    lightSources.forEach((ls, j) => ls.lightIndex = j);
+                    render();
+                    return;
+                }
+            }
+            
+            for(let i = blockers.length - 1; i >= 0; i--) {
+                if(hitTest(x, y, blockers[i])) {
+                    blockers.splice(i, 1);
+                    render();
+                    return;
+                }
+            }
+        }
+
+        const toggle = (prop, btnId, onText, offText) => {
+            window[prop] = !window[prop];
+            document.getElementById(btnId).textContent = window[prop] ? offText : onText;
+            render();
+        };
+
+        const toggleRays = () => toggle('showRays', 'rays-btn', 'Show Rays', 'Hide Rays');
+        const toggleShadows = () => toggle('showShadows', 'shadows-btn', 'Show Shadows', 'Hide Shadows');
+        const toggleAdaptive = () => toggle('useAdaptive', 'adaptive-btn', 'Enable Adaptive', 'Disable Adaptive');
+
+        const updateRayCount = () => {
+            rayCount = parseInt(document.getElementById('ray-count').value);
+            document.getElementById('ray-count-value').textContent = rayCount;
+            render();
+        };
+
+        const updateMaxDist = () => {
+            maxDist = parseInt(document.getElementById('max-dist').value);
+            document.getElementById('max-dist-value').textContent = maxDist;
+            render();
+        };
+
+        const clearBlockers = () => {
+            blockers = [];
+            render();
+        };
+
+        const switchAdaptiveType = () => {
+            adaptiveType = adaptiveType === 'edge' ? 'corner' : 'edge';
+            document.getElementById('adaptive-type-btn').textContent = adaptiveType === 'edge' ? 'Edge Detection' : 'Corner Sampling';
+            if(useAdaptive) render();
+        };
+
+        function addRandomBlocker(type = 'rect') {
+            const w = app.screen.width, h = app.screen.height;
+            if(type === 'rect') {
+                const bw = 30 + Math.random() * 60, bh = 30 + Math.random() * 60;
+                blockers.push({ type: 'rect', x: Math.random() * (w - bw), y: Math.random() * (h - bh), w: bw, h: bh });
+            } else {
+                const r = 20 + Math.random() * 40;
+                blockers.push({ type: 'circle', x: r + Math.random() * (w - 2 * r), y: r + Math.random() * (h - 2 * r), r });
+            }
+            render();
+        }
+
+        const addWalls = () => {
+            const w = app.screen.width, h = app.screen.height, t = 20;
+            blockers.push(
+                { type: 'rect', x: 0, y: 0, w, h: t },
+                { type: 'rect', x: 0, y: h - t, w, h: t },
+                { type: 'rect', x: 0, y: 0, w: t, h },
+                { type: 'rect', x: w - t, y: 0, w: t, h }
+            );
+            render();
+        };
+
+        const addRect = (x, y, w, h) => blockers.push({ type: 'rect', x, y, w, h });
+        const addCircle = (x, y, r) => blockers.push({ type: 'circle', x, y, r });
+        const inBounds = (x, y, margin = 50) => x >= margin && y >= margin && x < app.screen.width - margin && y < app.screen.height - margin;
+
+        function loadPreset(name) {
+            blockers = [];
+            const cx = app.screen.width / 2, cy = app.screen.height / 2;
+            
+            if(name === 'maze') {
+                for(let x = cx - 300; x < cx + 300; x += 120) {
+                    for(let y = cy - 200; y < cy + 200; y += 120) {
+                        if(Math.random() > 0.3 && inBounds(x, y, 80)) addRect(x, y, 80, 80);
+                    }
+                }
+            } else if(name === 'room') {
+                addWalls();
+                addRect(cx - 200, cy - 150, 120, 60);
+                addRect(cx + 50, cy - 50, 80, 80);
+                addRect(cx + 150, cy - 100, 60, 100);
+                addRect(cx - 100, cy + 100, 100, 50);
+            } else if(name === 'pillars') {
+                for(let x = cx - 300; x < cx + 300; x += 200) {
+                    for(let y = cy - 200; y < cy + 200; y += 200) {
+                        if(inBounds(x, y, 75)) {
+                            Math.random() > 0.5 ? addRect(x - 25, y - 25, 50, 50) : addCircle(x, y, 25);
+                        }
+                    }
+                }
+                for(let i = 0; i < 3; i++) {
+                    const r = 15 + Math.random() * 25;
+                    const x = cx + (Math.random() - 0.5) * 400;
+                    const y = cy + (Math.random() - 0.5) * 300;
+                    if(inBounds(x, y, r)) addCircle(x, y, r);
+                }
+            }
+            render();
+        }
+
+        const clearContainers = () => {
+            [lightContainer, rayContainer, shadowContainer, blockerContainer].forEach(container => {
+                container.children.forEach(child => child.destroy());
+                container.removeChildren();
+            });
+        };
+        
+        const drawPolygon = (container, points, fillColor, fillAlpha = 1, strokeColor = null, strokeWidth = 0) => {
+            if(points.length < 3) return;
+            const g = new PIXI.Graphics();
+            g.moveTo(points[0][0], points[0][1]);
+            points.slice(1).forEach(p => g.lineTo(p[0], p[1]));
+            g.closePath();
+            g.fill({ color: fillColor, alpha: fillAlpha });
+            if(strokeColor !== null) g.stroke({ color: strokeColor, width: strokeWidth });
+            container.addChild(g);
+        };
+
+        const drawShape = (container, obj, fillColor, fillAlpha = 1, strokeColor = null, strokeWidth = 0) => {
+            const g = new PIXI.Graphics();
+            if(obj.type === 'rect') g.rect(obj.x, obj.y, obj.w, obj.h);
+            else if(obj.type === 'circle') g.circle(obj.x, obj.y, obj.r);
+            g.fill({ color: fillColor, alpha: fillAlpha });
+            if(strokeColor !== null) g.stroke({ color: strokeColor, width: strokeWidth });
+            container.addChild(g);
+        };
+
+        function render() {
+            clearContainers();
+            if(!lights.length) return updateStats([]);
+
+            const allLightMasks = useAdaptive ? 
+                vis_multi_light_mask(lights, rayCount, blockers, maxDist, true) :
+                vis_multi_light_mask(lights, rayCount, blockers, maxDist, false);
+
+            allLightMasks.forEach(lightMask => {
+                if(lightMask.light.length > 2) {
+                    const light = lightMask.lightSource;
+                    const layers = [
+                        { factor: 1.0, alpha: 0.08 }, { factor: 0.85, alpha: 0.12 }, { factor: 0.7, alpha: 0.15 },
+                        { factor: 0.55, alpha: 0.18 }, { factor: 0.4, alpha: 0.20 }, { factor: 0.25, alpha: 0.22 }, { factor: 0.1, alpha: 0.25 }
+                    ];
+                    
+                    layers.forEach(layer => {
+                        const maskGraphics = new PIXI.Graphics();
+                        maskGraphics.moveTo(lightMask.light[0][0], lightMask.light[0][1]);
+                        lightMask.light.slice(1).forEach(p => maskGraphics.lineTo(p[0], p[1]));
+                        maskGraphics.closePath();
+                        maskGraphics.fill({ color: 0xFFFFFF });
+                        
+                        const layerGraphics = new PIXI.Graphics();
+                        const layerRadius = layer.factor * maxDist;
+                        layerGraphics.circle(light.x, light.y, layerRadius);
+                        
+                        const fadeFactor = vis_distance_fade(layerRadius, maxDist, 0.1);
+                        layerGraphics.fill({ color: lightMask.color, alpha: layer.alpha * fadeFactor });
+                        layerGraphics.mask = maskGraphics;
+                        
+                        lightContainer.addChild(maskGraphics, layerGraphics);
+                    });
+                }
+            });
+
+            if(showShadows) {
+                allLightMasks.forEach(lightMask => {
+                    lightMask.shadows.forEach(shadow => {
+                        if(shadow.length >= 6) {
+                            drawPolygon(shadowContainer, shadow, 0x000000, 0.3);
+                        }
+                    });
+                });
+            }
+
+            if(showRays) {
+                allLightMasks.forEach((lightMask, lightIndex) => {
+                    const light = lights[lightIndex];
+                    lightMask.rays.forEach(ray => {
+                        const g = new PIXI.Graphics();
+                        g.moveTo(light.x, light.y);
+                        g.lineTo(ray.x, ray.y);
+                        
+                        const actualDistance = Math.sqrt((ray.x - light.x) ** 2 + (ray.y - light.y) ** 2);
+                        const distanceFactor = vis_distance_fade(actualDistance, maxDist, 0.2);
+                        
+                        let alpha = 0.25 * distanceFactor;
+                        if(ray.blocked) alpha *= 0.3;
+                        
+                        const rayWidth = ray.blocked ? 0.5 : 0.5 + distanceFactor * 2.0;
+                        
+                        g.stroke({ 
+                            color: ray.blocked ? 0xFF4444 : lightMask.color, 
+                            width: rayWidth, 
+                            alpha: Math.max(0.02, alpha)
+                        });
+                        rayContainer.addChild(g);
+                    });
+                });
+            }
+
+            blockers.forEach((blocker, index) => {
+                const isDraggedBlocker = isDragging && dragTarget?.type === 'blocker' && dragTarget.index === index;
+                drawShape(blockerContainer, blocker, isDraggedBlocker ? 0x666666 : 0x444444, 1, isDraggedBlocker ? 0xAAAAAA : 0x666666, isDraggedBlocker ? 3 : 2);
+            });
+
+            lights.forEach((light, index) => {
+                const isBeingDragged = isDragging && dragTarget?.type === 'light' && dragTarget.index === index;
+                updateLightGraphic(lightSources[index], light, isBeingDragged);
+            });
+
+            updateStats(allLightMasks);
+        }
+
+        function updateStats(allLightMasks) {
+            if(!allLightMasks || allLightMasks.length === 0) {
+                document.getElementById('stats').innerHTML = `Light Sources: 0<br>Rays: 0<br>Blockers: ${blockers.length}<br>Visible: 0%`;
+                return;
+            }
+
+            let totalRays = 0, totalVisibleRays = 0;
+            allLightMasks.forEach(lightMask => {
+                totalRays += lightMask.rays.length;
+                totalVisibleRays += lightMask.rays.filter(r => !r.blocked).length;
+            });
+
+            const visiblePercent = totalRays > 0 ? Math.round((totalVisibleRays / totalRays) * 100) : 0;
+            document.getElementById('stats').innerHTML = `Light Sources: ${lights.length}<br>Rays: ${rayCount}${useAdaptive ? ' (adaptive)' : ''}<br>Total Rays: ${totalRays}<br>Blockers: ${blockers.length}<br>Visible: ${visiblePercent}%`;
+        }
+
+        window.addEventListener('load', init);
+        window.addEventListener('resize', () => {
+            if(app) {
+                app.renderer.resize(window.innerWidth, window.innerHeight);
+                render();
+            }
+        });
+    </script>
+</body>
+</html>

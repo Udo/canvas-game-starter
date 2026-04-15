@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>HTML/Canvas/3D Game Starter</title>
+		<meta name="description" content="">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<link rel="stylesheet" href="css/game.css?">
+		<link rel="stylesheet" href="../../css/hint.css">
+		<link rel="stylesheet" href="../../css/font-awesome.min.css">
+
+		<script src="../../lib/u-howler.js"></script>
+		<script src="../../lib/u-macrobars.js"></script>
+		<script src="../../lib/u-pathastar.js"></script>
+		<script src="../../lib/u-threestage.js"></script>
+		<script src="../../lib/u-helper.js"></script>
+		<script src="../../lib/u-events.js"></script>
+		<script src="../../lib/u-grid.js"></script>
+		<script src="../../lib/u-gridhelper.js"></script>
+
+		<script src="js/game.js?"></script>
+	</head>
+	<body onunload="Game.quick_save();">
+
+		<nav>
+			HTML/Canvas/3D Game Starter
+		</nav>
+
+		<footer>
+			<div id="frame-rate">0fps</div>
+		</footer>
+
+		<script type="module">
+		import { setup_pipeline, THREE, EffectComposer, Shaders } from './js/pipeline.js';
+
+		let stage = null;
+		let grid = false;
+		const cellSize = 3;
+		const gridSize = 12;
+
+		const Shapes = {};
+		const Mat = {};
+		const Obj = {};
+
+			async function initStage() {
+				stage = await ThreeStage.create({
+					THREE : THREE,
+					smoothScroll : 0.85,
+					draggable : true,
+					pan_speed : 0.03,
+				});
+
+			setup_pipeline(stage, EffectComposer, Shaders);
+			Game.init(stage, document.getElementById('frame-rate'));
+			
+			stage.start();
+
+			const mapLayer = stage.layers.add('map');
+			const mobsLayer = stage.layers.add('mobs');
+			const uiLayer = stage.layers.add('ui');
+
+			const light = new THREE.DirectionalLight( 0xffffff, 5.40 );
+			light.position.set( 0.3, 1, 0.3 );
+			stage.root.add( light );
+
+			const ambient = new THREE.HemisphereLight( 0x7799aa, 0x880088, 2.85 );
+			stage.root.add( ambient );
+
+			stage.shapes.tile = new THREE.CylinderGeometry( cellSize*0.56, cellSize*0.56, cellSize, 6);
+			stage.mat.tile = new THREE.MeshStandardMaterial( {
+				color: 0xcccccc,
+				metalness: 0.01,
+				roughness: 0.38
+			} );
+			stage.mat.highlight = new THREE.MeshStandardMaterial( {color: 0xaaffaa, emissive : 0x888888} );
+			stage.mat.cursor = new THREE.MeshStandardMaterial( {color: 0xff0000, emissive : 0x444444} );
+
+			const mapOffset = -0.5*cellSize*gridSize;
+
+			Object.assign(stage.camera.position, { x : 0, y : -20, z : 15 });
+			Object.assign(stage.camera.rotation, { x : 0.7, y : 0, z : 0 });
+			stage.camera.updateMatrixWorld();
+
+			grid = UGrid.create(gridSize, gridSize, {
+				cellSize : cellSize,
+				type : UGrid.pointyTop,
+				mapOffsetX : mapOffset,
+				mapOffsetY : mapOffset,
+
+				onCreateCell : function(cell) {
+					const tile = new THREE.Mesh( stage.shapes.tile, stage.mat.tile );
+					tile.rotation.x = Math.PI * 0.5;
+					tile.position.x = cell.pos.x;
+					tile.position.y = cell.pos.y;
+					tile.position.z = -cellSize*0.5;
+					tile.cell = cell;
+					cell.goIndex = mapLayer.children.length;
+					mapLayer.add(tile);
+				},
+			});
+
+			// Fix GridMap3D layer access
+			if (!stage.layers.ui) {
+				stage.layers.ui = stage.layers.get('ui');
+			}
+			if (!stage.layers.map) {
+				stage.layers.map = stage.layers.get('map');
+			}
+
+			GridMap3D.init(grid, stage);
+
+			stage.events.on('click', function(e) {
+				const hit = stage.getNearestMouseIntersect(mapLayer.children);
+				if(hit) {
+					GridMap3D.placeXY(GridMap3D.cursor, hit.object.cell);
+				}
+			});
+
+			stage.events.on('mousemove', function(e) {
+				GridMap3D.mouseToGroundPlane();
+				GridMap3D.resetHighlight();
+				GridMap3D.highlightTileAt(GridMap3D.mousePlane.x, GridMap3D.mousePlane.y);
+			});
+
+			stage.animate(function(dt) {
+				stage.root.rotation.z += dt*0.1;
+				return true;
+			});
+
+			setInterval(() => {
+				document.getElementById('frame-rate').textContent = stage.debug.fps + ' FPS';
+			}, 100);
+		}
+
+		window.addEventListener('load', () => {
+			initStage().catch(console.error);
+		});
+		</script>
+
+	</body>
+</html>

@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>U-Helper Demo</title>
+    <style>
+        :root {
+            --space: 8px;
+            --radius: 5px;
+            
+            --gray: #6c757d;
+            --gray-bg: #f5f5f5;
+            --blue: #007acc;
+            --green: #28a745;
+            --white: white;
+            --dark: #333;
+            
+            --max-width: 1400px;
+            --sidebar: 400px;
+        }
+        
+        * { box-sizing: border-box; }
+        
+        body { 
+            font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: var(--space);
+            background: var(--gray-bg);
+        }
+        
+        .container { 
+            background: var(--white);
+            padding: calc(var(--space) * 1.5);
+            border-radius: var(--radius);
+        }
+        
+        .main-layout { 
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: calc(var(--space) * 1.5);
+        }
+        
+        .api-column { 
+            background: var(--gray-bg);
+            padding: var(--space);
+            border-radius: var(--radius);
+            border-left: 4px solid var(--green);
+        }
+        
+        h1 { 
+            color: var(--dark);
+            text-align: center;
+            margin-bottom: calc(var(--space) * 1.5);
+            grid-column: 1 / -1;
+        }
+        
+        h2 { 
+            color: var(--gray);
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: var(--space);
+            margin-top: calc(var(--space) * 1.5);
+        }
+        
+        .demo-section { 
+            margin: var(--space) 0;
+            padding: var(--space);
+            background: var(--gray-bg);
+            border-radius: var(--radius);
+            border-left: 4px solid var(--blue);
+        }
+        
+        .controls, .input-group { 
+            display: flex;
+            gap: var(--space);
+            margin: 15px 0;
+        }
+        
+        .controls { flex-wrap: wrap; }
+        .input-group { align-items: center; }
+        .feature-grid { display: grid; gap: var(--space); margin: var(--space) 0; }
+        
+        button { 
+            background: var(--blue);
+            color: var(--white);
+            border: none;
+            padding: var(--space) var(--space);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover { filter: brightness(0.9); }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        
+        input[type="text"], input[type="number"], input[type="range"] { 
+            padding: var(--space);
+            border: 1px solid #ddd;
+            border-radius: var(--radius);
+        }
+        
+        input[type="number"] {
+            width: 80px;
+        }
+        
+        input[type="range"] {
+            flex: 1;
+        }
+        
+        .status, .code-example { 
+            font-family: monospace;
+            padding: var(--space);
+            border-radius: var(--radius);
+            margin: var(--space) 0;
+        }
+        
+        .status { 
+            background: var(--dark);
+            color: #0f0;
+            white-space: pre-wrap;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        .code-example { 
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            overflow-x: auto;
+            margin: var(--space) 0;
+        }
+        
+        .highlight { color: #68d391; }
+        .keyword { color: #fbb6ce; }
+        .string { color: #fbd38d; }
+        
+        .api-section { margin: 15px 0; }
+        .api-section h3 { 
+            color: var(--green);
+            margin: 0 0 var(--space) 0;
+        }
+        
+        .api-method { 
+            font-family: monospace;
+            margin: 3px 0;
+            color: var(--gray);
+        }
+        
+        .api-method .method-name { color: var(--blue); font-weight: bold; }
+        .api-method .return-type { color: #6f42c1; }
+        .api-method .param { color: #e83e8c; }
+        
+        .api-description {
+            margin: var(--space) 0;
+        }
+        
+        .api-options {
+            color: var(--gray);
+        }
+        
+        .help-text {
+            color: var(--gray);
+            margin: var(--space) 0;
+        }
+        
+        .code-comment {
+            color: #68d391;
+        }
+        
+        .color-box { 
+            display: inline-block; 
+            width: 30px; 
+            height: 30px; 
+            margin: 5px; 
+            border: 1px solid #000; 
+            border-radius: var(--radius);
+        }
+        
+        canvas { 
+            border: 1px solid #ddd; 
+            border-radius: var(--radius);
+            margin: var(--space) 0;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-layout { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>U-Helper Demo</h1>
+        
+        <div class="main-layout">
+            <div class="demo-column">
+                <h2>Hash Generation & Utility</h2>
+                <div class="demo-section">
+                    <div class="input-group">
+                        <input type="text" id="hash-input" value="Hello World" placeholder="Enter text">
+                        <button onclick="generateHash()">Generate Hash</button>
+                    </div>
+                    <div class="status" id="hash-output"></div>
+                </div>
+
+                <div class="demo-section">
+                    <div class="controls">
+                        <button onclick="demonstrateFirst()">Test first()</button>
+                        <button onclick="demonstrateIsset()">Test isset()</button>
+                    </div>
+                    <div class="status" id="utility-output"></div>
+                </div>
+            </div>
+
+            <div class="api-column">
+                <h2>Overview</h2>
+                
+                <div class="api-section">
+                    <div class="api-method"><span class="method-name">make_hash</span>(<span class="param">string</span>) → <span class="return-type">number</span></div>
+                    <div class="api-description">
+                        Generates a unique hash value from any input string for use as identifiers or keys.
+                    </div>
+                    <div class="api-method"><span class="method-name">first</span>(<span class="param">...args</span>) → <span class="return-type">any</span></div>
+                    <div class="api-description">
+                        Returns the first non-empty value from arguments<br>
+                    </div>
+                    <div class="api-method"><span class="method-name">isset</span>(<span class="param">value</span>) → <span class="return-type">boolean</span></div>
+                    <div class="api-description">
+                        Checks if a value is defined (not undefined)
+                    </div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Examples</h3>
+                    <pre class="code-example">
+<span class="code-comment">// Hash generation</span>
+<span class="keyword">const</span> hash = <span class="highlight">make_hash</span>(<span class="string">'player_123'</span>);
+
+<span class="code-comment">// Get first valid value</span>
+<span class="keyword">const</span> name = <span class="highlight">first</span>(<span class="string">''</span>, <span class="keyword">null</span>, <span class="string">'Player'</span>);
+
+<span class="code-comment">// Check if defined</span>
+<span class="keyword">if</span> (<span class="highlight">isset</span>(config.debug)) {
+  console.log(<span class="string">'Debug mode'</span>);
+}
+</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <div class="demo-column">
+                <h2>Color Functions</h2>
+                <div class="demo-section">
+                    <h3>RGB Color Generation</h3>
+                    <div class="input-group">
+                        <label>R:</label>
+                        <input type="number" id="r-input" value="255" min="0" max="255">
+                        <label>G:</label>
+                        <input type="number" id="g-input" value="128" min="0" max="255">
+                        <label>B:</label>
+                        <input type="number" id="b-input" value="64" min="0" max="255">
+                    </div>
+                    <div class="controls">
+                        <button onclick="demonstrateColors()">Generate Color</button>
+                    </div>
+                    <div class="status" id="color-output"></div>
+                </div>
+            </div>
+
+            <div class="api-column">
+                <h2>Colors</h2>
+                
+                <div class="api-section">
+                    <h3>Color Functions</h3>
+                    <div class="api-method"><span class="method-name">rgb</span>(<span class="param">r, g, b</span>) → <span class="return-type">number</span></div>
+                    <div class="api-description">
+                        Converts RGB values (0-255) to color integer<br>
+                    </div>
+                    <div class="api-method"><span class="method-name">frgb</span>(<span class="param">r, g, b</span>) → <span class="return-type">number</span></div>
+                    <div class="api-description">
+                        Converts floating RGB values (0.0-1.0) to color integer
+                    </div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Usage Examples</h3>
+                    <pre class="code-example">
+<span class="code-comment">// Integer RGB values</span>
+<span class="keyword">const</span> red = <span class="highlight">rgb</span>(<span class="string">255</span>, <span class="string">0</span>, <span class="string">0</span>);
+
+<span class="code-comment">// Floating point RGB values</span>
+<span class="keyword">const</span> blue = <span class="highlight">frgb</span>(<span class="string">0.0</span>, <span class="string">0.0</span>, <span class="string">1.0</span>);
+
+<span class="code-comment">// Use in graphics contexts</span>
+ctx.fillStyle = <span class="string">'#'</span> + red.toString(<span class="string">16</span>);
+</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <div class="demo-column">
+                <h2>Mathematical Functions</h2>
+                <div class="demo-section">
+                    <h3>Linear Interpolation</h3>
+                    <div class="input-group">
+                        <label>From:</label>
+                        <input type="number" id="lerp-a" value="0" step="0.1">
+                        <label>To:</label>
+                        <input type="number" id="lerp-b" value="100" step="0.1">
+                        <label>T:</label>
+                        <input type="number" id="lerp-t" value="0.5" min="0" max="1" step="0.1">
+                    </div>
+                    <div class="controls">
+                        <button onclick="demonstrateLerp()">Calculate Lerp</button>
+                    </div>
+                    <div class="status" id="lerp-output"></div>
+                </div>
+
+                <div class="demo-section">
+                    <h3>Value Clamping</h3>
+                    <div class="input-group">
+                        <label>Value:</label>
+                        <input type="number" id="clamp-val" value="150">
+                        <label>Min:</label>
+                        <input type="number" id="clamp-min" value="0">
+                        <label>Max:</label>
+                        <input type="number" id="clamp-max" value="100">
+                    </div>
+                    <div class="controls">
+                        <button onclick="demonstrateClamp()">Clamp Value</button>
+                    </div>
+                    <div class="status" id="clamp-output"></div>
+                </div>
+            </div>
+
+            <div class="api-column">
+                <h2>Math</h2>
+                
+                <div class="api-section">
+                    <h3>Mathematical Functions</h3>
+                    <div class="api-method"><span class="method-name">lerp</span>(<span class="param">a, b, t</span>) → <span class="return-type">number</span></div>
+                    <div class="api-description">
+                        Linear interpolation between two values<br>
+                    </div>
+                    <div class="api-method"><span class="method-name">clamp</span>(<span class="param">value, min, max</span>) → <span class="return-type">number</span></div>
+                    <div class="api-description">
+                        Constrains value between min and max<br>
+                    </div>
+                    <div class="api-method"><span class="method-name">dist</span>(<span class="param">x1, y1, x2, y2</span>) → <span class="return-type">number</span></div>
+                    <div class="api-description">
+                        Calculates Euclidean distance between points
+                    </div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Math Examples</h3>
+                    <pre class="code-example">
+<span class="code-comment">// Smooth transitions</span>
+<span class="keyword">const</span> position = <span class="highlight">lerp</span>(startPos, endPos, time);
+
+<span class="code-comment">// Keep values in bounds</span>
+<span class="keyword">const</span> health = <span class="highlight">clamp</span>(currentHealth, <span class="string">0</span>, <span class="string">100</span>);
+
+<span class="code-comment">// Calculate distances</span>
+<span class="keyword">const</span> distance = <span class="highlight">dist</span>(player.x, player.y, enemy.x, enemy.y);
+</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <div class="demo-column">
+                <h2>Geometry</h2>
+            
+                <div class="demo-section">
+                    <h3>Bresenham Line Algorithm</h3>
+                    <canvas id="line-canvas" width="400" height="200"></canvas>
+                    <div class="input-group">
+                        <label>Start:</label>
+                        <input type="number" id="line-x0" value="10" placeholder="X">
+                        <input type="number" id="line-y0" value="10" placeholder="Y">
+                        <label>End:</label>
+                        <input type="number" id="line-x1" value="350" placeholder="X">
+                        <input type="number" id="line-y1" value="150" placeholder="Y">
+                    </div>
+                    <div class="controls">
+                        <button onclick="drawBresenhamLine()">Draw Line</button>
+                    </div>
+                </div>
+
+                <div class="demo-section">
+                    <h3>Lerp</h3>
+                    <canvas id="lerp-canvas" width="400" height="100"></canvas>
+                    <div class="input-group">
+                        <input type="range" id="lerp-slider" min="0" max="1" step="0.01" value="0.5" oninput="updateLerpVisualization()">
+                        <span>T: <span id="t-value">0.5</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="api-column">
+                <h2>Geometry</h2>
+                
+                <div class="api-section">
+                    <h3>Line Generation</h3>
+                    <div class="api-method"><span class="method-name">bresenham_line</span>(<span class="param">x0, y0, x1, y1</span>) → <span class="return-type">Array</span></div>
+                    <div class="api-description">
+                        Generates pixel-perfect line points using Bresenham's algorithm. Returns array of [x, y] coordinate pairs.
+                    </div>
+                </div>
+
+                <div class="api-section">
+                    <pre class="code-example">
+<span class="code-comment">// Generate line for raycast</span>
+<span class="keyword">const</span> line = <span class="highlight">bresenham_line</span>(startX, startY, endX, endY);
+line.forEach(([x, y]) => {
+  <span class="keyword">if</span> (hitWall(x, y)) <span class="keyword">return</span>;
+  drawPixel(x, y);
+});
+
+<span class="code-comment">// Check collision along path</span>
+<span class="keyword">const</span> path = <span class="highlight">bresenham_line</span>(from.x, from.y, to.x, to.y);
+<span class="keyword">const</span> blocked = path.some(([x, y]) => grid[y][x]);
+</pre>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <div class="demo-column">
+                <h2>Vector Operations</h2>
+                
+                <div class="demo-section">
+                    <div class="input-group">
+                        <label>Vector 1:</label>
+                        <input type="number" id="v1x" value="3" step="0.1">
+                        <input type="number" id="v1y" value="4" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <label>Vector 2:</label>
+                        <input type="number" id="v2x" value="1" step="0.1">
+                        <input type="number" id="v2y" value="0" step="0.1">
+                    </div>
+                    <div class="controls">
+                        <button onclick="demonstrateVectors()">Calculate</button>
+                        <button onclick="demonstrateVectorRotation()">Rotate V1</button>
+                    </div>
+                    <div class="status" id="vector-output"></div>
+                </div>
+
+                <div class="demo-section">
+                    <canvas id="vector-canvas" width="400" height="300"></canvas>
+                    <div class="input-group">
+                        <label>Rotation:</label>
+                        <input type="range" id="rotation-slider" min="0" max="6.28" step="0.1" value="0" oninput="updateVectorVisualization()">
+                        <span>Angle: <span id="angle-value">0°</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="api-column">
+                <h2>Vectors</h2>
+                
+                <div class="api-section">
+                    <div class="api-method"><span class="method-name">normalize</span>(<span class="param">x, y</span>) → <span class="return-type">Array[2]</span></div>
+                    <div class="api-description">Returns unit vector with length 1</div>
+                    
+                    <div class="api-method"><span class="method-name">dot</span>(<span class="param">x1, y1, x2, y2</span>) → <span class="return-type">number</span></div>
+                    <div class="api-description">Dot product of two vectors</div>
+                    
+                    <div class="api-method"><span class="method-name">cross</span>(<span class="param">x1, y1, x2, y2</span>) → <span class="return-type">number</span></div>
+                    <div class="api-description">Cross product (scalar for 2D)</div>
+                    
+                    <div class="api-method"><span class="method-name">magnitude</span>(<span class="param">x, y</span>) → <span class="return-type">number</span></div>
+                    <div class="api-description">Length of vector</div>
+                    
+                    <div class="api-method"><span class="method-name">angle_between_vectors</span>(<span class="param">x1, y1, x2, y2</span>) → <span class="return-type">number</span></div>
+                    <div class="api-description">Angle between vectors in radians</div>
+                    
+                    <div class="api-method"><span class="method-name">rotate_vector</span>(<span class="param">x, y, angle</span>) → <span class="return-type">Array[2]</span></div>
+                    <div class="api-description">Rotate vector by angle (radians)</div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Vector Examples</h3>
+                    <pre class="code-example">
+<span class="code-comment">// Normalize movement vector</span>
+<span class="keyword">const</span> [dx, dy] = <span class="highlight">normalize</span>(inputX, inputY);
+player.x += dx * speed;
+
+<span class="code-comment">// Check if vectors point same direction</span>
+<span class="keyword">const</span> dotProduct = <span class="highlight">dot</span>(v1x, v1y, v2x, v2y);
+<span class="keyword">const</span> sameDirection = dotProduct > <span class="string">0</span>;
+
+<span class="code-comment">// Rotate sprite direction</span>
+<span class="keyword">const</span> [newX, newY] = <span class="highlight">rotate_vector</span>(dirX, dirY, angle);
+</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <div class="demo-column">
+                <h2>Collision Detection</h2>
+                
+                <div class="demo-section">
+                    <h3>Interactive Collision Testing</h3>
+                    <canvas id="collision-canvas" width="400" height="300"></canvas>
+                    <div class="controls">
+                        <button onclick="toggleCollisionMode('rect')">Rectangle Mode</button>
+                        <button onclick="toggleCollisionMode('circle')">Circle Mode</button>
+                        <button onclick="clearCollisionCanvas()">Clear</button>
+                    </div>
+                    <div class="status" id="collision-output"></div>
+                    <div class="help-text">Click and drag to create shapes. Watch for collision detection!</div>
+                </div>
+
+                <div class="demo-section">
+                    <h3>Collision Calculator</h3>
+                    <div class="input-group">
+                        <label>Circle:</label>
+                        <input type="number" id="circle-x" value="200" placeholder="X">
+                        <input type="number" id="circle-y" value="150" placeholder="Y">
+                        <input type="number" id="circle-r" value="50" placeholder="Radius">
+                    </div>
+                    <div class="input-group">
+                        <label>Rect:</label>
+                        <input type="number" id="rect-x" value="150" placeholder="X">
+                        <input type="number" id="rect-y" value="100" placeholder="Y">
+                        <input type="number" id="rect-w" value="100" placeholder="Width">
+                        <input type="number" id="rect-h" value="100" placeholder="Height">
+                    </div>
+                    <div class="controls">
+                        <button onclick="testCollisions()">Test Collisions</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="api-column">
+                <h2>Collision</h2>
+                
+                <div class="api-section">
+                    <h3>Collision Functions</h3>
+                    <div class="api-method"><span class="method-name">point_in_rect</span>(<span class="param">px, py, rx, ry, rw, rh</span>) → <span class="return-type">boolean</span></div>
+                    <div class="api-description">Check if point is inside rectangle</div>
+                    
+                    <div class="api-method"><span class="method-name">point_in_circle</span>(<span class="param">px, py, cx, cy, radius</span>) → <span class="return-type">boolean</span></div>
+                    <div class="api-description">Check if point is inside circle</div>
+                    
+                    <div class="api-method"><span class="method-name">rect_overlap</span>(<span class="param">r1x, r1y, r1w, r1h, r2x, r2y, r2w, r2h</span>) → <span class="return-type">boolean</span></div>
+                    <div class="api-description">Check if two rectangles overlap</div>
+                    
+                    <div class="api-method"><span class="method-name">circle_overlap</span>(<span class="param">c1x, c1y, r1, c2x, c2y, r2</span>) → <span class="return-type">boolean</span></div>
+                    <div class="api-description">Check if two circles overlap</div>
+                    
+                    <div class="api-method"><span class="method-name">circle_rect_overlap</span>(<span class="param">cx, cy, radius, rx, ry, rw, rh</span>) → <span class="return-type">boolean</span></div>
+                    <div class="api-description">Check if circle and rectangle overlap</div>
+                    
+                    <div class="api-method"><span class="method-name">line_circle_intersect</span>(<span class="param">x1, y1, x2, y2, cx, cy, radius</span>) → <span class="return-type">boolean</span></div>
+                    <div class="api-description">Check if line intersects circle</div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Collision Examples</h3>
+                    <pre class="code-example">
+<span class="code-comment">// Mouse click detection</span>
+<span class="keyword">if</span> (<span class="highlight">point_in_rect</span>(mouseX, mouseY, button.x, button.y, button.w, button.h)) {
+  button.onClick();
+}
+
+<span class="code-comment">// Enemy collision</span>
+<span class="keyword">if</span> (<span class="highlight">circle_overlap</span>(player.x, player.y, player.radius, 
+                    enemy.x, enemy.y, enemy.radius)) {
+  takeDamage();
+}
+
+<span class="code-comment">// Projectile vs wall</span>
+<span class="keyword">if</span> (<span class="highlight">line_circle_intersect</span>(bullet.prevX, bullet.prevY, 
+                        bullet.x, bullet.y, wall.x, wall.y, wall.radius)) {
+  bullet.explode();
+}
+</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="u-helper.js"></script>
+    <script>
+        function log(message, outputId = 'hash-output') {
+            const output = document.getElementById(outputId);
+            const timestamp = new Date().toLocaleTimeString();
+            output.textContent += `[${timestamp}] ${message}\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function clearOutput(outputId) {
+            document.getElementById(outputId).textContent = '';
+        }
+
+        function generateHash() {
+            clearOutput('hash-output');
+            const input = document.getElementById('hash-input').value;
+            const hash = make_hash(input);
+            log(`Hash of "${input}": ${hash}`, 'hash-output');
+        }
+
+        function demonstrateFirst() {
+            clearOutput('utility-output');
+            const result = first("", null, undefined, "Hello", "World");
+            log(`first("", null, undefined, "Hello", "World")`, 'utility-output');
+            log(`Result: "${result}"`, 'utility-output');
+        }
+
+        function demonstrateIsset() {
+            const tests = [
+                { value: undefined, name: 'undefined' },
+                { value: null, name: 'null' },
+                { value: "", name: '""' },
+                { value: 0, name: '0' },
+                { value: false, name: 'false' },
+                { value: "hello", name: '"hello"' }
+            ];
+            
+            tests.forEach(test => {
+                const result = isset(test.value);
+                log(`isset(${test.name}) = ${result}`, 'utility-output');
+            });
+        }
+
+        function demonstrateColors() {
+            clearOutput('color-output');
+            const r = parseInt(document.getElementById('r-input').value);
+            const g = parseInt(document.getElementById('g-input').value);
+            const b = parseInt(document.getElementById('b-input').value);
+            
+            const rgbValue = rgb(r, g, b);
+            const frgbValue = frgb(r/255, g/255, b/255);
+            const hexColor = '#' + r.toString(16).padStart(2, '0') + g.toString(16).padStart(2, '0') + b.toString(16).padStart(2, '0');
+            
+            log(`RGB values: (${r}, ${g}, ${b})`, 'color-output');
+            log(`rgb() result: ${rgbValue}`, 'color-output');
+            log(`frgb() result: ${frgbValue}`, 'color-output');
+            log(`Hex equivalent: ${hexColor}`, 'color-output');
+            
+            const colorBox = document.createElement('div');
+            colorBox.className = 'color-box';
+            colorBox.style.backgroundColor = hexColor;
+            document.getElementById('color-output').appendChild(colorBox);
+        }
+
+        function demonstrateLerp() {
+            clearOutput('lerp-output');
+            const a = parseFloat(document.getElementById('lerp-a').value);
+            const b = parseFloat(document.getElementById('lerp-b').value);
+            const t = parseFloat(document.getElementById('lerp-t').value);
+            
+            const result = lerp(a, b, t);
+            log(`lerp(${a}, ${b}, ${t})`, 'lerp-output');
+            log(`Result: ${result.toFixed(2)}`, 'lerp-output');
+        }
+
+        function demonstrateClamp() {
+            clearOutput('clamp-output');
+            const val = parseFloat(document.getElementById('clamp-val').value);
+            const min = parseFloat(document.getElementById('clamp-min').value);
+            const max = parseFloat(document.getElementById('clamp-max').value);
+            
+            const result = clamp(val, min, max);
+            log(`clamp(${val}, ${min}, ${max})`, 'clamp-output');
+            log(`Result: ${result}`, 'clamp-output');
+        }
+
+        function calculateDistance() {
+            clearOutput('distance-output');
+            const x1 = parseFloat(document.getElementById('p1x').value);
+            const y1 = parseFloat(document.getElementById('p1y').value);
+            const x2 = parseFloat(document.getElementById('p2x').value);
+            const y2 = parseFloat(document.getElementById('p2y').value);
+            
+            const distance = dist(x1, y1, x2, y2);
+            log(`Distance between (${x1}, ${y1}) and (${x2}, ${y2})`, 'distance-output');
+            log(`Result: ${distance.toFixed(2)}`, 'distance-output');
+        }
+
+        function drawBresenhamLine() {
+            const canvas = document.getElementById('line-canvas');
+            const ctx = canvas.getContext('2d');
+            const x0 = parseInt(document.getElementById('line-x0').value);
+            const y0 = parseInt(document.getElementById('line-y0').value);
+            const x1 = parseInt(document.getElementById('line-x1').value);
+            const y1 = parseInt(document.getElementById('line-y1').value);
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.strokeStyle = '#f0f0f0';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += 10) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += 10) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+            
+            const points = bresenham_line(x0, y0, x1, y1);
+            
+            ctx.fillStyle = 'red';
+            points.forEach(([x, y]) => {
+                ctx.fillRect(x - 1, y - 1, 3, 3);
+            });
+            
+            ctx.fillStyle = 'green';
+            ctx.fillRect(x0 - 3, y0 - 3, 6, 6);
+            ctx.fillStyle = 'blue';
+            ctx.fillRect(x1 - 3, y1 - 3, 6, 6);
+        }
+
+        function updateLerpVisualization() {
+            const slider = document.getElementById('lerp-slider');
+            const t = parseFloat(slider.value);
+            document.getElementById('t-value').textContent = t.toFixed(2);
+            
+            const canvas = document.getElementById('lerp-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const startX = 50, startY = 50;
+            const endX = 350, endY = 50;
+            
+            const currentX = lerp(startX, endX, t);
+            const currentY = lerp(startY, endY, t);
+            
+            ctx.strokeStyle = '#ccc';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+            
+            ctx.fillStyle = 'green';
+            ctx.beginPath();
+            ctx.arc(startX, startY, 8, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            ctx.fillStyle = 'blue';
+            ctx.beginPath();
+            ctx.arc(endX, endY, 8, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            ctx.fillStyle = 'red';
+            ctx.beginPath();
+            ctx.arc(currentX, currentY, 6, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            ctx.fillStyle = 'black';
+            ctx.font = '12px Arial';
+            ctx.fillText('Start', startX - 20, startY - 15);
+            ctx.fillText('End', endX - 10, endY - 15);
+            ctx.fillText(`t=${t.toFixed(2)}`, currentX - 20, currentY - 15);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            generateHash();
+            demonstrateColors();
+            updateLerpVisualization();
+            initializeCollisionCanvas();
+        });
+
+        // Vector operations demo functions
+        function demonstrateVectors() {
+            clearOutput('vector-output');
+            const v1x = parseFloat(document.getElementById('v1x').value);
+            const v1y = parseFloat(document.getElementById('v1y').value);
+            const v2x = parseFloat(document.getElementById('v2x').value);
+            const v2y = parseFloat(document.getElementById('v2y').value);
+
+            // Calculate various vector operations
+            const mag1 = magnitude(v1x, v1y);
+            const mag2 = magnitude(v2x, v2y);
+            const [norm1x, norm1y] = normalize(v1x, v1y);
+            const [norm2x, norm2y] = normalize(v2x, v2y);
+            const dotProduct = dot(v1x, v1y, v2x, v2y);
+            const crossProduct = cross(v1x, v1y, v2x, v2y);
+            const angle = angle_between_vectors(v1x, v1y, v2x, v2y);
+
+            log(`Vector 1: (${v1x}, ${v1y})`, 'vector-output');
+            log(`Vector 2: (${v2x}, ${v2y})`, 'vector-output');
+            log(`Magnitude 1: ${mag1.toFixed(3)}`, 'vector-output');
+            log(`Magnitude 2: ${mag2.toFixed(3)}`, 'vector-output');
+            log(`Normalized 1: (${norm1x.toFixed(3)}, ${norm1y.toFixed(3)})`, 'vector-output');
+            log(`Normalized 2: (${norm2x.toFixed(3)}, ${norm2y.toFixed(3)})`, 'vector-output');
+            log(`Dot Product: ${dotProduct.toFixed(3)}`, 'vector-output');
+            log(`Cross Product: ${crossProduct.toFixed(3)}`, 'vector-output');
+            log(`Angle between: ${(angle * 180 / Math.PI).toFixed(1)}°`, 'vector-output');
+        }
+
+        function demonstrateVectorRotation() {
+            clearOutput('vector-output');
+            const v1x = parseFloat(document.getElementById('v1x').value);
+            const v1y = parseFloat(document.getElementById('v1y').value);
+            
+            const angles = [0, Math.PI/4, Math.PI/2, Math.PI, 3*Math.PI/2];
+            const angleNames = ['0°', '45°', '90°', '180°', '270°'];
+            
+            log(`Original vector: (${v1x}, ${v1y})`, 'vector-output');
+            
+            angles.forEach((angle, i) => {
+                const [rotX, rotY] = rotate_vector(v1x, v1y, angle);
+                log(`Rotated ${angleNames[i]}: (${rotX.toFixed(3)}, ${rotY.toFixed(3)})`, 'vector-output');
+            });
+        }
+
+        function updateVectorVisualization() {
+            const slider = document.getElementById('rotation-slider');
+            const angle = parseFloat(slider.value);
+            document.getElementById('angle-value').textContent = (angle * 180 / Math.PI).toFixed(0) + '°';
+            
+            const canvas = document.getElementById('vector-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const scale = 30;
+            
+            // Draw grid
+            ctx.strokeStyle = '#f0f0f0';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += 20) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += 20) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+            
+            // Draw axes
+            ctx.strokeStyle = '#ccc';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, centerY);
+            ctx.lineTo(canvas.width, centerY);
+            ctx.moveTo(centerX, 0);
+            ctx.lineTo(centerX, canvas.height);
+            ctx.stroke();
+            
+            // Original vector
+            const origX = 3, origY = 2;
+            drawVector(ctx, centerX, centerY, origX * scale, -origY * scale, 'blue', 'Original');
+            
+            // Rotated vector
+            const [rotX, rotY] = rotate_vector(origX, origY, angle);
+            drawVector(ctx, centerX, centerY, rotX * scale, -rotY * scale, 'red', 'Rotated');
+        }
+
+        function drawVector(ctx, startX, startY, dx, dy, color, label) {
+            const endX = startX + dx;
+            const endY = startY + dy;
+            
+            // Draw vector line
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+            
+            // Draw arrowhead
+            const angle = Math.atan2(dy, dx);
+            const arrowLength = 15;
+            const arrowAngle = Math.PI / 6;
+            
+            ctx.beginPath();
+            ctx.moveTo(endX, endY);
+            ctx.lineTo(endX - arrowLength * Math.cos(angle - arrowAngle), 
+                      endY - arrowLength * Math.sin(angle - arrowAngle));
+            ctx.moveTo(endX, endY);
+            ctx.lineTo(endX - arrowLength * Math.cos(angle + arrowAngle), 
+                      endY - arrowLength * Math.sin(angle + arrowAngle));
+            ctx.stroke();
+            
+            // Label
+            ctx.fillStyle = color;
+            ctx.font = '12px Arial';
+            ctx.fillText(label, endX + 5, endY - 5);
+        }
+
+        // Collision detection demo functions
+        let collisionMode = 'rect';
+        let collisionShapes = [];
+        let isDrawing = false;
+        let startPos = {x: 0, y: 0};
+
+        function initializeCollisionCanvas() {
+            const canvas = document.getElementById('collision-canvas');
+            
+            canvas.addEventListener('mousedown', startCollisionDraw);
+            canvas.addEventListener('mousemove', updateCollisionDraw);
+            canvas.addEventListener('mouseup', endCollisionDraw);
+            
+            updateCollisionVisualization();
+        }
+
+        function toggleCollisionMode(mode) {
+            collisionMode = mode;
+            clearOutput('collision-output');
+            log(`Switched to ${mode} mode`, 'collision-output');
+        }
+
+        function startCollisionDraw(e) {
+            const rect = e.target.getBoundingClientRect();
+            startPos.x = e.clientX - rect.left;
+            startPos.y = e.clientY - rect.top;
+            isDrawing = true;
+        }
+
+        function updateCollisionDraw(e) {
+            if (!isDrawing) return;
+            
+            const rect = e.target.getBoundingClientRect();
+            const currentX = e.clientX - rect.left;
+            const currentY = e.clientY - rect.top;
+            
+            updateCollisionVisualization(currentX, currentY);
+        }
+
+        function endCollisionDraw(e) {
+            if (!isDrawing) return;
+            
+            const rect = e.target.getBoundingClientRect();
+            const endX = e.clientX - rect.left;
+            const endY = e.clientY - rect.top;
+            
+            if (collisionMode === 'rect') {
+                const width = Math.abs(endX - startPos.x);
+                const height = Math.abs(endY - startPos.y);
+                const x = Math.min(startPos.x, endX);
+                const y = Math.min(startPos.y, endY);
+                
+                collisionShapes.push({
+                    type: 'rect',
+                    x: x, y: y, w: width, h: height
+                });
+            } else if (collisionMode === 'circle') {
+                const radius = dist(startPos.x, startPos.y, endX, endY);
+                collisionShapes.push({
+                    type: 'circle',
+                    x: startPos.x, y: startPos.y, r: radius
+                });
+            }
+            
+            isDrawing = false;
+            updateCollisionVisualization();
+            checkCollisions();
+        }
+
+        function updateCollisionVisualization(mouseX, mouseY) {
+            const canvas = document.getElementById('collision-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw existing shapes
+            collisionShapes.forEach((shape, index) => {
+                if (shape.type === 'rect') {
+                    ctx.strokeStyle = 'blue';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(shape.x, shape.y, shape.w, shape.h);
+                    ctx.fillStyle = 'rgba(0, 0, 255, 0.1)';
+                    ctx.fillRect(shape.x, shape.y, shape.w, shape.h);
+                } else if (shape.type === 'circle') {
+                    ctx.strokeStyle = 'red';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(shape.x, shape.y, shape.r, 0, 2 * Math.PI);
+                    ctx.stroke();
+                    ctx.fillStyle = 'rgba(255, 0, 0, 0.1)';
+                    ctx.fill();
+                }
+            });
+            
+            // Draw current drawing
+            if (isDrawing && mouseX !== undefined && mouseY !== undefined) {
+                ctx.strokeStyle = 'gray';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([5, 5]);
+                
+                if (collisionMode === 'rect') {
+                    const width = mouseX - startPos.x;
+                    const height = mouseY - startPos.y;
+                    ctx.strokeRect(startPos.x, startPos.y, width, height);
+                } else if (collisionMode === 'circle') {
+                    const radius = dist(startPos.x, startPos.y, mouseX, mouseY);
+                    ctx.beginPath();
+                    ctx.arc(startPos.x, startPos.y, radius, 0, 2 * Math.PI);
+                    ctx.stroke();
+                }
+                
+                ctx.setLineDash([]);
+            }
+        }
+
+        function checkCollisions() {
+            clearOutput('collision-output');
+            let collisionCount = 0;
+            
+            for (let i = 0; i < collisionShapes.length; i++) {
+                for (let j = i + 1; j < collisionShapes.length; j++) {
+                    const shape1 = collisionShapes[i];
+                    const shape2 = collisionShapes[j];
+                    
+                    let collision = false;
+                    let type = '';
+                    
+                    if (shape1.type === 'rect' && shape2.type === 'rect') {
+                        collision = rect_overlap(shape1.x, shape1.y, shape1.w, shape1.h,
+                                               shape2.x, shape2.y, shape2.w, shape2.h);
+                        type = 'Rect-Rect';
+                    } else if (shape1.type === 'circle' && shape2.type === 'circle') {
+                        collision = circle_overlap(shape1.x, shape1.y, shape1.r,
+                                                 shape2.x, shape2.y, shape2.r);
+                        type = 'Circle-Circle';
+                    } else if ((shape1.type === 'circle' && shape2.type === 'rect') ||
+                              (shape1.type === 'rect' && shape2.type === 'circle')) {
+                        const circle = shape1.type === 'circle' ? shape1 : shape2;
+                        const rect = shape1.type === 'rect' ? shape1 : shape2;
+                        collision = circle_rect_overlap(circle.x, circle.y, circle.r,
+                                                       rect.x, rect.y, rect.w, rect.h);
+                        type = 'Circle-Rect';
+                    }
+                    
+                    if (collision) {
+                        collisionCount++;
+                        log(`${type} collision detected between shape ${i+1} and ${j+1}`, 'collision-output');
+                    }
+                }
+            }
+            
+            if (collisionCount === 0 && collisionShapes.length > 1) {
+                log('No collisions detected', 'collision-output');
+            }
+            
+            log(`Total shapes: ${collisionShapes.length}`, 'collision-output');
+        }
+
+        function clearCollisionCanvas() {
+            collisionShapes = [];
+            updateCollisionVisualization();
+            clearOutput('collision-output');
+        }
+
+        function testCollisions() {
+            clearOutput('collision-output');
+            
+            const cx = parseFloat(document.getElementById('circle-x').value);
+            const cy = parseFloat(document.getElementById('circle-y').value);
+            const cr = parseFloat(document.getElementById('circle-r').value);
+            
+            const rx = parseFloat(document.getElementById('rect-x').value);
+            const ry = parseFloat(document.getElementById('rect-y').value);
+            const rw = parseFloat(document.getElementById('rect-w').value);
+            const rh = parseFloat(document.getElementById('rect-h').value);
+            
+            // Test all collision types
+            const circleRectOverlap = circle_rect_overlap(cx, cy, cr, rx, ry, rw, rh);
+            
+            // Test point in shapes
+            const testX = cx, testY = cy; // Use circle center as test point
+            const pointInCircle = point_in_circle(testX, testY, cx, cy, cr);
+            const pointInRect = point_in_rect(testX, testY, rx, ry, rw, rh);
+            
+            log(`Circle: (${cx}, ${cy}) r=${cr}`, 'collision-output');
+            log(`Rectangle: (${rx}, ${ry}) ${rw}x${rh}`, 'collision-output');
+            log(`Circle-Rect overlap: ${circleRectOverlap}`, 'collision-output');
+            log(`Point (${testX}, ${testY}) in circle: ${pointInCircle}`, 'collision-output');
+            log(`Point (${testX}, ${testY}) in rect: ${pointInRect}`, 'collision-output');
+        }
+    </script>
+</body>
+</html>

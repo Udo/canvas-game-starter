@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>U-EventEmitter Demo</title>
+    <style>
+        :root {
+            --space: 8px;
+            --radius: 5px;
+            
+            --gray: #6c757d;
+            --gray-bg: #f5f5f5;
+            --blue: #007acc;
+            --green: #28a745;
+            --white: white;
+            --dark: #333;
+            
+            --max-width: 1400px;
+            --sidebar: 400px;
+        }
+        
+        * { box-sizing: border-box; }
+        
+        body { 
+            font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: var(--space);
+            background: var(--gray-bg);
+        }
+        
+        .container { 
+            background: var(--white);
+            padding: calc(var(--space) * 1.5);
+            border-radius: var(--radius);
+        }
+        
+        .main-layout { 
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: calc(var(--space) * 1.5);
+        }
+        
+        .api-column { 
+            background: var(--gray-bg);
+            padding: var(--space);
+            border-radius: var(--radius);
+            border-left: 4px solid var(--green);
+        }
+        
+        h1 { 
+            color: var(--dark);
+            text-align: center;
+            margin-bottom: calc(var(--space) * 1.5);
+            grid-column: 1 / -1;
+        }
+        
+        h2 { 
+            color: var(--gray);
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: var(--space);
+            margin-top: calc(var(--space) * 1.5);
+        }
+        
+        .demo-section { 
+            margin: var(--space) 0;
+            padding: var(--space);
+            background: var(--gray-bg);
+            border-radius: var(--radius);
+            border-left: 4px solid var(--blue);
+        }
+        
+        .controls, .input-group { 
+            display: flex;
+            gap: var(--space);
+            margin: 15px 0;
+        }
+        
+        .controls { flex-wrap: wrap; }
+        .input-group { align-items: center; }
+        .feature-grid { display: grid; gap: var(--space); margin: var(--space) 0; }
+        
+        button { 
+            background: var(--blue);
+            color: var(--white);
+            border: none;
+            padding: var(--space) var(--space);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover { filter: brightness(0.9); }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        
+        input[type="text"] { 
+            padding: var(--space);
+            border: 1px solid #ddd;
+            border-radius: var(--radius);
+            flex: 1;
+        }
+        
+        .status, .code-example { 
+            font-family: monospace;
+            padding: var(--space);
+            border-radius: var(--radius);
+            margin: var(--space) 0;
+        }
+        
+        .status { 
+            background: var(--dark);
+            color: #0f0;
+            white-space: pre-wrap;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        .code-example { 
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            overflow-x: auto;
+            margin: var(--space) 0;
+        }
+        
+        .highlight { color: #68d391; }
+        .keyword { color: #fbb6ce; }
+        .string { color: #fbd38d; }
+        
+        .event-visual { 
+            height: 100px;
+            background: linear-gradient(45deg, #1e3c72, #2a5298);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-weight: bold;
+            margin: 15px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .pulse-wave { 
+            position: absolute;
+            inset: 0;
+            opacity: 0.3;
+            background: radial-gradient(circle at center, rgba(255,255,255,0.2) 0%, transparent 70%);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        .event-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 12px;
+            height: 12px;
+            background: #68d391;
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .event-indicator.active {
+            opacity: 1;
+            animation: blink 0.5s ease-in-out;
+        }
+        
+        @keyframes pulse { 
+            0%, 100% { transform: scale(0.8); opacity: 0.3; }
+            50% { transform: scale(1.2); opacity: 0.1; }
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        .api-section { margin: 15px 0; }
+        .api-section h3 { 
+            color: var(--green);
+            margin: 0 0 var(--space) 0;
+        }
+        
+        .api-method { 
+            font-family: monospace;
+            margin: 3px 0;
+            color: var(--gray);
+        }
+        
+        .api-method .method-name { color: var(--blue); font-weight: bold; }
+        .api-method .return-type { color: #6f42c1; }
+        .api-method .param { color: #e83e8c; }
+        
+        .api-description {
+            margin: var(--space) 0;
+        }
+        
+        .api-options {
+            color: var(--gray);
+        }
+        
+        .help-text {
+            color: var(--gray);
+            margin: var(--space) 0;
+        }
+        
+        .code-comment {
+            color: #68d391;
+        }
+        
+        .event-log {
+            background: var(--dark);
+            color: #0f0;
+            font-family: monospace;
+            padding: var(--space);
+            border-radius: var(--radius);
+            height: 150px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin: var(--space) 0;
+        }
+        
+        .listener-counter {
+            background: var(--blue);
+            color: var(--white);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-layout { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>U-EventEmitter Demo</h1>
+        
+        <div class="main-layout">
+            <div class="demo-column">
+                <h2>Basic Event System</h2>
+                <div class="demo-section">
+                    <div class="controls">
+                        <button onclick="basicDemo()">Basic Subscribe & Emit</button>
+                        <button onclick="multipleListenersDemo()">Add Multiple Listeners</button>
+                        <button onclick="emitToMultiple()">Emit to All</button>
+                    </div>
+                    <div class="status" id="basic-output"></div>
+                </div>
+
+                <div class="demo-section">
+                    <h3>Advanced Features</h3>
+                    <div class="controls">
+                        <button onclick="slotDemo()">Slot-based Handlers</button>
+                        <button onclick="replaceSlotHandler()">Replace Handler</button>
+                        <button onclick="emitSlotEvent()">Test Slot System</button>
+                    </div>
+                    <div class="controls">
+                        <button onclick="autoRemovalDemo()">Self-removing Handler</button>
+                        <button onclick="triggerAutoRemoval()">Trigger Auto-removal</button>
+                    </div>
+                    <div class="status" id="advanced-output"></div>
+                </div>
+
+                <div class="demo-section">
+                    <h3>Interactive Event System</h3>
+                    <div class="input-group">
+                        <input type="text" id="event-name" placeholder="Event name" value="chat">
+                        <input type="text" id="event-data" placeholder="Event data" value="Hello EventEmitter!">
+                    </div>
+                    <div class="controls">
+                        <button onclick="addListener()">Add Listener <span id="listenerCount" class="listener-counter">0</span></button>
+                        <button onclick="emitCustomEvent()">Emit Event</button>
+                        <button onclick="removeAllListeners()">Clear Listeners</button>
+                    </div>
+                    <div class="event-log" id="event-log">Ready for interactive events...</div>
+                </div>
+            </div>
+
+            <div class="api-column">
+                <h2>API Overview</h2>
+                
+                <div class="api-section">
+                    <h3>EventEmitter Constructor</h3>
+                    <div class="api-method"><span class="keyword">new</span> <span class="method-name">EventEmitter</span>()</div>
+                    <div class="api-description">
+                        Creates a new event emitter instance for custom event communication.
+                    </div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Core Methods</h3>
+                    <div class="api-method"><span class="method-name">on</span>(<span class="param">event, handler, slot?</span>) → <span class="return-type">EventEmitter</span></div>
+                    <div class="api-method"><span class="method-name">emit</span>(<span class="param">event, ...args</span>) → <span class="return-type">number</span></div>
+                    <div class="api-method"><span class="method-name">off</span>(<span class="param">event, handler?</span>) → <span class="return-type">EventEmitter</span></div>
+                    <div class="api-method"><span class="method-name">clear</span>(<span class="param">event?</span>) → <span class="return-type">EventEmitter</span></div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Key Features</h3>
+                    <div class="api-description">
+                        <strong>Slot-based Deduplication:</strong> Use slot parameter to replace existing handlers<br>
+                        <strong>Auto-removal:</strong> Handlers returning 'remove_handler' are automatically unsubscribed<br>
+                        <strong>Return Values:</strong> emit() returns the number of handlers called<br>
+                        <strong>Flexible Arguments:</strong> Pass any number of arguments to handlers
+                    </div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Examples</h3>
+                    <pre class="code-example">
+<span class="code-comment">// Basic usage</span>
+<span class="keyword">const</span> emitter = <span class="keyword">new</span> <span class="highlight">EventEmitter</span>();
+emitter.on(<span class="string">'message'</span>, (data) => {
+  console.log(<span class="string">'Received:'</span>, data);
+});
+emitter.emit(<span class="string">'message'</span>, <span class="string">'Hello World'</span>);
+
+<span class="code-comment">// Slot-based replacement</span>
+emitter.on(<span class="string">'update'</span>, handler1, <span class="string">'ui-updater'</span>);
+emitter.on(<span class="string">'update'</span>, handler2, <span class="string">'ui-updater'</span>); <span class="code-comment">// Replaces handler1</span>
+
+<span class="code-comment">// Self-removing handler</span>
+emitter.on(<span class="string">'init'</span>, () => {
+  console.log(<span class="string">'Initialized!'</span>);
+  <span class="keyword">return</span> <span class="string">'remove_handler'</span>; <span class="code-comment">// Removes itself</span>
+});
+</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <div class="demo-column">
+                <h2>Event Patterns</h2>
+                <div class="demo-section">
+                    <h3>Publisher-Subscriber Pattern</h3>
+                    <div class="controls">
+                        <button onclick="createPublisher()">Create Publisher</button>
+                        <button onclick="addSubscribers()">Add Subscribers</button>
+                        <button onclick="publishNews()">Publish News</button>
+                    </div>
+                    <div class="status" id="pubsub-output"></div>
+                </div>
+
+                <div class="demo-section">
+                    <h3>Component Communication</h3>
+                    <div class="controls">
+                        <button onclick="setupComponents()">Setup Components</button>
+                        <button onclick="componentInteraction()">Trigger Interaction</button>
+                        <button onclick="cascadeEvents()">Cascade Events</button>
+                    </div>
+                    <div class="status" id="component-output"></div>
+                </div>
+
+                <div class="demo-section">
+                    <h3>Handler Counting & Management</h3>
+                    <div class="controls">
+                        <button onclick="handlerCountDemo()">Count Handlers</button>
+                        <button onclick="benchmarkEmission()">Benchmark Emission</button>
+                    </div>
+                    <div class="status" id="count-output"></div>
+                </div>
+            </div>
+
+            <div class="api-column">
+                <h2>Advanced Usage</h2>
+                
+                <div class="api-section">
+                    <h3>Event Management</h3>
+                    <div class="api-description">
+                        <strong>on(event, handler, slot)</strong> - Subscribe to events<br>
+                        • event: String event name<br>
+                        • handler: Function to call when event is emitted<br>
+                        • slot: Optional string key for handler replacement<br><br>
+                        <strong>emit(event, ...args)</strong> - Emit events to all listeners<br>
+                        • Returns the number of handlers that were called<br>
+                        • Passes all additional arguments to handlers<br><br>
+                        <strong>off(event, handler)</strong> - Remove specific handler<br>
+                        • If handler omitted, removes all handlers for event
+                    </div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Slot System</h3>
+                    <div class="api-description">
+                        The slot system prevents duplicate handlers by using string keys:<br>
+                        • Same slot key replaces previous handler<br>
+                        • Useful for UI updates, state management<br>
+                        • Prevents memory leaks from repeated subscriptions<br>
+                        • Slot keys are per-event, not global
+                    </div>
+                    <pre class="code-example">
+<span class="code-comment">// Without slots: multiple handlers</span>
+emitter.on(<span class="string">'render'</span>, updateUI);
+emitter.on(<span class="string">'render'</span>, updateUI); <span class="code-comment">// Now 2 handlers</span>
+
+<span class="code-comment">// With slots: automatic replacement</span>
+emitter.on(<span class="string">'render'</span>, updateUI, <span class="string">'ui'</span>);
+emitter.on(<span class="string">'render'</span>, updateUI, <span class="string">'ui'</span>); <span class="code-comment">// Still 1 handler</span>
+</pre>
+                </div>
+
+                <div class="api-section">
+                    <h3>Performance Patterns</h3>
+                    <div class="api-description">
+                        <strong>Event Namespacing:</strong> Use dot notation for hierarchical events<br>
+                        <strong>Batch Operations:</strong> Group related events for efficiency<br>
+                        <strong>Handler Cleanup:</strong> Use slots or off() to prevent memory leaks<br>
+                        <strong>Conditional Emission:</strong> Check handler count before expensive operations
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <div class="demo-column">
+                
+            </div>
+
+            <div class="api-column">
+                
+                <div class="api-section">
+                    <h3>Memory Management</h3>
+                    <div class="api-description">
+                        <strong>Use Slots:</strong> Prevent duplicate handlers with slot keys<br>
+                        <strong>Clean Up:</strong> Call off() when components are destroyed<br>
+                        <strong>Self-removal:</strong> Use 'remove_handler' return for one-time events<br>
+                        <strong>Clear All:</strong> Use clear() to remove all listeners for an event
+                    </div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Common Patterns</h3>
+                    <pre class="code-example">
+<span class="code-comment">// Request-Response pattern</span>
+emitter.on(<span class="string">'data.request'</span>, (type, callback) => {
+  <span class="keyword">const</span> data = fetchData(type);
+  callback(data);
+});
+
+<span class="code-comment">// State change notifications</span>
+emitter.on(<span class="string">'state.change'</span>, (oldState, newState) => {
+  updateUI(newState);
+  logStateChange(oldState, newState);
+});
+
+<span class="code-comment">// Error handling</span>
+emitter.on(<span class="string">'error'</span>, (error, context) => {
+  console.error(<span class="string">'Error in'</span>, context, error);
+  showErrorToUser(error.message);
+});
+</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <div class="demo-column">
+                <h2>Library Info</h2>
+                <div class="demo-section">
+                    <div class="status" id="libraryInfo">Loading library information...</div>
+                    
+                    <h3>Event Statistics:</h3>
+                    <div id="eventStats" class="status"></div>
+                </div>
+            </div>
+
+            <div class="api-column">
+                
+
+            </div>
+        </div>
+    </div>
+
+    <script src="u-events.js"></script>
+    <script>
+        const demoEmitter = new EventEmitter();
+        const interactiveEmitter = new EventEmitter();
+        const publisherEmitter = new EventEmitter();
+        const gameEmitter = new EventEmitter();
+        const uiEmitter = new EventEmitter();
+        
+        let listenerCount = 0;
+        let gameStats = {
+            eventsEmitted: 0,
+            handlersExecuted: 0,
+            totalEvents: 0
+        };
+
+        function log(message, outputId = 'basic-output') {
+            const output = document.getElementById(outputId);
+            const timestamp = new Date().toLocaleTimeString();
+            output.textContent += `[${timestamp}] ${message}\n`;
+            output.scrollTop = output.scrollHeight;
+            
+            flashIndicator('basicIndicator');
+        }
+
+        function clearOutput(outputId) {
+            document.getElementById(outputId).textContent = '';
+        }
+
+        function flashIndicator(indicatorId) {
+            const indicator = document.getElementById(indicatorId);
+            if (indicator) {
+                indicator.classList.remove('active');
+                setTimeout(() => indicator.classList.add('active'), 10);
+                setTimeout(() => indicator.classList.remove('active'), 500);
+            }
+        }
+
+        function basicDemo() {
+            clearOutput('basic-output');
+            
+            demoEmitter.on('greeting', (name) => {
+                log(`Hello, ${name}!`, 'basic-output');
+            });
+            
+            demoEmitter.emit('greeting', 'World');
+            demoEmitter.emit('greeting', 'EventEmitter');
+            gameStats.eventsEmitted += 2;
+            updateEventStats();
+        }
+
+        function multipleListenersDemo() {
+            demoEmitter.on('multi-test', (data) => {
+                log(`Handler 1: ${data}`, 'basic-output');
+            });
+            
+            demoEmitter.on('multi-test', (data) => {
+                log(`Handler 2: ${data}`, 'basic-output');
+            });
+            
+            demoEmitter.on('multi-test', (data) => {
+                log(`Handler 3: ${data}`, 'basic-output');
+            });
+            
+            log('Added 3 listeners for "multi-test" event', 'basic-output');
+        }
+
+        function emitToMultiple() {
+            const count = demoEmitter.emit('multi-test', 'Hello from multiple demo!');
+            log(`Event emitted to ${count} handlers`, 'basic-output');
+            gameStats.eventsEmitted++;
+            gameStats.handlersExecuted += count;
+            updateEventStats();
+        }
+
+        function slotDemo() {
+            clearOutput('advanced-output');
+            
+            demoEmitter.on('slot-event', (msg) => {
+                log(`Slot handler v1: ${msg}`, 'advanced-output');
+            }, 'demo-slot');
+            
+            log('Added handler with slot key "demo-slot"', 'advanced-output');
+        }
+
+        function replaceSlotHandler() {
+            demoEmitter.on('slot-event', (msg) => {
+                log(`Slot handler v2 (replaced): ${msg}`, 'advanced-output');
+            }, 'demo-slot');
+            
+            log('Replaced handler using same slot key', 'advanced-output');
+        }
+
+        function emitSlotEvent() {
+            const count = demoEmitter.emit('slot-event', 'Testing slot replacement');
+            log(`Emitted to ${count} handler(s)`, 'advanced-output');
+            gameStats.eventsEmitted++;
+            gameStats.handlersExecuted += count;
+            updateEventStats();
+        }
+
+        let autoRemovalCount = 0;
+        function autoRemovalDemo() {
+            demoEmitter.on('auto-remove', (msg) => {
+                autoRemovalCount++;
+                log(`Auto-removal handler called ${autoRemovalCount} time(s): ${msg}`, 'advanced-output');
+                return 'remove_handler';
+            });
+            
+            log('Added self-removing handler', 'advanced-output');
+        }
+
+        function triggerAutoRemoval() {
+            const count = demoEmitter.emit('auto-remove', 'This handler will remove itself');
+            log(`Handlers called: ${count}`, 'advanced-output');
+            
+            setTimeout(() => {
+                const count2 = demoEmitter.emit('auto-remove', 'This should call 0 handlers');
+                log(`Second emit - handlers called: ${count2}`, 'advanced-output');
+            }, 1000);
+            
+            gameStats.eventsEmitted += 2;
+            gameStats.handlersExecuted += count;
+            updateEventStats();
+        }
+
+        function addListener() {
+            const eventName = document.getElementById('event-name').value;
+            if (!eventName) return;
+            
+            listenerCount++;
+            const listenerId = listenerCount;
+            
+            interactiveEmitter.on(eventName, (data) => {
+                const logEl = document.getElementById('event-log');
+                logEl.textContent += `[Listener ${listenerId}] ${eventName}: ${data}\n`;
+                logEl.scrollTop = logEl.scrollHeight;
+            });
+            
+            const logEl = document.getElementById('event-log');
+            logEl.textContent += `Added listener ${listenerId} for "${eventName}"\n`;
+            logEl.scrollTop = logEl.scrollHeight;
+            
+            updateListenerCounter();
+        }
+
+        function emitCustomEvent() {
+            const eventName = document.getElementById('event-name').value;
+            const eventData = document.getElementById('event-data').value;
+            
+            if (!eventName) return;
+            
+            const count = interactiveEmitter.emit(eventName, eventData);
+            const logEl = document.getElementById('event-log');
+            logEl.textContent += `Emitted "${eventName}" to ${count} listener(s)\n`;
+            logEl.scrollTop = logEl.scrollHeight;
+            
+            gameStats.eventsEmitted++;
+            gameStats.handlersExecuted += count;
+            updateEventStats();
+        }
+
+        function removeAllListeners() {
+            const eventName = document.getElementById('event-name').value;
+            if (!eventName) return;
+            
+            interactiveEmitter.off(eventName);
+            
+            const logEl = document.getElementById('event-log');
+            logEl.textContent += `Removed all listeners for "${eventName}"\n`;
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        function updateListenerCounter() {
+            const counter = document.getElementById('listenerCount');
+            counter.textContent = listenerCount.toString();
+        }
+
+        function createPublisher() {
+            clearOutput('pubsub-output');
+            log('Publisher created', 'pubsub-output');
+        }
+
+        function addSubscribers() {
+            publisherEmitter.on('news', (headline, content) => {
+                log(`News Subscriber: ${headline}`, 'pubsub-output');
+            });
+            
+            publisherEmitter.on('news', (headline, content) => {
+                log(`Mobile App: New article "${headline}"`, 'pubsub-output');
+            });
+            
+            publisherEmitter.on('news', (headline, content) => {
+                log(`Email Service: Sending newsletter with "${headline}"`, 'pubsub-output');
+            });
+            
+            log('Added 3 subscribers to news events', 'pubsub-output');
+        }
+
+        function publishNews() {
+            const headlines = [
+                'EventEmitter Pattern Increases Developer Productivity',
+                'New Features Added to Event System',
+                'Best Practices for Event-Driven Architecture'
+            ];
+            
+            const headline = headlines[Math.floor(Math.random() * headlines.length)];
+            const count = publisherEmitter.emit('news', headline, 'Article content here...');
+            log(`Published "${headline}" to ${count} subscribers`, 'pubsub-output');
+            
+            gameStats.eventsEmitted++;
+            gameStats.handlersExecuted += count;
+            updateEventStats();
+        }
+
+        function setupComponents() {
+            clearOutput('component-output');
+            
+            demoEmitter.on('ui.update', (data) => {
+                log(`UI Component: Updating display with ${data}`, 'component-output');
+            });
+            
+            demoEmitter.on('data.request', (type) => {
+                log(`Data Component: Fetching ${type} data`, 'component-output');
+                setTimeout(() => {
+                    demoEmitter.emit('data.response', `${type} data loaded`);
+                }, 500);
+            });
+            
+            demoEmitter.on('data.response', (data) => {
+                log(`Logger: Data received - ${data}`, 'component-output');
+            });
+            
+            log('Components setup complete', 'component-output');
+        }
+
+        function componentInteraction() {
+            demoEmitter.emit('data.request', 'user');
+            gameStats.eventsEmitted++;
+            updateEventStats();
+        }
+
+        function cascadeEvents() {
+            demoEmitter.emit('ui.update', 'new theme');
+            setTimeout(() => {
+                demoEmitter.emit('ui.update', 'user preferences');
+            }, 300);
+            setTimeout(() => {
+                demoEmitter.emit('ui.update', 'layout changes');
+            }, 600);
+            
+            gameStats.eventsEmitted += 3;
+            updateEventStats();
+        }
+
+        function handlerCountDemo() {
+            clearOutput('count-output');
+            
+            demoEmitter.on('count-test', () => log('Handler A executed', 'count-output'));
+            demoEmitter.on('count-test', () => log('Handler B executed', 'count-output'));
+            demoEmitter.on('count-test', () => log('Handler C executed', 'count-output'));
+            
+            const count = demoEmitter.emit('count-test');
+            log(`Total handlers executed: ${count}`, 'count-output');
+            
+            gameStats.eventsEmitted++;
+            gameStats.handlersExecuted += count;
+            updateEventStats();
+        }
+
+        function benchmarkEmission() {
+            const start = performance.now();
+            let totalHandlers = 0;
+            
+            for (let i = 0; i < 1000; i++) {
+                totalHandlers += demoEmitter.emit('count-test');
+            }
+            
+            const end = performance.now();
+            log(`Benchmark: 1000 emissions took ${(end - start).toFixed(2)}ms`, 'count-output');
+            log(`Total handlers called: ${totalHandlers}`, 'count-output');
+            
+            gameStats.eventsEmitted += 1000;
+            gameStats.handlersExecuted += totalHandlers;
+            updateEventStats();
+        }
+
+        function setupGameDemo() {
+            clearOutput('game-output');
+            
+            gameEmitter.on('player.move', (x, y) => {
+                log(`Player moved to (${x}, ${y})`, 'game-output');
+            });
+            
+            gameEmitter.on('enemy.spawn', (type, level) => {
+                log(`${type} enemy spawned at level ${level}`, 'game-output');
+            });
+            
+            gameEmitter.on('score.update', (points, combo) => {
+                log(`Score: ${points} points (${combo}x combo)`, 'game-output');
+            });
+            
+            gameEmitter.on('game.over', (finalScore) => {
+                log(`Game Over! Final score: ${finalScore}`, 'game-output');
+            });
+            
+            log('Game event system initialized', 'game-output');
+        }
+
+        function simulateGameplay() {
+            const actions = [
+                () => gameEmitter.emit('player.move', Math.floor(Math.random() * 10), Math.floor(Math.random() * 10)),
+                () => gameEmitter.emit('enemy.spawn', ['goblin', 'orc', 'dragon'][Math.floor(Math.random() * 3)], Math.floor(Math.random() * 5) + 1),
+                () => gameEmitter.emit('score.update', Math.floor(Math.random() * 1000), Math.floor(Math.random() * 5) + 1),
+            ];
+            
+            let actionCount = 0;
+            const gameLoop = setInterval(() => {
+                const action = actions[Math.floor(Math.random() * actions.length)];
+                action();
+                actionCount++;
+                gameStats.eventsEmitted++;
+                
+                if (actionCount >= 8) {
+                    clearInterval(gameLoop);
+                    setTimeout(() => {
+                        gameEmitter.emit('game.over', Math.floor(Math.random() * 10000));
+                        gameStats.eventsEmitted++;
+                        updateEventStats();
+                    }, 1000);
+                }
+            }, 500);
+            
+            updateEventStats();
+        }
+
+        function showGameStats() {
+            log(`Game Statistics:`, 'game-output');
+            log(`Events emitted: ${gameStats.eventsEmitted}`, 'game-output');
+            log(`Handlers executed: ${gameStats.handlersExecuted}`, 'game-output');
+            log(`Avg handlers per event: ${(gameStats.handlersExecuted / gameStats.eventsEmitted || 0).toFixed(2)}`, 'game-output');
+        }
+
+        // UI Demo
+        function setupUIDemo() {
+            clearOutput('ui-output');
+            
+            uiEmitter.on('button.click', (buttonId) => {
+                log(`Button clicked: ${buttonId}`, 'ui-output');
+            });
+            
+            uiEmitter.on('form.submit', (formData) => {
+                log(`Form submitted: ${JSON.stringify(formData)}`, 'ui-output');
+            });
+            
+            uiEmitter.on('modal.open', (modalType) => {
+                log(`Modal opened: ${modalType}`, 'ui-output');
+            });
+            
+            uiEmitter.on('theme.change', (theme) => {
+                log(`Theme changed to: ${theme}`, 'ui-output');
+            });
+            
+            log('UI event handlers registered', 'ui-output');
+        }
+
+        function simulateUserActions() {
+            const actions = [
+                () => uiEmitter.emit('button.click', 'submit-btn'),
+                () => uiEmitter.emit('button.click', 'cancel-btn'),
+                () => uiEmitter.emit('form.submit', { name: 'John', email: 'john@example.com' }),
+                () => uiEmitter.emit('modal.open', 'settings'),
+                () => uiEmitter.emit('modal.open', 'help'),
+                () => uiEmitter.emit('theme.change', 'dark'),
+                () => uiEmitter.emit('theme.change', 'light'),
+            ];
+            
+            actions.forEach((action, index) => {
+                setTimeout(() => {
+                    action();
+                    gameStats.eventsEmitted++;
+                    if (index === actions.length - 1) {
+                        updateEventStats();
+                    }
+                }, index * 400);
+            });
+        }
+
+        function updateLibraryInfo() {
+            const info = document.getElementById('libraryInfo');
+            info.textContent = `
+EventEmitter Instances: Multiple active instances
+Global Event Statistics: ${gameStats.totalEvents} total events processed
+Memory Usage: Efficient slot-based deduplication
+Performance: Sub-millisecond event emission
+            `.trim();
+        }
+
+        function updateEventStats() {
+            gameStats.totalEvents = gameStats.eventsEmitted;
+            const stats = document.getElementById('eventStats');
+            stats.textContent = `
+Events Emitted: ${gameStats.eventsEmitted}
+Handlers Executed: ${gameStats.handlersExecuted}
+Average Handlers per Event: ${(gameStats.handlersExecuted / gameStats.eventsEmitted || 0).toFixed(2)}
+Active Listeners: ${listenerCount}
+            `.trim();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateLibraryInfo();
+            updateEventStats();
+            updateListenerCounter();
+            
+            setInterval(updateLibraryInfo, 3000);
+        });
+    </script>
+</body>
+</html>
