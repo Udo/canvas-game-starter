@@ -1,23 +1,53 @@
-const { parse: parseQueryString } = require('querystring');
+const { parse: parseQueryString, stringify: stringifyQueryString } = require('querystring');
 const http = require('http');
 const https = require('https');
 const { parse: parseUrl } = require('url');
 const { WebSocketServer } = require('ws');
 
+const DEFAULT_CLIENT_MESSAGE_LIMIT = 64 * 1024;
+const DEFAULT_BACKEND_RESPONSE_LIMIT = 1024 * 1024;
+const DEFAULT_COMMAND_REQUEST_LIMIT = 1024 * 1024;
+
+const byteLength = (value) => {
+	if (Buffer.isBuffer(value)) return value.length;
+	if (typeof value === 'string') return Buffer.byteLength(value);
+	return Buffer.byteLength(String(value));
+};
+
+const limitFor = (broker, key, fallback) => {
+	const value = broker?.config?.limits?.[key] ?? broker?.config?.[key];
+	return Number.isFinite(value) && value > 0 ? value : fallback;
+};
+
+const jsonParseError = (error, raw) => ({
+	json_error: error.message,
+	bytes: byteLength(raw),
+});
+
 /**
- * Safely parse JSON string, returning an object with error info if parsing fails
+ * Safely parse JSON string/buffer, returning an object with error info if parsing fails.
+ * The error intentionally reports only payload size, not the full payload body.
  * @param {*} raw - The raw data to parse
  * @returns {Object} Parsed object or error info
  */
 const safeParseJSON = (raw) => {
+	if (Buffer.isBuffer(raw))
+		raw = raw.toString('utf8');
 	if (typeof raw !== 'string')
 		return raw;
 	try {
 		return JSON.parse(raw);
 	} catch (error) {
-		return { json_error: `${error.message} // source: ${raw}` };
+		return jsonParseError(error, raw);
 	}
 };
+
+const oversizedMessage = (limit, actual) => ({
+	type: 'error',
+	error: 'message_too_large',
+	limit,
+	bytes: actual,
+});
 
 /**
  * Extract cookies from connection headers
@@ -187,11 +217,11 @@ const onBackendMessage = (broker, connection, message) => {
  * @param {Object} formData - Form data to send
  * @param {Function} callback - Callback function
  */
-const makeHttpRequest = (url, formData, callback) => {
+const makeHttpRequest = (url, formData, callback, maxResponseBytes = DEFAULT_BACKEND_RESPONSE_LIMIT) => {
 	const parsedUrl = parseUrl(url);
 	const httpModule = parsedUrl.protocol === 'https:' ? https : http;
 	
-	const postData = parseQueryString.stringify(formData);
+	const postData = stringifyQueryString(formData);
 	
 	const options = {
 		hostname: parsedUrl.hostname,
@@ -204,18 +234,35 @@ const makeHttpRequest = (url, formData, callback) => {
 		}
 	};
 	
+	let callbackSent = false;
+	const finish = (error, response, body) => {
+		if (callbackSent) return;
+		callbackSent = true;
+		callback(error, response, body);
+	};
+
 	const req = httpModule.request(options, (res) => {
 		let body = '';
+		let receivedBytes = 0;
 		res.on('data', (chunk) => {
+			receivedBytes += byteLength(chunk);
+			if (receivedBytes > maxResponseBytes) {
+				finish(new Error(`backend response exceeded ${maxResponseBytes} bytes`), res, null);
+				res.destroy();
+				return;
+			}
 			body += chunk;
 		});
 		res.on('end', () => {
-			callback(null, res, body);
+			finish(null, res, body);
+		});
+		res.on('error', (error) => {
+			finish(error, res, null);
 		});
 	});
 	
 	req.on('error', (error) => {
-		callback(error, null, null);
+		finish(error, null, null);
 	});
 	
 	req.write(postData);
@@ -234,17 +281,29 @@ const sendBackendMessage = (broker, connection, message, whenDone) => {
 	makeHttpRequest(broker.config.backend.url, data, (upstreamError, httpResponse, body) => {
 		const backendResponse = safeParseJSON(body);		
 		if (upstreamError && broker.config.log) {
-			console.log('! backend error', upstreamError, data);
+			console.log('! backend error', upstreamError.message, data);
 		} else if (whenDone) {
 			whenDone(backendResponse);
 		} else {
 			onBackendMessage(broker, connection, backendResponse);
 		}
-	});
+	}, limitFor(broker, 'backendResponseBytes', DEFAULT_BACKEND_RESPONSE_LIMIT));
 	}
 };
 
 const onClientMessage = (broker, connection, messageRaw) => {
+	const messageBytes = byteLength(messageRaw);
+	const maxMessageBytes = limitFor(broker, 'clientMessageBytes', DEFAULT_CLIENT_MESSAGE_LIMIT);
+	if (messageBytes > maxMessageBytes) {
+		const errorMessage = oversizedMessage(maxMessageBytes, messageBytes);
+		if (broker.config.log) {
+			console.log('! client message too large', connection.sessionInfo.wskey, errorMessage);
+		}
+		sendClientMessage(broker, connection, errorMessage, true);
+		connection.close(1009, 'message too large');
+		return;
+	}
+
 	const message = safeParseJSON(messageRaw);	
 	if (broker.config.log) {
 		console.log('→ from client', connection.sessionInfo.wskey, message);
@@ -319,11 +378,24 @@ const onWSConnection = (broker, connection) => {
 
 const onCommandRequest = (broker, request, response) => {
 	if (request.method === 'POST') {
-		let body = '';		
+		let body = '';
+		let receivedBytes = 0;
+		let rejected = false;
+		const maxRequestBytes = limitFor(broker, 'commandRequestBytes', DEFAULT_COMMAND_REQUEST_LIMIT);
 		request.on('data', (data) => {
+			if (rejected) return;
+			receivedBytes += byteLength(data);
+			if (receivedBytes > maxRequestBytes) {
+				rejected = true;
+				response.writeHead(413, { 'Content-Type': 'application/json' });
+				response.end(JSON.stringify({ error: 'request too large', limit: maxRequestBytes, bytes: receivedBytes }));
+				request.destroy();
+				return;
+			}
 			body += data;
 		});		
 		request.on('end', () => {
+			if (rejected) return;
 			response.writeHead(200, { 'Content-Type': 'application/json' });			
 			const address = request.connection.remoteAddress || request.socket.remoteAddress;			
 			if (!broker.config.backend || 
@@ -368,6 +440,7 @@ const initWebSocketServer = (broker) => {
 	
 	const wsServer = new WebSocketServer({
 		server: broker.httpServer,
+		maxPayload: limitFor(broker, 'clientMessageBytes', DEFAULT_CLIENT_MESSAGE_LIMIT),
 	});
 	
 	wsServer.on('connection', broker.onWSConnection);
@@ -455,4 +528,17 @@ class Broker {
 	}
 }
 
-module.exports = { Broker };
+module.exports = {
+	Broker,
+	_internals: {
+		DEFAULT_CLIENT_MESSAGE_LIMIT,
+		DEFAULT_BACKEND_RESPONSE_LIMIT,
+		DEFAULT_COMMAND_REQUEST_LIMIT,
+		byteLength,
+		limitFor,
+		safeParseJSON,
+		onClientMessage,
+		onCommandRequest,
+		makeHttpRequest,
+	},
+};

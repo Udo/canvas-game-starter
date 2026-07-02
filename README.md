@@ -28,6 +28,20 @@ Author: udo@openfu.com
 * **udolib** (latest) Public Domain | https://github.com/udo/udolib
 * **THREE.js** MIT License | https://threejs.org/docs/
 
+## Server Safety Limits
+
+The optional WebSocket broker in `server/wsbroker.js` applies default size caps before buffering and parsing untrusted traffic:
+
+- `clientMessageBytes`: 64 KiB WebSocket client frame limit
+- `backendResponseBytes`: 1 MiB HTTP backend response limit
+- `commandRequestBytes`: 1 MiB backend command POST body limit
+
+Override them with `config.limits` when constructing a broker. The focused broker limit regression test is self-contained and can run without installing npm dependencies:
+
+```bash
+node server/wsbroker-limits.test.js
+```
+
 ## Dependency Policy
 
 This repository is intentionally vendored and does not rely on `package.json` / `package-lock.json`.
