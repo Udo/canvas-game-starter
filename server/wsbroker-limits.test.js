@@ -134,8 +134,31 @@ async function testBackendResponseLimit() {
 	}
 }
 
+function testSessionInfoFromUpgradeRequest() {
+	const connection = {
+		request: {
+			headers: {
+				cookie: 'User=Alice; theme=dark; token=abc=def==',
+				'x-forwarded-for': '203.0.113.7',
+				'sec-websocket-key': 'ws-key-1',
+			},
+			socket: { remoteAddress: '127.0.0.1' },
+		},
+	};
+	const cookies = _internals.getCookies(connection);
+	assert.deepStrictEqual(cookies, { user: 'Alice', theme: 'dark', token: 'abc=def==' }, 'cookies parse with lowercased names and values containing =');
+	const session = _internals.buildSessionInfo(connection);
+	assert.strictEqual(session.ip, '203.0.113.7', 'forwarded ip wins');
+	assert.strictEqual(session.wskey, 'ws-key-1', 'ws key comes from upgrade request headers');
+	assert.strictEqual(session.user, 'Alice', 'cookies merge into session info');
+
+	const noForward = { request: { headers: {}, socket: { remoteAddress: '10.0.0.2' } } };
+	assert.strictEqual(_internals.buildSessionInfo(noForward).ip, '10.0.0.2', 'falls back to socket address');
+}
+
 (async () => {
 	testSafeParseJSONDoesNotEchoPayload();
+	testSessionInfoFromUpgradeRequest();
 	testOversizedClientMessageIsRejected();
 	testValidBufferMessageStillReachesHandler();
 	testOversizedCommandRequestIsRejected();
