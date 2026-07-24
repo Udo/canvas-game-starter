@@ -1,11 +1,8 @@
 {
+  "name": "canvas-game-starter",
+  "private": true,
+  "description": "Browser game starter. All browser demos are vendored; this manifest only covers the optional Node WebSocket tools under server/.",
   "dependencies": {
-    "pixi-filters": "^6.1.0",
-    "pixi.js": "^8.7.2",
-    "three": "^0.172.0",
-    "typescript": "^5.7.3",
-    "uglify": "^0.1.5",
-    "ws": "^8.18.3",
-    "wsbroker": "^1.0.15"
+    "ws": "8.18.3"
   }
 }

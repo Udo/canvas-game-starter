@@ -44,12 +44,19 @@ node server/wsbroker-limits.test.js
 
 ## Dependency Policy
 
-This repository is intentionally vendored and does not rely on `package.json` / `package-lock.json`.
+All browser demos are intentionally vendored (`lib/pixi.min.js`, `lib/three/`) and need no install, build step, or `node_modules/`. Every test also runs with plain `node` and no installed packages.
+
+The only npm dependency is `ws` (exact-pinned in `package.json`), used solely by the optional WebSocket tools under `server/`. To run the broker/server examples:
+
+```bash
+npm install --ignore-scripts   # installs only ws
+node server/wserver.js
+```
 
 When adding dependencies:
-1. Add only compiled runtime files that are required by this repo.
-2. Avoid vendoring full source trees when a minimal runtime subset is enough.
-3. Record the source/version in `THIRD_PARTY.md`.
+1. Prefer vendoring compiled runtime files over npm packages; avoid vendoring full source trees when a minimal runtime subset is enough.
+2. Record vendored sources/versions in `THIRD_PARTY.md`.
+3. Keep `package.json` limited to server-only tooling, exact-pinned, and regenerate the lockfile with `npm install --package-lock-only --ignore-scripts`.
 
 ## Gameplay Helpers
 
