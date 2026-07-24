@@ -36,11 +36,23 @@ class NonogramGameRenderer {
     isCellCorrect(row, col) {
         return this.logic.isCellCorrect(row, col);
     }
+
+    snapshot() {
+        return this.logic.snapshot();
+    }
+
+    restore(snapshot) {
+        const result = this.logic.restore(snapshot);
+        if (result.success) this.gameState = this.logic.getGameState();
+        return result;
+    }
 }
 
 let nonogramGame, stage, gridContainer;
 let hintContainers = { rows: [], cols: [] };
 let cellGraphics = [];
+let saveNotice = '';
+const nonogramSnapshots = SnapshotStore.create({ namespace: 'canvas-game-starter.nonogram', version: 1 });
 
 function initNonogram() {
     nonogramGame = new NonogramGameRenderer();
@@ -217,17 +229,49 @@ function updateGameStatus() {
     if (gameState.isComplete) status = 'complete';
     else if (gameState.isGameOver) status = 'gameOver';
     
-    statusElement.innerHTML = statusMessages[status];
+    statusElement.innerHTML = statusMessages[status] + (saveNotice ? `<div>${saveNotice}</div>` : '');
 }
 
 function newGame() {
     nonogramGame.newGame();
+    saveNotice = '';
     createGrid(stage);
     updateDisplay();
 }
 
 function resetGame() {
     nonogramGame.reset();
+    saveNotice = '';
+    updateDisplay();
+}
+
+function saveGame() {
+    const result = nonogramSnapshots.save('current', nonogramGame.snapshot());
+    saveNotice = result.ok ? 'Game saved.' : 'Save failed.';
+    updateDisplay();
+}
+
+function loadGame() {
+    const result = nonogramSnapshots.load('current');
+    if (!result.ok) {
+        saveNotice = result.code === 'missing' ? 'No saved game.' : 'Saved game cannot be loaded.';
+        updateDisplay();
+        return;
+    }
+    const restored = nonogramGame.restore(result.payload);
+    if (!restored.success) {
+        saveNotice = 'Saved game is invalid.';
+        updateDisplay();
+        return;
+    }
+    saveNotice = 'Game loaded.';
+    createGrid(stage);
+    updateDisplay();
+}
+
+function clearSave() {
+    const result = nonogramSnapshots.remove('current');
+    saveNotice = result.ok ? 'Saved game cleared.' : 'Could not clear saved game.';
     updateDisplay();
 }
 

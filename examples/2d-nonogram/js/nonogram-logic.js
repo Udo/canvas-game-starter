@@ -78,7 +78,7 @@ class NonogramLogic {
     }
     
     toggleCell(row, col, rightClick = false) {
-        if (this.isComplete || row < 0 || row >= this.gridSize || col < 0 || col >= this.gridSize) {
+        if (this.isComplete || this.mistakes >= this.maxMistakes || row < 0 || row >= this.gridSize || col < 0 || col >= this.gridSize) {
             return { success: false, reason: 'invalid_move' };
         }
         
@@ -141,6 +141,31 @@ class NonogramLogic {
         this.mistakes = 0;
     }
     
+    snapshot() {
+        return {
+            gridSize: this.gridSize,
+            grid: this.grid.map(row => [...row]),
+            solution: this.solution.map(row => [...row])
+        };
+    }
+
+    restore(snapshot) {
+        const size = this.gridSize;
+        const isMatrix = (matrix, allowed) => Array.isArray(matrix) && matrix.length === size && matrix.every(row =>
+            Array.isArray(row) && row.length === size && row.every(cell => allowed.includes(cell))
+        );
+        if (!snapshot || snapshot.gridSize !== size || !isMatrix(snapshot.grid, [-1, 0, 1]) || !isMatrix(snapshot.solution, [0, 1])) {
+            return { success: false, reason: 'invalid_snapshot' };
+        }
+        this.grid = snapshot.grid.map(row => [...row]);
+        this.solution = snapshot.solution.map(row => [...row]);
+        this.calculateHints();
+        this.isComplete = false;
+        this.checkForErrors();
+        this.checkForCompletion();
+        return { success: true };
+    }
+
     getGameState() {
         return {
             gridSize: this.gridSize,

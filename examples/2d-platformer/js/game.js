@@ -1,7 +1,13 @@
 
 (function(){
 	async function initGame() {
-        Keyboard.keybindings = Keyboard.keybindings_default;
+		const input = ActionInput.create({
+			bindings: {
+				move_left: [{ key: 'ArrowLeft' }, { key: 'a' }, { key: 'A' }, { gamepadButton: 14 }, { gamepadAxis: 0, direction: -1 }],
+				move_right: [{ key: 'ArrowRight' }, { key: 'd' }, { key: 'D' }, { gamepadButton: 15 }, { gamepadAxis: 0, direction: 1 }],
+				jump: [{ key: 'ArrowUp' }, { key: 'w' }, { key: 'W' }, { mouse: 0 }, { gamepadButton: 0 }]
+			}
+		}).listen();
 
 		let stage = await PixiStage.create();
 		stage.layers.add('world');
@@ -59,7 +65,7 @@
 			JUMP_SPEED: 700,
 		};
 
-		Keyboard.listen();
+		window.addEventListener('unload', () => input.stop());
 
 		function aabbIntersect(ax, ay, aw, ah, bx, by, bw, bh) {
 			return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
@@ -87,12 +93,11 @@
 
 		function update(dt) {
 			dt = Math.min(dt, 1/30);
-			let move = 0;
-			if (Keyboard.keys['move_left']) move -= 1;
-			if (Keyboard.keys['move_right']) move += 1;
+			input.update();
+			let move = input.value('move_right') - input.value('move_left');
 			state.acc.x = dt * move * physics.MOVE_SPEED * 10.0;
 			state.vel.x += (state.acc.x - state.vel.x) * Math.min(1, dt * 10);
-			if (Keyboard.keys['jump'] && state.grounded) {
+			if (input.pressed('jump') && state.grounded) {
 				state.vel.y = -physics.JUMP_SPEED;
 				state.grounded = false;
 			}
@@ -107,6 +112,7 @@
 			player.y = state.pos.y;
 			stage.director.focus_on(player, 0.25);
 			document.getElementById('frame-rate').innerText = `FPS: ${stage.app.ticker.FPS.toFixed(2)}`;
+			input.endFrame();
 		}
 
 		stage.app.ticker.add(() => {
